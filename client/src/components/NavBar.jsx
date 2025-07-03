@@ -1,11 +1,10 @@
-import { useContext } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { AuthContext } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContext';
 import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline';
 
 function NavBar() {
-  const { user, logout } = useContext(AuthContext);
+  const { user, logout } = useAuth();
   const isAuthenticated = user !== null;
   const navigate = useNavigate();
 

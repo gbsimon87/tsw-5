@@ -220,42 +220,22 @@ app.get('/auth/me', async (req, res) => {
   }
 });
 
-// Helper function for default scoring rules
-function getDefaultScoringRules(sportType) {
-  switch (sportType) {
-    case 'basketball':
-      return { freeThrow: 1, twoPoint: 2, threePoint: 3 };
-    case 'soccer':
-      return { goal: 1, assist: 1 };
-    case 'baseball':
-      return { single: 1, double: 2, triple: 3, homeRun: 4 };
-    case 'hockey':
-      return { goal: 1, assist: 1 };
-    case 'football':
-      return { touchdown: 6, fieldGoal: 3 };
-    default:
-      return {};
-  }
-}
-
+// League routes
 // Create a new league
 app.post('/api/leagues', authMiddleware, async (req, res) => {
-  console.log('Body:', req.body); // Debug: Log form data
   try {
-    const { name, picture, location, sportType } = req.body; // Fix: Use req.body
+    const { name, logo, location, sportType, visibility } = req.body;
     if (!name || !sportType) {
       return res.status(400).json({ error: 'Name and sportType are required' });
     }
 
-    const scoringRules = getDefaultScoringRules(sportType);
-
     const league = new League({
       name,
-      picture,
+      logo,
       location,
       sportType,
-      scoringRules,
-      admins: [req.user._id], // Creator is admin
+      visibility,
+      admins: [req.user._id],
       managers: []
     });
 
@@ -283,7 +263,22 @@ app.get('/api/leagues', authMiddleware, async (req, res) => {
   }
 });
 
-// API route (for testing)
+app.get('/api/leagues/:leagueId', authMiddleware, async (req, res) => {
+  try {
+    const league = await League.findById(req.params.leagueId).populate('admins', 'name').populate('managers', 'name');
+    if (!league) {
+      return res.status(404).json({ error: 'League not found' });
+    }
+    if (!league.admins.some(admin => admin._id.equals(req.user._id))) {
+      return res.status(403).json({ error: 'You are not authorised to view this league' });
+    }
+    res.json(league);
+  } catch (error) {
+    console.error('Get league error:', error);
+    res.status(500).json({ error: 'Failed to fetch league' });
+  }
+});
+
 app.get('/api', (req, res) => {
   res.json({ message: 'Hello from the MERN backend!' });
 });

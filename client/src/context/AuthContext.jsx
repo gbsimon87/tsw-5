@@ -1,8 +1,8 @@
-import { useContext, createContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
 
-export const AuthContext = createContext();
+const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -16,7 +16,7 @@ export const AuthProvider = ({ children }) => {
         axios.get('/auth/me', {
           headers: { Authorization: `Bearer ${token}` }
         }).then(response => {
-          setUser({ ...response.data, token });
+          setUser({ ...response.data, token, _id: decoded.userId });
           setLoading(false);
         }).catch(() => {
           localStorage.removeItem('token');
@@ -34,19 +34,18 @@ export const AuthProvider = ({ children }) => {
   const login = async (token, isGoogle = false) => {
     try {
       if (isGoogle) {
-        // Handle Google OAuth
         const response = await axios.post('/auth/google', { token });
         const { token: jwtToken, user } = response.data;
         localStorage.setItem('token', jwtToken);
-        setUser({ ...user, token: jwtToken });
+        const decoded = jwtDecode(jwtToken);
+        setUser({ ...user, token: jwtToken, _id: decoded.userId });
       } else {
-        // Handle email/password auth
         localStorage.setItem('token', token);
         const decoded = jwtDecode(token);
         const response = await axios.get('/auth/me', {
           headers: { Authorization: `Bearer ${token}` }
         });
-        setUser({ ...response.data, token });
+        setUser({ ...response.data, token, _id: decoded.userId });
       }
     } catch (error) {
       console.error('Login error:', error);
@@ -63,10 +62,10 @@ export const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider value={{ user, login, logout, loading }}>
-      {children}
+      {!loading && children}
     </AuthContext.Provider>
   );
-};
+}
 
 export const useAuth = () => {
   const context = useContext(AuthContext);

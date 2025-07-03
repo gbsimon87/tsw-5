@@ -8,7 +8,7 @@ export default function AdminPanel() {
   const [leagues, setLeagues] = useState([]);
   const [formData, setFormData] = useState({
     name: '',
-    picture: '',
+    logo: '',
     location: '',
     sportType: 'basketball',
     visibility: 'public'
@@ -35,7 +35,7 @@ export default function AdminPanel() {
         headers: { Authorization: `Bearer ${user.token}` }
       });
       setLeagues([...leagues, response.data]);
-      setFormData({ name: '', picture: '', location: '', sportType: 'basketball', visibility: 'private' });
+      setFormData({ name: '', logo: '', location: '', sportType: 'basketball', visibility: 'public' });
       setError(null);
     } catch (err) {
       setError('Failed to create league');
@@ -54,7 +54,13 @@ export default function AdminPanel() {
           <ul className="space-y-2">
             {leagues.map(league => (
               <li key={league._id} className="p-2 bg-gray-50 rounded">
-                {league.name} ({league.sportType}, {league.visibility}) - {league.admins.includes(user._id) ? 'Admin' : 'Manager'}
+                {league.admins.includes(user._id) ? (
+                  <Link to={`/leagues/${league._id}`} className="text-blue-500 hover:underline">
+                    {league.name}
+                  </Link>
+                ) : (
+                  league.name
+                )} ({league.sportType}, {league.visibility}) - {league.admins.includes(user._id) ? 'Admin' : 'Manager'}
               </li>
             ))}
           </ul>
@@ -73,11 +79,11 @@ export default function AdminPanel() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Picture URL (optional):</label>
+            <label className="block text-sm font-medium text-gray-700">Logo URL (optional):</label>
             <input
               type="url"
-              name="picture"
-              value={formData.picture}
+              name="logo"
+              value={formData.logo}
               onChange={handleInputChange}
               className="mt-1 w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
