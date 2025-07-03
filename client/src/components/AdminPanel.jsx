@@ -43,84 +43,98 @@ export default function AdminPanel() {
   };
 
   return (
-    <div className="App">
-      <h1>Admin Panel</h1>
-      <h2>Your Leagues</h2>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-      {leagues.length === 0 ? (
-        <p>No leagues found.</p>
-      ) : (
-        <ul>
-          {leagues.map(league => (
-            <li key={league._id}>
-              {league.name} ({league.sportType}, {league.visibility}) - {league.admins.includes(user._id) ? 'Admin' : 'Manager'}
-            </li>
-          ))}
-        </ul>
-      )}
-
-      <h2>Create New League</h2>
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label>Name:</label>
-          <input
-            type="text"
-            name="name"
-            value={formData.name}
-            onChange={handleInputChange}
-            required
-          />
-        </div>
-        <div>
-          <label>Picture URL (optional):</label>
-          <input
-            type="url"
-            name="picture"
-            value={formData.picture}
-            onChange={handleInputChange}
-          />
-        </div>
-        <div>
-          <label>Location (optional):</label>
-          <input
-            type="text"
-            name="location"
-            value={formData.location}
-            onChange={handleInputChange}
-          />
-        </div>
-        <div>
-          <label>Sport Type:</label>
-          <select
-            name="sportType"
-            value={formData.sportType}
-            onChange={handleInputChange}
-            required
+    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+      <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-2xl">
+        <h1 className="text-2xl font-bold mb-6 text-center">Admin Panel</h1>
+        <h2 className="text-lg font-semibold mb-4">Your Leagues</h2>
+        {error && <p className="text-red-500 mb-4 text-center">{error}</p>}
+        {leagues.length === 0 ? (
+          <p className="text-center">No leagues found.</p>
+        ) : (
+          <ul className="space-y-2">
+            {leagues.map(league => (
+              <li key={league._id} className="p-2 bg-gray-50 rounded">
+                {league.name} ({league.sportType}, {league.visibility}) - {league.admins.includes(user._id) ? 'Admin' : 'Manager'}
+              </li>
+            ))}
+          </ul>
+        )}
+        <h2 className="text-lg font-semibold mt-6 mb-4">Create New League</h2>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Name:</label>
+            <input
+              type="text"
+              name="name"
+              value={formData.name}
+              onChange={handleInputChange}
+              required
+              className="mt-1 w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Picture URL (optional):</label>
+            <input
+              type="url"
+              name="picture"
+              value={formData.picture}
+              onChange={handleInputChange}
+              className="mt-1 w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Location (optional):</label>
+            <input
+              type="text"
+              name="location"
+              value={formData.location}
+              onChange={handleInputChange}
+              className="mt-1 w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Sport Type:</label>
+            <select
+              name="sportType"
+              value={formData.sportType}
+              onChange={handleInputChange}
+              required
+              className="mt-1 w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="basketball">Basketball</option>
+              <option value="soccer">Soccer</option>
+              <option value="baseball">Baseball</option>
+              <option value="hockey">Hockey</option>
+              <option value="football">Football</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Visibility:</label>
+            <select
+              name="visibility"
+              value={formData.visibility}
+              onChange={handleInputChange}
+              required
+              className="mt-1 w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="public">Public</option>
+              <option value="private">Private</option>
+            </select>
+          </div>
+          <button
+            type="submit"
+            className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 transition"
           >
-            <option value="basketball">Basketball</option>
-            <option value="soccer">Soccer</option>
-            <option value="baseball">Baseball</option>
-            <option value="hockey">Hockey</option>
-            <option value="football">Football</option>
-          </select>
-        </div>
-        <div>
-          <label>Visibility:</label>
-          <select
-            name="visibility"
-            value={formData.visibility}
-            onChange={handleInputChange}
-            required
-          >
-            <option value="public">Public</option>
-            <option value="private">Private</option>
-          </select>
-        </div>
-        <button type="submit">Create League</button>
-      </form>
-      <nav>
-        <Link to="/">Home</Link> | <Link to="/about">About</Link> | <Link to="/dashboard">Dashboard</Link> | <Link to="/admin">Admin</Link>
-      </nav>
+            Create League
+          </button>
+        </form>
+        <nav className="flex justify-center space-x-4 mt-6">
+          <Link to="/" className="text-blue-500 hover:underline">Home</Link>
+          <Link to="/about" className="text-blue-500 hover:underline">About</Link>
+          <Link to="/dashboard" className="text-blue-500 hover:underline">Dashboard</Link>
+          <Link to="/admin" className="text-blue-500 hover:underline">Admin</Link>
+        </nav>
+      </div>
     </div>
   );
 }
