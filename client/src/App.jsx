@@ -7,6 +7,7 @@ import Login from './components/Login';
 import Register from './components/Register';
 import Dashboard from './components/Dashboard';
 import AdminPanel from './components/AdminPanel';
+import NavBar from './components/NavBar';
 import axios from 'axios';
 import './App.css';
 
@@ -47,6 +48,7 @@ function App() {
     <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
       <AuthProvider>
         <BrowserRouter>
+          <NavBar />
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/about" element={<About />} />
