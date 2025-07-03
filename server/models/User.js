@@ -1,16 +1,16 @@
 const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema({
-  googleId: { type: String, required: true, unique: true },
+  googleId: { type: String, unique: true, sparse: true }, // Sparse for non-Google users
   email: { type: String, required: true, unique: true },
-  name: { type: String, required: true },
-  givenName: { type: String }, // First name
-  familyName: { type: String }, // Last name
-  picture: { type: String }, // Profile picture URL
-  locale: { type: String }, // Language preference
-  emailVerified: { type: Boolean }, // Email verification status
-},
-  { timestamps: true }
-);
+  name: { type: String }, // Optional for email/password users
+  password: { type: String }, // For email/password users
+  givenName: { type: String },
+  familyName: { type: String },
+  picture: { type: String },
+  locale: { type: String },
+  emailVerified: { type: Boolean, default: false },
+  createdAt: { type: Date, default: Date.now }
+});
 
 module.exports = mongoose.model('User', userSchema);

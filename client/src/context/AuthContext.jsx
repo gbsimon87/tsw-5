@@ -9,7 +9,6 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check for existing token
     const token = localStorage.getItem('token');
     if (token) {
       try {
@@ -32,14 +31,27 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  const login = async (googleToken) => {
+  const login = async (token, isGoogle = false) => {
     try {
-      const response = await axios.post('/auth/google', { token: googleToken });
-      const { token, user } = response.data;
-      localStorage.setItem('token', token);
-      setUser({ ...user, token });
+      if (isGoogle) {
+        // Handle Google OAuth
+        const response = await axios.post('/auth/google', { token });
+        const { token: jwtToken, user } = response.data;
+        localStorage.setItem('token', jwtToken);
+        setUser({ ...user, token: jwtToken });
+      } else {
+        // Handle email/password auth
+        localStorage.setItem('token', token);
+        const decoded = jwtDecode(token);
+        const response = await axios.get('/auth/me', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setUser({ ...response.data, token });
+      }
     } catch (error) {
       console.error('Login error:', error);
+      localStorage.removeItem('token');
+      setUser(null);
       throw error;
     }
   };

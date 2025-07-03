@@ -4,6 +4,7 @@ import { GoogleOAuthProvider } from '@react-oauth/google';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Login from './components/Login';
+import Register from './components/Register';
 import Dashboard from './components/Dashboard';
 import AdminPanel from './components/AdminPanel';
 import axios from 'axios';
@@ -23,7 +24,7 @@ function Home() {
       <h1>MERN Stack App - Home</h1>
       <p>{message || 'Loading...'}</p>
       <nav>
-        <Link to="/">Home</Link> | <Link to="/about">About</Link> | <Link to="/dashboard">Dashboard</Link> | <Link to="/admin">Admin</Link>
+        <Link to="/">Home</Link> | <Link to="/about">About</Link> | <Link to="/dashboard">Dashboard</Link> | <Link to="/admin">Admin</Link> | <Link to="/register">Register</Link> | <Link to="/login">Login</Link>
       </nav>
     </div>
   );
@@ -35,7 +36,7 @@ function About() {
       <h1>About Page</h1>
       <p>This is the About page of the MERN app.</p>
       <nav>
-        <Link to="/">Home</Link> | <Link to="/about">About</Link> | <Link to="/dashboard">Dashboard</Link> | <Link to="/admin">Admin</Link>
+        <Link to="/">Home</Link> | <Link to="/about">About</Link> | <Link to="/dashboard">Dashboard</Link> | <Link to="/admin">Admin</Link> | <Link to="/register">Register</Link> | <Link to="/login">Login</Link>
       </nav>
     </div>
   );
@@ -50,6 +51,7 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/about" element={<About />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
             <Route
               path="/dashboard"
               element={

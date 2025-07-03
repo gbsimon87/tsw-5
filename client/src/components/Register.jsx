@@ -1,44 +1,34 @@
 import { useState } from 'react';
-import { GoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
-export default function Login() {
+export default function Register() {
   const { login } = useAuth();
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({ email: '', password: '' });
+  const [formData, setFormData] = useState({ email: '', password: '', name: '' });
   const [error, setError] = useState(null);
 
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleEmailLogin = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('/auth/login', formData);
+      const response = await axios.post('/auth/register', formData);
       await login(response.data.token, false); // JWT, not Google token
       navigate('/dashboard');
     } catch (err) {
-      setError(err.response?.data?.error || 'Login failed');
-    }
-  };
-
-  const handleGoogleSuccess = async (credentialResponse) => {
-    try {
-      await login(credentialResponse.credential, true); // Google token
-      navigate('/dashboard');
-    } catch (err) {
-      setError('Google login failed');
+      setError(err.response?.data?.error || 'Registration failed');
     }
   };
 
   return (
     <div>
-      <h1>Login</h1>
+      <h1>Register</h1>
       {error && <p style={{ color: 'red' }}>{error}</p>}
-      <form onSubmit={handleEmailLogin}>
+      <form onSubmit={handleSubmit}>
         <input
           type="email"
           name="email"
@@ -55,15 +45,16 @@ export default function Login() {
           placeholder="Password"
           required
         />
-        <button type="submit">Login</button>
-      </form>
-      <div>
-        <h2>Or use Google</h2>
-        <GoogleLogin
-          onSuccess={handleGoogleSuccess}
-          onError={() => setError('Google login failed')}
+        <input
+          type="text"
+          name="name"
+          value={formData.name}
+          onChange={handleInputChange}
+          placeholder="Name"
+          required
         />
-      </div>
+        <button type="submit">Register</button>
+      </form>
     </div>
   );
 }
