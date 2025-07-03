@@ -6,118 +6,139 @@ import {
 } from '@heroicons/react/24/solid';
 
 export default function UpcomingFeatures() {
-  const features = [
-    {
-      title: 'Add halves or quarters in league creation screen',
-      status: 'done',
-    },
-    {
-      title: 'Allow scorekeepers the option to not record the location on the court where the play was committed',
-      status: 'todo',
-    },
-    {
-      title: 'Prevent duplicate team names in a league',
-      status: 'in-progress',
-    },
-    {
-      title: 'When deleting a league, we must:',
-      status: 'todo',
-      subtasks: [
-        { title: 'Render all the teams inactive', status: 'todo' },
-        { title: 'Render all the players accounts in those teams inactive', status: 'todo' },
-      ],
-    },
-    {
-      title: 'Test the heatmaps on the player profile page',
-      status: 'todo',
-      subtasks: [
-        { title: 'Allow the users the capability to have the spots on the court', status: 'todo' },
-        { title: 'Include a play by play option so they can see the heatmap develop throughout the game', status: 'todo' },
-      ],
-    },
-    {
-      title: 'When creating a game, inform the user with a toast that the game has been created, or if there is an error',
-      status: 'todo',
-    },
-    {
-      title: 'Subs screen: show fouls per player, and disable fouled out players',
-      status: 'todo',
-    },
-    {
-      title: 'In the league settings, assign amount of fouls for a foul out',
-      status: 'todo',
-    },
-    {
-      title: 'In Player Profile page, allow the user to select which stat to display in the chart',
-      status: 'todo',
-    },
-  ];
+const features = [
+  {
+    title: "As a league admnistrator, I want to choose halves or quarters when creating a league so that the game format matches our needs.",
+    status: "done",
+  },
+  {
+    title: "As a scorekeeper, I want the option to skip recording the court location for a play so that I can save time when it's not needed.",
+    status: "todo",
+  },
+  {
+    title: "As a league admnistrator, I want to prevent duplicate team names so that each team is uniquely identifiable.",
+    status: "in-progress",
+  },
+  {
+    title: "As a league admnistrator, I want all related data handled properly when deleting a league so that no active teams or players remain by mistake.",
+    status: "todo",
+    subtasks: [
+      {
+        title: "As a league admnistrator, I want all teams in a deleted league to become inactive so that they don't appear in active lists.",
+        status: "todo",
+      },
+      {
+        title: "As a league admnistrator, I want all player accounts on those teams to become inactive so that they can't participate in deleted leagues.",
+        status: "todo",
+      },
+    ],
+  },
+  {
+    title: "As a player, I want to see accurate heatmaps on my profile so that I can analyze my performance.",
+    status: "todo",
+    subtasks: [
+      {
+        title: "As a player, I want to select spots on the court for the heatmap so that I can track my actions precisely.",
+        status: "todo",
+      },
+      {
+        title: "As a player, I want a play-by-play heatmap option so that I can see how my performance changes throughout the game.",
+        status: "todo",
+      },
+    ],
+  },
+  {
+    title: "As a user, I want to receive a confirmation or error toast when creating a game so that I know if it was successful.",
+    status: "todo",
+  },
+  {
+    title: "As a coach or scorekeeper, I want to see fouls per player and have fouled out players disabled on the subs screen so that substitutions are accurate.",
+    status: "todo",
+  },
+  {
+    title: "As a league admnistrator, I want to set the number of fouls for a foul out in league settings so that rules match our league's requirements.",
+    status: "todo",
+  },
+  {
+    title: "As a player, I want to select which stat to display on my profile chart so that I can focus on the stats that matter most to me.",
+    status: "todo",
+  },
+];
 
+
+  // Sort features: in-progress, todo, done
+  const statusOrder = { 'in-progress': 0, 'todo': 1, 'done': 2 };
+  const sortedFeatures = [...features].sort(
+    (a, b) => statusOrder[a.status] - statusOrder[b.status]
+  );
+
+  // Traffic light status styles
   const statusStyles = {
-    done: 'bg-blue-100 text-blue-800',
-    'in-progress': 'bg-blue-200 text-blue-900',
-    todo: 'bg-blue-50 text-blue-700',
+    'in-progress': 'text-yellow-600 border-yellow-400',
+    todo: 'text-red-600 border-red-400',
+    done: 'text-green-600 border-green-400',
   };
 
   const statusIcon = (status) => {
     switch (status) {
       case 'done':
-        return <CheckCircleIcon className="w-5 h-5 text-blue-500 flex-shrink-0" />;
+        return <CheckCircleIcon className="w-5 h-5 text-green-500 flex-shrink-0" />;
       case 'in-progress':
-        return <ClockIcon className="w-5 h-5 text-blue-600 flex-shrink-0" />;
+        return <ClockIcon className="w-5 h-5 text-yellow-500 flex-shrink-0" />;
       default:
-        return <ExclamationCircleIcon className="w-5 h-5 text-blue-400 flex-shrink-0" />;
+        return <ExclamationCircleIcon className="w-5 h-5 text-red-500 flex-shrink-0" />;
+    }
+  };
+
+  const statusLabel = (status) => {
+    switch (status) {
+      case 'done':
+        return 'Completed';
+      case 'in-progress':
+        return 'In Progress';
+      default:
+        return 'To Do';
     }
   };
 
   return (
     <div className="max-w-4xl mx-auto p-6">
-      <h1 class="text-2xl font-bold mb-6 text-center">
-        <span className="mr-2">🚀</span> Upcoming Features & Fixes</h1>
+      <h1 className="text-2xl font-bold mb-6 text-center">
+        <span className="mr-2">🚀</span> Upcoming Features & Fixes
+      </h1>
       <ul className="space-y-4">
-        {features.map((feature, idx) => (
+        {sortedFeatures.map((feature, idx) => (
           <li
             key={idx}
-            className={`p-4 rounded-lg border-l-4 flex flex-col bg-gradient-to-br from-blue-50 to-blue-100/30 backdrop-blur-md shadow-sm
-              ${feature.status === 'done'
-                ? 'border-blue-500'
-                : feature.status === 'in-progress'
-                  ? 'border-blue-600'
-                  : 'border-blue-400'
-              }`}
+            className={`p-4 rounded-lg border-l-4 flex flex-col shadow-sm border ${statusStyles[feature.status]}`}
+            style={{ background: 'none' }}
           >
-            <div className="flex items-center mb-2">
+            <div className="flex items-center mb-1">
               {statusIcon(feature.status)}
               <span className={`ml-3 font-semibold ${feature.status === 'done' ? 'line-through text-gray-400' : 'text-gray-800'}`}>
                 {feature.title}
               </span>
-              <span
-                className={`ml-auto px-2 py-0.5 rounded text-xs font-semibold ${statusStyles[feature.status]}`}
-              >
-                {feature.status === 'done'
-                  ? 'Done'
-                  : feature.status === 'in-progress'
-                    ? 'In Progress'
-                    : 'To Do'}
-              </span>
             </div>
+            <span
+              className={`mt-2 px-2 py-0.5 rounded text-xs font-semibold w-max ${statusStyles[feature.status]}`}
+            >
+              {statusLabel(feature.status)}
+            </span>
             {feature.subtasks && (
               <ul className="ml-8 mt-2 space-y-2">
                 {feature.subtasks.map((sub, subIdx) => (
-                  <li key={subIdx} className="flex items-center">
-                    <ChevronRightIcon className="w-4 h-4 text-blue-400 mr-2 flex-shrink-0" />
-                    {statusIcon(sub.status)}
-                    <span className={`ml-3 ${sub.status === 'done' ? 'line-through text-gray-400' : 'text-gray-700'}`}>
-                      {sub.title}
-                    </span>
+                  <li key={subIdx} className="flex flex-col">
+                    <div className="flex items-center">
+                      <ChevronRightIcon className="w-4 h-4 text-gray-400 mr-2 flex-shrink-0" />
+                      {statusIcon(sub.status)}
+                      <span className={`ml-3 ${sub.status === 'done' ? 'line-through text-gray-400' : 'text-gray-700'}`}>
+                        {sub.title}
+                      </span>
+                    </div>
                     <span
-                      className={`ml-auto px-2 py-0.5 rounded text-xs font-semibold ${statusStyles[sub.status]}`}
+                      className={`mt-1 ml-8 px-2 py-0.5 rounded text-xs font-semibold w-max ${statusStyles[sub.status]}`}
                     >
-                      {sub.status === 'done'
-                        ? 'Done'
-                        : sub.status === 'in-progress'
-                          ? 'In Progress'
-                          : 'To Do'}
+                      {statusLabel(sub.status)}
                     </span>
                   </li>
                 ))}
