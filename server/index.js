@@ -279,6 +279,69 @@ app.get('/api/leagues/:leagueId', authMiddleware, async (req, res) => {
   }
 });
 
+app.patch('/api/leagues/:leagueId', authMiddleware, async (req, res) => {
+  try {
+    const league = await League.findById(req.params.leagueId);
+    if (!league) {
+      return res.status(404).json({ error: 'League not found' });
+    }
+    if (!league.admins.some(admin => admin._id.equals(req.user._id))) {
+      return res.status(403).json({ error: 'You are not authorized to edit this league' });
+    }
+
+    const { name, sportType, visibility, logo, location, establishedYear, isActive, settings } = req.body;
+    if (!name || !sportType) {
+      return res.status(400).json({ error: 'Name and sportType are required' });
+    }
+
+    // Update fields
+    league.name = name;
+    if (league.sportType !== sportType) {
+      league.sportType = sportType;
+      // Reset settings to defaults for new sportType
+      const scoringRulesMap = {
+        basketball: { twoPointFGM: 2, threePointFGM: 3, freeThrowM: 1 },
+        hockey: { goal: 1 },
+        soccer: { goal: 1 },
+        baseball: { single: 1, double: 2, triple: 3, homeRun: 4 },
+        football: { touchdown: 6, fieldGoal: 3, extraPoint: 1, twoPointConversion: 2, safety: 2 },
+      };
+      league.settings = {
+        periodType: sportType === 'basketball' ? 'halves' : sportType === 'hockey' ? 'periods' : 'halves',
+        periodDuration: sportType === 'basketball' ? 24 : sportType === 'hockey' ? 20 : 45,
+        overtimeDuration: sportType === 'soccer' ? 15 : 5,
+        scoringRules: scoringRulesMap[sportType] || {},
+        statTypes: sportType === 'basketball'
+          ? [
+            'twoPointFGM', 'twoPointFGA', 'threePointFGM', 'threePointFGA',
+            'freeThrowM', 'freeThrowA', 'offensiveRebound', 'defensiveRebound',
+            'assist', 'steal', 'turnover', 'block', 'personalFoul',
+            'teamFoul', 'technicalFoul', 'flagrantFoul',
+          ]
+          : [],
+      };
+    }
+    league.visibility = visibility;
+    league.logo = logo || undefined;
+    league.location = location || undefined;
+    league.establishedYear = establishedYear || undefined;
+    league.isActive = isActive !== undefined ? isActive : league.isActive;
+
+    if (settings) {
+      if (settings.periodType) league.settings.periodType = settings.periodType;
+      if (settings.periodDuration) league.settings.periodDuration = settings.periodDuration;
+      if (settings.overtimeDuration) league.settings.overtimeDuration = settings.overtimeDuration;
+      if (settings.scoringRules) league.settings.scoringRules = settings.scoringRules;
+    }
+
+    await league.save();
+    res.json(league);
+  } catch (error) {
+    console.error('Update league error:', error);
+    res.status(400).json({ error: 'Failed to update league' });
+  }
+});
+
 app.get('/api', (req, res) => {
   res.json({ message: 'Hello from the MERN backend!' });
 });

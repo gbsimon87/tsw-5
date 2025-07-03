@@ -8,6 +8,7 @@ import Register from './components/Register';
 import MySporty from './components/MySporty';
 import AdminPanel from './components/AdminPanel';
 import LeagueManagement from './components/LeagueManagement';
+import LeagueEdit from './components/LeagueEdit';
 import NavBar from './components/NavBar';
 import About from './components/About';
 import Home from './components/Home';
@@ -55,6 +56,14 @@ function AppContent() {
                 </ProtectedRoute>
               }
             />
+            <Route
+            path="/leagues/:leagueId/edit"
+            element={
+              <ProtectedRoute>
+                <LeagueEdit />
+              </ProtectedRoute>
+            }
+          />
           <Route path="*" element={<h1>404 - Page Not Found</h1>} />
         </Routes>
       </main>
