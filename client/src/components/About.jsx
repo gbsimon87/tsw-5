@@ -87,7 +87,7 @@ function About() {
           <p className="text-xl text-blue-100 mb-6">
             Join thousands of players, parents, and coaches building stronger sports communities with The Sporty Way.
           </p>
-          <div className="flex justify-center space-x-6">
+          <div className="flex align-center justify-center space-x-6">
             <Link
               to="/public-leagues"
               className="text-white hover:text-blue-200 focus:ring-2 focus:ring-blue-500 focus:outline-none"

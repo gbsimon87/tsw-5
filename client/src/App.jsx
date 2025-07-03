@@ -10,6 +10,7 @@ import AdminPanel from './components/AdminPanel';
 import NavBar from './components/NavBar';
 import About from './components/About';
 import Home from './components/Home';
+import UpcomingFeatures from './components/UpcomingFeatures';
 import './App.css';
 
 function AppContent() {
@@ -21,10 +22,12 @@ function AppContent() {
   return (
     <div className="App">
       {showNavbar && <NavBar />}
-      <main style={{ paddingTop: showNavbar ? '64px' : '0' }}>
+      {/* <main style={{ paddingTop: showNavbar ? '64px' : '0' }}> */}
+      <main>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/about" element={<About />} />
+          <Route path="/upcoming-features" element={<UpcomingFeatures />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route
@@ -55,7 +58,6 @@ function App() {
     <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
       <AuthProvider>
         <BrowserRouter>
-          <NavBar />
           <AppContent />
         </BrowserRouter>
       </AuthProvider>

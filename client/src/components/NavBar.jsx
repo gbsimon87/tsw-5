@@ -1,6 +1,8 @@
 import { useContext } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
+import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
+import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline';
 
 function NavBar() {
   const { user, logout } = useContext(AuthContext);
@@ -12,7 +14,6 @@ function NavBar() {
     navigate('/');
   };
 
-  // Get user initials from name or email (only called when user exists)
   const getInitials = (user) => {
     const name = user.name || user.email.split('@')[0];
     const nameParts = name.trim().split(' ');
@@ -21,137 +22,134 @@ function NavBar() {
       : nameParts[0].slice(0, 2);
   };
 
-  return (
-    <>
-      <style>
-        {`
-          .navbar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 64px;
-            background: linear-gradient(to right, #2563eb, #4f46e5);
-            color: white;
-            z-index: 50;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-          }
-          .navbar-container {
-            max-width: 1280px;
-            margin: 0 auto;
-            padding: 0 16px;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-          }
-          .navbar-logo {
-            font-size: 24px;
-            font-weight: bold;
-            color: white;
-            text-decoration: none;
-          }
-          .navbar-desktop {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-          }
-          .navbar-desktop a, .navbar-desktop button {
-            padding: 8px 12px;
-            color: white;
-            text-decoration: none;
-            font-size: 14px;
-            font-weight: 500;
-            border-radius: 4px;
-            transition: background-color 0.2s;
-            background: none;
-            border: none;
-            cursor: pointer;
-            outline: none;
-          }
-          .navbar-desktop a:hover, .navbar-desktop button:hover,
-          .navbar-desktop a:focus, .navbar-desktop button:focus {
-            background-color: rgba(255, 255, 255, 0.1);
-            outline: 2px solid rgba(255, 255, 255, 0.5);
-          }
-          .navbar-initials {
-            background: none;
-            border: 1px solid white;
-            border-radius: 50%;
-            color: white;
-            font-size: 0.875rem;
-            font-weight: bold;
-            text-transform: uppercase;
-            line-height: 1;
-            text-align: center;
-            min-width: 2rem;
-            height: 2rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-          }
-        `}
-      </style>
-      <nav className="navbar" aria-label="Main navigation">
-        <div className="navbar-container">
-          <NavLink to="/" className="navbar-logo" aria-label="Home">
-            TSW
-          </NavLink>
-          <div className="navbar-desktop">
-            <NavLink to="/" className="hover:bg-white/10" aria-label="Home page">
-              Home
-            </NavLink>
-            <NavLink to="/about" className="hover:bg-white/10" aria-label="About page">
-              About
-            </NavLink>
-            {isAuthenticated ? (
-              <>
-                <NavLink to="/my-sporty" className="hover:bg-white/10" aria-label="My Sporty page">
-                  My Sporty
-                </NavLink>
-                <NavLink to="/admin" className="hover:bg-white/10" aria-label="Admin page">
-                  Admin
-                </NavLink>
-                <button
-                  onClick={handleLogoutClick}
-                  className="hover:bg-white/10"
-                  aria-label="Log out"
-                >
-                  Log out
-                </button>
-                {console.log(user)}
-                {console.log(getInitials(user))}
-                <div
-                  className="navbar-initials"
-                  aria-label={`User profile: ${user.name || user.email}`}
-                >
+  const navigation = [
+    ...(isAuthenticated
+      ? [
+        { name: 'My Sporty', to: '/my-sporty', current: false },
+        { name: 'Admin', to: '/admin', current: false },
+      ]
+      : [
+        { name: 'Login', to: '/login', current: false },
+        { name: 'Register', to: '/register', current: false },
+      ]),
+    { name: 'Upcoming Features', to: '/upcoming-features', current: false },
+    { name: 'About', to: '/about', current: false },
+  ];
 
-                  {getInitials(user)}
-                  {/* {user?.picture ? (
+  return (
+    <Disclosure as="nav" className="bg-gray-800" aria-label="Main navigation">
+      <div className="mx-auto max-w-7xl px-2 sm:px-6 lg:px-8">
+        <div className="relative flex h-16 items-center justify-between">
+          <div className="absolute inset-y-0 left-0 flex items-center sm:hidden">
+            <DisclosureButton className="group relative inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-gray-700 hover:text-white focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white">
+              <span className="absolute -inset-0.5" />
+              <span className="sr-only">Open main menu</span>
+              <Bars3Icon aria-hidden="true" className="block size-6 group-data-[open]:hidden" />
+              <XMarkIcon aria-hidden="true" className="hidden size-6 group-data-[open]:block" />
+            </DisclosureButton>
+          </div>
+          <div className="flex flex-1 items-center justify-center sm:items-stretch sm:justify-start">
+            <NavLink to="/" className="flex shrink-0 items-center text-2xl font-bold text-white no-underline" aria-label="Home">
+              TSW
+            </NavLink>
+            <div className="hidden sm:ml-6 sm:block">
+              <div className="flex space-x-4">
+                {navigation.map((item) => (
+                  <NavLink
+                    key={item.name}
+                    to={item.to}
+                    className={({ isActive }) =>
+                      isActive
+                        ? 'bg-gray-900 text-white rounded-md px-3 py-2 text-sm font-medium'
+                        : 'text-gray-300 hover:bg-gray-700 hover:text-white rounded-md px-3 py-2 text-sm font-medium'
+                    }
+                    aria-label={`${item.name} page`}
+                  >
+                    {item.name}
+                  </NavLink>
+                ))}
+              </div>
+            </div>
+          </div>
+          {isAuthenticated && (
+            <div className="absolute inset-y-0 right-0 flex items-center pr-2 sm:static sm:inset-auto sm:ml-6 sm:pr-0">
+              <Menu as="div" className="relative ml-3">
+                <MenuButton className="relative flex rounded-full bg-gray-800 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-gray-800">
+                  <span className="absolute -inset-1.5" />
+                  <span className="sr-only">Open user menu</span>
+                  {user.picture ? (
                     <img
-                      src={user?.picture}
+                      src={user.picture}
                       alt="User profile"
-                      className="navbar-initials w-8 h-8 rounded-full"
+                      className="size-8 rounded-full"
                     />
                   ) : (
-                    getInitials(user)
-                  )} */}
-                </div>
-              </>
-            ) : (
-              <>
-                <NavLink to="/login" className="hover:bg-white/10" aria-label="Login page">
-                  Login
-                </NavLink>
-                <NavLink to="/register" className="hover:bg-white/10" aria-label="Register page">
-                  Register
-                </NavLink>
-              </>
-            )}
-          </div>
+                    <div
+                      className="size-8 rounded-full bg-gray-600 text-white text-sm font-semibold flex items-center justify-center uppercase"
+                      aria-label={`User profile: ${user.name || user.email}`}
+                    >
+                      {getInitials(user)}
+                    </div>
+                  )}
+                </MenuButton>
+                <MenuItems
+                  transition
+                  className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black/5 transition focus:outline-none data-[closed]:scale-95 data-[closed]:transform data-[closed]:opacity-0 data-[enter]:duration-100 data-[leave]:duration-75 data-[enter]:ease-out data-[leave]:ease-in"
+                >
+                  <MenuItem>
+                    <NavLink
+                      to="/my-sporty"
+                      className="block px-4 py-2 text-sm text-gray-700 data-[focus]:bg-gray-100 data-[focus]:outline-none"
+                      aria-label="My Sporty"
+                    >
+                      My Sporty
+                    </NavLink>
+                  </MenuItem>
+                  <MenuItem>
+                    <NavLink
+                      to="/admin"
+                      className="block px-4 py-2 text-sm text-gray-700 data-[focus]:bg-gray-100 data-[focus]:outline-none"
+                      aria-label="Admin Zone"
+                    >
+                      Admin Zone
+                    </NavLink>
+                  </MenuItem>
+                  <MenuItem>
+                    <a
+                      href="#"
+                      onClick={handleLogoutClick}
+                      className="block px-4 py-2 text-sm text-gray-700 data-[focus]:bg-gray-100 data-[focus]:outline-none"
+                      aria-label="Log out"
+                    >
+                      Log out
+                    </a>
+                  </MenuItem>
+                </MenuItems>
+              </Menu>
+            </div>
+          )}
         </div>
-      </nav>
-    </>
+      </div>
+      <DisclosurePanel className="sm:hidden">
+        <div className="space-y-1 px-2 pb-3 pt-2">
+          {navigation.map((item) => (
+            <DisclosureButton
+              key={item.name}
+              as={NavLink}
+              to={item.to}
+              className={({ isActive }) =>
+                isActive
+                  ? 'bg-gray-900 text-white block rounded-md px-3 py-2 text-base font-medium'
+                  : 'text-gray-300 hover:bg-gray-700 hover:text-white block rounded-md px-3 py-2 text-base font-medium'
+              }
+              aria-label={`${item.name} page`}
+            >
+              {item.name}
+            </DisclosureButton>
+          ))}
+        </div>
+      </DisclosurePanel>
+    </Disclosure>
   );
 }
 
