@@ -4,6 +4,7 @@ const path = require('path');
 const { OAuth2Client } = require('google-auth-library');
 const jwt = require('jsonwebtoken');
 const User = require('./models/User');
+const League = require('./models/League');
 require('dotenv').config({ path: '.env' });
 
 const app = express();
@@ -15,7 +16,23 @@ app.use(express.static(path.join(__dirname, '../client/dist')));
 // Google OAuth client
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
-console.log(process.env.GOOGLE_CLIENT_ID);
+// Middleware to verify JWT
+const authMiddleware = async (req, res, next) => {
+  try {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) return res.status(401).json({ error: 'No token provided' });
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.userId);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    req.user = user; // Attach user to request
+    next();
+  } catch (error) {
+    console.error('Auth middleware error:', error);
+    res.status(401).json({ error: 'Invalid token' });
+  }
+};
 
 // Verify Google ID token
 app.post('/auth/google', async (req, res) => {
@@ -27,8 +44,6 @@ app.post('/auth/google', async (req, res) => {
     });
     const payload = ticket.getPayload();
     const { sub: googleId, email, name, given_name, family_name, picture, locale, email_verified } = payload;
-
-    console.log('Google payload:', payload); // For debugging
 
     // Find or create user
     let user = await User.findOne({ googleId });
@@ -104,6 +119,69 @@ app.get('/auth/me', async (req, res) => {
   } catch (error) {
     console.error('Auth me error:', error);
     res.status(401).json({ error: 'Invalid token' });
+  }
+});
+
+// Helper function for default scoring rules
+function getDefaultScoringRules(sportType) {
+  switch (sportType) {
+    case 'basketball':
+      return { freeThrow: 1, twoPoint: 2, threePoint: 3 };
+    case 'soccer':
+      return { goal: 1, assist: 1 };
+    case 'baseball':
+      return { single: 1, double: 2, triple: 3, homeRun: 4 };
+    case 'hockey':
+      return { goal: 1, assist: 1 };
+    case 'football':
+      return { touchdown: 6, fieldGoal: 3 };
+    default:
+      return {};
+  }
+}
+
+// Create a new league
+app.post('/api/leagues', authMiddleware, async (req, res) => {
+  console.log('Body:', req.body); // Debug: Log form data
+  try {
+    const { name, picture, location, sportType } = req.body; // Fix: Use req.body
+    if (!name || !sportType) {
+      return res.status(400).json({ error: 'Name and sportType are required' });
+    }
+
+    const scoringRules = getDefaultScoringRules(sportType);
+
+    const league = new League({
+      name,
+      picture,
+      location,
+      sportType,
+      scoringRules,
+      admins: [req.user._id], // Creator is admin
+      managers: []
+    });
+
+    await league.save();
+    res.status(201).json(league);
+  } catch (error) {
+    console.error('Create league error:', error);
+    res.status(400).json({ error: 'Failed to create league' });
+  }
+});
+
+// Get user's leagues (admin or manager)
+app.get('/api/leagues', authMiddleware, async (req, res) => {
+  try {
+    const leagues = await League.find({
+      $or: [
+        { admins: req.user._id },
+        { managers: req.user._id }
+      ]
+    });
+    res.json(leagues);
+  } catch (error) {
+    console.error('Get leagues error:', error);
+    res.status(500).json({ error: 'Failed to fetch leagues' });
   }
 });
 

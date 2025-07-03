@@ -9,7 +9,8 @@ const userSchema = new mongoose.Schema({
   picture: { type: String }, // Profile picture URL
   locale: { type: String }, // Language preference
   emailVerified: { type: Boolean }, // Email verification status
-  createdAt: { type: Date, default: Date.now }
-}, { timestamps: true, timeseries: true });
+},
+  { timestamps: true }
+);
 
 module.exports = mongoose.model('User', userSchema);
