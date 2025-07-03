@@ -19,15 +19,15 @@ export default function Register() {
     try {
       const response = await axios.post('/auth/register', formData);
       await login(response.data.token, false);
-      navigate('/dashboard');
+      navigate('/my-sporty');
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to register');
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
+    <div className="flex items-center justify-center bg-gray-100">
+      <div className="bg-white p-8 rounded-lg w-full max-w-md">
         <h1 className="text-2xl font-bold mb-6 text-center">Register</h1>
         {error && <p className="text-red-500 mb-4 text-center">{error}</p>}
         <form onSubmit={handleSubmit} className="space-y-4">

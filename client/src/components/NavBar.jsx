@@ -13,7 +13,7 @@ function NavBar() {
   };
 
   // Get user initials from name or email (only called when user exists)
-  const getInitials = () => {
+  const getInitials = (user) => {
     const name = user.name || user.email.split('@')[0];
     const nameParts = name.trim().split(' ');
     return nameParts.length > 1
@@ -76,7 +76,7 @@ function NavBar() {
           }
           .navbar-initials {
             background: none;
-            border: 2px solid white;
+            border: 1px solid white;
             border-radius: 50%;
             color: white;
             font-size: 0.875rem;
@@ -106,8 +106,8 @@ function NavBar() {
             </NavLink>
             {isAuthenticated ? (
               <>
-                <NavLink to="/dashboard" className="hover:bg-white/10" aria-label="Dashboard page">
-                  Dashboard
+                <NavLink to="/my-sporty" className="hover:bg-white/10" aria-label="My Sporty page">
+                  My Sporty
                 </NavLink>
                 <NavLink to="/admin" className="hover:bg-white/10" aria-label="Admin page">
                   Admin
@@ -119,19 +119,23 @@ function NavBar() {
                 >
                   Log out
                 </button>
+                {console.log(user)}
+                {console.log(getInitials(user))}
                 <div
                   className="navbar-initials"
                   aria-label={`User profile: ${user.name || user.email}`}
                 >
-                  {user.picture ? (
+
+                  {getInitials(user)}
+                  {/* {user?.picture ? (
                     <img
-                      src={user.picture}
+                      src={user?.picture}
                       alt="User profile"
                       className="navbar-initials w-8 h-8 rounded-full"
                     />
                   ) : (
-                    getInitials()
-                  )}
+                    getInitials(user)
+                  )} */}
                 </div>
               </>
             ) : (

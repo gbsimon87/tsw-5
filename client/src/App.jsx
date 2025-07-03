@@ -1,44 +1,51 @@
 import { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Login from './components/Login';
 import Register from './components/Register';
-import Dashboard from './components/Dashboard';
+import MySporty from './components/MySporty';
 import AdminPanel from './components/AdminPanel';
 import NavBar from './components/NavBar';
-import axios from 'axios';
+import About from './components/About';
+import Home from './components/Home';
 import './App.css';
 
-function Home() {
-  const [message, setMessage] = useState('');
-
-  useEffect(() => {
-    axios.get('/api')
-      .then(response => setMessage(response.data.message))
-      .catch(error => console.error('Error fetching data:', error));
-  }, []);
+function AppContent() {
+  const location = useLocation();
+  // Define routes where navbar should NOT be shown
+  const hideNavbarRoutes = [];
+  const showNavbar = !hideNavbarRoutes.includes(location.pathname);
 
   return (
     <div className="App">
-      <h1>MERN Stack App - Home</h1>
-      <p>{message || 'Loading...'}</p>
-      <nav>
-        <Link to="/">Home</Link> | <Link to="/about">About</Link> | <Link to="/dashboard">Dashboard</Link> | <Link to="/admin">Admin</Link> | <Link to="/register">Register</Link> | <Link to="/login">Login</Link>
-      </nav>
-    </div>
-  );
-}
-
-function About() {
-  return (
-    <div className="App">
-      <h1>About Page</h1>
-      <p>This is the About page of the MERN app.</p>
-      <nav>
-        <Link to="/">Home</Link> | <Link to="/about">About</Link> | <Link to="/dashboard">Dashboard</Link> | <Link to="/admin">Admin</Link> | <Link to="/register">Register</Link> | <Link to="/login">Login</Link>
-      </nav>
+      {showNavbar && <NavBar />}
+      <main style={{ paddingTop: showNavbar ? '64px' : '0' }}>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route
+            path="/my-sporty"
+            element={
+              <ProtectedRoute>
+                <MySporty />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute>
+                <AdminPanel />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="*" element={<h1>404 - Page Not Found</h1>} />
+        </Routes>
+      </main>
     </div>
   );
 }
@@ -49,33 +56,46 @@ function App() {
       <AuthProvider>
         <BrowserRouter>
           <NavBar />
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route
-              path="/dashboard"
-              element={
-                <ProtectedRoute>
-                  <Dashboard />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin"
-              element={
-                <ProtectedRoute>
-                  <AdminPanel />
-                </ProtectedRoute>
-              }
-            />
-            <Route path="*" element={<h1>404 - Page Not Found</h1>} />
-          </Routes>
+          <AppContent />
         </BrowserRouter>
       </AuthProvider>
     </GoogleOAuthProvider>
   );
 }
+
+// function App() {
+//   return (
+//     <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
+//       <AuthProvider>
+//         <BrowserRouter>
+//           <NavBar />
+//           <Routes>
+//             <Route path="/" element={<Home />} />
+//             <Route path="/about" element={<About />} />
+//             <Route path="/login" element={<Login />} />
+//             <Route path="/register" element={<Register />} />
+//             <Route
+//               path="/my-sporty"
+//               element={
+//                 <ProtectedRoute>
+//                   <MySporty />
+//                 </ProtectedRoute>
+//               }
+//             />
+//             <Route
+//               path="/admin"
+//               element={
+//                 <ProtectedRoute>
+//                   <AdminPanel />
+//                 </ProtectedRoute>
+//               }
+//             />
+//             <Route path="*" element={<h1>404 - Page Not Found</h1>} />
+//           </Routes>
+//         </BrowserRouter>
+//       </AuthProvider>
+//     </GoogleOAuthProvider>
+//   );
+// }
 
 export default App;

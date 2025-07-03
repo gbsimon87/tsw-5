@@ -43,7 +43,7 @@ export default function AdminPanel() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+    <div className="flex items-center justify-center bg-gray-100">
       <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-2xl">
         <h1 className="text-2xl font-bold mb-6 text-center">Admin Panel</h1>
         <h2 className="text-lg font-semibold mb-4">Your Leagues</h2>
@@ -131,7 +131,7 @@ export default function AdminPanel() {
         <nav className="flex justify-center space-x-4 mt-6">
           <Link to="/" className="text-blue-500 hover:underline">Home</Link>
           <Link to="/about" className="text-blue-500 hover:underline">About</Link>
-          <Link to="/dashboard" className="text-blue-500 hover:underline">Dashboard</Link>
+          <Link to="/my-sporty" className="text-blue-500 hover:underline">My Sporty</Link>
           <Link to="/admin" className="text-blue-500 hover:underline">Admin</Link>
         </nav>
       </div>
