@@ -12,6 +12,4 @@ const userSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 }, { timestamps: true, timeseries: true });
 
-userSchema.index({ googleId: 1 }); // Add index for faster lookups
-
 module.exports = mongoose.model('User', userSchema);
