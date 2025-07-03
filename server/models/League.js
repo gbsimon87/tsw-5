@@ -1,11 +1,10 @@
 const mongoose = require('mongoose');
 
-// Define scoring rules map outside schema
 const scoringRulesMap = {
   basketball: { twoPointFGM: 2, threePointFGM: 3, freeThrowM: 1 },
   hockey: { goal: 1 },
   soccer: { goal: 1 },
-  basebal: { single: 1, double: 2, triple: 3, homeRun: 4 },
+  baseball: { single: 1, double: 2, triple: 3, homeRun: 4 },
   football: { touchdown: 6, fieldGoal: 3, extraPoint: 1, twoPointConversion: 2, safety: 2 }
 };
 
@@ -14,21 +13,23 @@ const leagueSchema = new mongoose.Schema({
   sportType: {
     type: String,
     required: true,
-    enum: ['basketball', 'soccer', 'baseball', 'hockey', 'football'], // Add more as needed
+    enum: ['basketball', 'soccer', 'baseball', 'hockey', 'football'],
     default: 'basketball',
   },
-  season: { type: String, default: 'season-1', },
+  season: { type: String, default: 'season-1' }, // Current active season
   visibility: { type: String, enum: ['public', 'private'], default: 'public' },
   logo: { type: String },
   establishedYear: { type: Number },
   isActive: { type: Boolean, default: true },
-  location: { type: String }, // Optional location
+  location: { type: String },
   admins: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   managers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+  teams: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Team' }],
   seasons: [{
-    name: String,
-    startDate: Date,
-    endDate: Date
+    name: { type: String, required: true },
+    startDate: { type: Date, required: true },
+    endDate: { type: Date, required: true },
+    isActive: { type: Boolean, default: false },
   }],
   settings: {
     periodType: {
@@ -69,21 +70,20 @@ const leagueSchema = new mongoose.Schema({
       default: function () {
         return this.sportType === 'basketball'
           ? [
-            'twoPointFGM', 'twoPointFGA', 'threePointFGM', 'threePointFGA',
-            'freeThrowM', 'freeThrowA', 'offensiveRebound', 'defensiveRebound',
-            'assist', 'steal', 'turnover', 'block', 'personalFoul',
-            'teamFoul', 'technicalFoul', 'flagrantFoul',
-          ]
+              'twoPointFGM', 'twoPointFGA', 'threePointFGM', 'threePointFGA',
+              'freeThrowM', 'freeThrowA', 'offensiveRebound', 'defensiveRebound',
+              'assist', 'steal', 'turnover', 'block', 'personalFoul',
+              'teamFoul', 'technicalFoul', 'flagrantFoul',
+            ]
           : [];
       },
     },
   },
   status: { type: String, enum: ['active', 'inactive'], default: 'active' },
 }, {
-  timestamps: true
+  timestamps: true,
 });
 
-// Indexes for faster queries
 leagueSchema.index({ admins: 1 });
 leagueSchema.index({ managers: 1 });
 leagueSchema.index({ visibility: 1 });

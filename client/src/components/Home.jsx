@@ -23,7 +23,7 @@ function Home() {
       </style>
       {/* Welcome Section */}
       <section
-        className="bg-gradient-to-br from-indigo-900 to-blue-900 text-white py-20 text-center"
+        className="bg-gray-800 text-white py-20 text-center"
         aria-label="Welcome section"
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

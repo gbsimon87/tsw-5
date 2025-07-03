@@ -30,7 +30,7 @@ const semanticScoringRulesMap = {
   },
 };
 
-export default function LeagueManagement() {
+export default function ManageLeague() {
   const { leagueId } = useParams();
   const { user } = useAuth();
   const [league, setLeague] = useState(null);
@@ -40,7 +40,7 @@ export default function LeagueManagement() {
     const fetchLeague = async () => {
       try {
         const response = await axios.get(`/api/leagues/${leagueId}`, {
-          headers: { Authorization: `Bearer ${user.token}` }
+          headers: { Authorization: `Bearer ${user.token}` },
         });
         setLeague(response.data);
       } catch (err) {
@@ -67,13 +67,22 @@ export default function LeagueManagement() {
       <div className="bg-white p-8 rounded-lg w-full max-w-4xl">
         <div className="flex justify-between items-center mb-4">
           <h1 className="text-2xl font-bold text-blue-800">{league.name}</h1>
-          <Link
-            to={`/leagues/${leagueId}/edit`}
-            className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition focus:ring-2 focus:ring-blue-500 focus:outline-none"
-            aria-label="Edit League"
-          >
-            Edit League
-          </Link>
+          <div className="flex space-x-2">
+            <Link
+              to={`/leagues/${leagueId}/edit`}
+              className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              aria-label="Edit League"
+            >
+              Edit League
+            </Link>
+            <Link
+              to={`/leagues/${leagueId}/teams`}
+              className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              aria-label="Manage Teams"
+            >
+              Manage Teams
+            </Link>
+          </div>
         </div>
         <h2 className="text-xl font-semibold mb-2">League Details</h2>
         <div className="space-y-2">
@@ -115,6 +124,16 @@ export default function LeagueManagement() {
           <p><strong>Admins:</strong> {league.admins.map(admin => admin.name).join(', ')}</p>
           <p><strong>Managers:</strong> {league.managers.map(manager => manager.name).join(', ') || 'None'}</p>
           <p><strong>Status:</strong> {league.status}</p>
+          <p><strong>Teams:</strong></p>
+          {league.teams.length > 0 ? (
+            <ul className="list-disc list-inside ml-4">
+              {league.teams.map((team) => (
+                <li key={team._id}>{team.name}</li>
+              ))}
+            </ul>
+          ) : (
+            <p className="ml-4">No teams defined</p>
+          )}
         </div>
       </div>
     </div>

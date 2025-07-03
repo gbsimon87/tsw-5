@@ -10,7 +10,7 @@ function NavBar() {
 
   const handleLogoutClick = () => {
     logout();
-    navigate('/');
+    navigate('/login');
   };
 
   const getInitials = (user) => {
@@ -25,7 +25,8 @@ function NavBar() {
     ...(isAuthenticated
       ? [
         { name: 'My Sporty', to: '/my-sporty', current: false },
-        { name: 'Admin', to: '/admin', current: false },
+        { name: 'Admin Panel', to: '/admin', current: false },
+        { name: 'Join a Team', to: '/teams/join', current: false },
       ]
       : [
         { name: 'Login', to: '/login', current: false },
@@ -36,7 +37,7 @@ function NavBar() {
   ];
 
   return (
-    <Disclosure as="nav" className="bg-gray-800" aria-label="Main navigation">
+    <Disclosure as="nav" className="bg-gray-800 z-[100]" aria-label="Main navigation">
       <div className="mx-auto max-w-7xl px-2 sm:px-6 lg:px-8">
         <div className="relative flex h-16 items-center justify-between">
           <div className="absolute inset-y-0 left-0 flex items-center sm:hidden">
@@ -108,9 +109,9 @@ function NavBar() {
                     <NavLink
                       to="/admin"
                       className="block px-4 py-2 text-sm text-gray-700 data-[focus]:bg-gray-100 data-[focus]:outline-none"
-                      aria-label="Admin Zone"
+                      aria-label="Admin Panel"
                     >
-                      Admin Zone
+                      Admin Panel
                     </NavLink>
                   </MenuItem>
                   <MenuItem>

@@ -7,12 +7,14 @@ import Login from './components/Login';
 import Register from './components/Register';
 import MySporty from './components/MySporty';
 import AdminPanel from './components/AdminPanel';
-import LeagueManagement from './components/LeagueManagement';
-import LeagueEdit from './components/LeagueEdit';
+import ManageLeague from './components/ManageLeague';
+import ManageLeagueEdit from './components/ManageLeagueEdit';
 import NavBar from './components/NavBar';
 import About from './components/About';
 import Home from './components/Home';
 import UpcomingFeatures from './components/UpcomingFeatures';
+import ManageTeams from './components/ManageTeams';
+import TeamJoin from './components/TeamJoin';
 import './App.css';
 
 function AppContent() {
@@ -33,6 +35,14 @@ function AppContent() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route
+            path="/teams/join"
+            element={
+              <ProtectedRoute>
+                <TeamJoin />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/my-sporty"
             element={
               <ProtectedRoute>
@@ -49,18 +59,26 @@ function AppContent() {
             }
           />
           <Route
-              path="/leagues/:leagueId"
-              element={
-                <ProtectedRoute>
-                  <LeagueManagement />
-                </ProtectedRoute>
-              }
-            />
-            <Route
+            path="/leagues/:leagueId"
+            element={
+              <ProtectedRoute>
+                <ManageLeague />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/leagues/:leagueId/edit"
             element={
               <ProtectedRoute>
-                <LeagueEdit />
+                <ManageLeagueEdit />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/leagues/:leagueId/teams"
+            element={
+              <ProtectedRoute>
+                <ManageTeams />
               </ProtectedRoute>
             }
           />

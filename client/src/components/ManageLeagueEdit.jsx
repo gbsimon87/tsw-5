@@ -38,7 +38,7 @@ const semanticScoringRulesMap = {
   },
 };
 
-export default function LeagueEdit() {
+export default function ManageLeagueEdit() {
   const { leagueId } = useParams();
   const { user } = useAuth();
   const navigate = useNavigate();

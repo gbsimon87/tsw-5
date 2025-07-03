@@ -6,18 +6,15 @@ const { OAuth2Client } = require('google-auth-library');
 const jwt = require('jsonwebtoken');
 const User = require('./models/User');
 const League = require('./models/League');
+const Team = require('./models/Team');
 require('dotenv').config({ path: '.env' });
 
 const app = express();
 app.use(express.json());
-
-// Serve static files from the Vite build output
 app.use(express.static(path.join(__dirname, '../client/dist')));
 
-// Google OAuth client
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
-// Middleware to verify JWT
 const authMiddleware = async (req, res, next) => {
   try {
     const token = req.headers.authorization?.split(' ')[1];
@@ -27,7 +24,7 @@ const authMiddleware = async (req, res, next) => {
     const user = await User.findById(decoded.userId);
     if (!user) return res.status(404).json({ error: 'User not found' });
 
-    req.user = user; // Attach user to request
+    req.user = user;
     next();
   } catch (error) {
     console.error('Auth middleware error:', error);
@@ -35,6 +32,7 @@ const authMiddleware = async (req, res, next) => {
   }
 };
 
+// Authentication routes
 // Register user with email and password
 app.post('/auth/register', async (req, res) => {
   try {
@@ -143,7 +141,6 @@ app.post('/auth/google', async (req, res) => {
     const payload = ticket.getPayload();
     const { sub: googleId, email, name, given_name, family_name, picture, locale, email_verified } = payload;
 
-    // Find or create user
     let user = await User.findOne({ googleId });
     if (!user) {
       user = new User({
@@ -158,7 +155,6 @@ app.post('/auth/google', async (req, res) => {
       });
       await user.save();
     } else {
-      // Update existing user with new data
       user.email = email;
       user.name = name;
       user.givenName = given_name;
@@ -169,14 +165,12 @@ app.post('/auth/google', async (req, res) => {
       await user.save();
     }
 
-    // Generate JWT
     const jwtToken = jwt.sign(
       { userId: user._id, email: user.email },
       process.env.JWT_SECRET,
       { expiresIn: '1h' }
     );
 
-    // Return full user data
     res.json({
       token: jwtToken,
       user: {
@@ -236,7 +230,8 @@ app.post('/api/leagues', authMiddleware, async (req, res) => {
       sportType,
       visibility,
       admins: [req.user._id],
-      managers: []
+      managers: [],
+      teams: []
     });
 
     await league.save();
@@ -265,12 +260,12 @@ app.get('/api/leagues', authMiddleware, async (req, res) => {
 
 app.get('/api/leagues/:leagueId', authMiddleware, async (req, res) => {
   try {
-    const league = await League.findById(req.params.leagueId).populate('admins', 'name').populate('managers', 'name');
+    const league = await League.findById(req.params.leagueId).populate('admins', 'name').populate('managers', 'name').populate('teams');
     if (!league) {
       return res.status(404).json({ error: 'League not found' });
     }
     if (!league.admins.some(admin => admin._id.equals(req.user._id))) {
-      return res.status(403).json({ error: 'You are not authorised to view this league' });
+      return res.status(403).json({ error: 'You are not authorized to view this league' });
     }
     res.json(league);
   } catch (error) {
@@ -294,11 +289,9 @@ app.patch('/api/leagues/:leagueId', authMiddleware, async (req, res) => {
       return res.status(400).json({ error: 'Name and sportType are required' });
     }
 
-    // Update fields
     league.name = name;
     if (league.sportType !== sportType) {
       league.sportType = sportType;
-      // Reset settings to defaults for new sportType
       const scoringRulesMap = {
         basketball: { twoPointFGM: 2, threePointFGM: 3, freeThrowM: 1 },
         hockey: { goal: 1 },
@@ -342,10 +335,201 @@ app.patch('/api/leagues/:leagueId', authMiddleware, async (req, res) => {
   }
 });
 
+// Team routes
+// Create a new team
+app.post('/api/teams', authMiddleware, async (req, res) => {
+  try {
+    const { name, leagueId, logo, season } = req.body;
+    if (!name || !leagueId || !season) {
+      return res.status(400).json({ error: 'Team name, league ID, and season are required' });
+    }
+
+    const league = await League.findById(leagueId);
+    if (!league) {
+      return res.status(404).json({ error: 'League not found' });
+    }
+    if (!league.admins.some(admin => admin._id.equals(req.user._id))) {
+      return res.status(403).json({ error: 'You are not authorized to create teams in this league' });
+    }
+
+    const team = new Team({
+      name,
+      league: leagueId,
+      season,
+      logo,
+      createdBy: req.user._id,
+      members: [],
+    });
+
+    await team.save();
+    league.teams.push(team._id);
+    await league.save();
+
+    res.status(201).json(team);
+  } catch (error) {
+    console.error('Create team error:', error);
+    res.status(400).json({ error: 'Failed to create team' });
+  }
+});
+
+app.post('/api/teams/join', authMiddleware, async (req, res) => {
+  try {
+    const { secretKey } = req.body;
+    if (!secretKey) {
+      return res.status(400).json({ error: 'Secret key is required' });
+    }
+
+    const team = await Team.findOne({ secretKey }).populate('league');
+    if (!team) {
+      return res.status(404).json({ error: 'Team not found or invalid secret key' });
+    }
+
+    if (team.members.some(member => member.user.equals(req.user._id))) {
+      return res.status(400).json({ error: 'You are already a member of this team' });
+    }
+
+    team.members.push({
+      user: req.user._id,
+      role: 'player',
+      isActive: true,
+    });
+    await team.save();
+
+    res.json(team);
+  } catch (error) {
+    console.error('Join team error:', error);
+    res.status(400).json({ error: 'Failed to join team' });
+  }
+});
+
+app.get('/api/teams', authMiddleware, async (req, res) => {
+  try {
+    const { leagueId, season } = req.query;
+    if (!leagueId || !season) {
+      return res.status(400).json({ error: 'League ID and season are required' });
+    }
+
+    const league = await League.findById(leagueId);
+    if (!league) {
+      return res.status(404).json({ error: 'League not found' });
+    }
+    if (!league.admins.some(admin => admin._id.equals(req.user._id))) {
+      return res.status(403).json({ error: 'You are not authorized to view teams in this league' });
+    }
+
+    const teams = await Team.find({ league: leagueId, season })
+      .populate('members.user', 'name picture');
+    res.json(teams);
+  } catch (error) {
+    console.error('Get teams error:', error);
+    res.status(500).json({ error: 'Failed to fetch teams' });
+  }
+});
+
+app.patch('/api/teams/:teamId', authMiddleware, async (req, res) => {
+  try {
+    const { teamId } = req.params;
+    const { isActive } = req.body;
+
+    const team = await Team.findById(teamId);
+    if (!team) {
+      return res.status(404).json({ error: 'Team not found' });
+    }
+
+    const league = await League.findById(team.league);
+    if (!league) {
+      return res.status(404).json({ error: 'League not found' });
+    }
+    if (!league.admins.some(admin => admin._id.equals(req.user._id))) {
+      return res.status(403).json({ error: 'You are not authorized to modify this team' });
+    }
+
+    if (isActive !== undefined) {
+      team.isActive = isActive;
+    }
+
+    await team.save();
+    res.json(team);
+  } catch (error) {
+    console.error('Update team error:', error);
+    res.status(400).json({ error: 'Failed to update team' });
+  }
+});
+
+app.patch('/api/teams/:teamId/members/:memberId', authMiddleware, async (req, res) => {
+  try {
+    const { teamId, memberId } = req.params;
+    const { isActive, role } = req.body;
+
+    const team = await Team.findById(teamId);
+    if (!team) {
+      return res.status(404).json({ error: 'Team not found' });
+    }
+
+    const league = await League.findById(team.league);
+    if (!league) {
+      return res.status(404).json({ error: 'League not found' });
+    }
+    if (!league.admins.some(admin => admin._id.equals(req.user._id))) {
+      return res.status(403).json({ error: 'You are not authorized to modify team members' });
+    }
+
+    const member = team.members.find(m => m?.user?.equals(memberId));
+    if (!member) {
+      return res.status(404).json({ error: 'Member not found in team' });
+    }
+
+    if (isActive !== undefined) {
+      member.isActive = isActive;
+    }
+    if (role) {
+      if (!['player', 'manager'].includes(role)) {
+        return res.status(400).json({ error: 'Invalid role' });
+      }
+      member.role = role;
+    }
+
+    await team.save();
+    res.json(team);
+  } catch (error) {
+    console.error('Update team member error:', error);
+    res.status(400).json({ error: 'Failed to update team member' });
+  }
+});
+
+// Join a team
+app.post('/api/teams/join', authMiddleware, async (req, res) => {
+  try {
+    const { secretKey } = req.body;
+    if (!secretKey) {
+      return res.status(400).json({ error: 'Secret key is required' });
+    }
+
+    const team = await Team.findOne({ secretKey }).populate('league');
+    if (!team) {
+      return res.status(404).json({ error: 'Team not found or invalid secret key' });
+    }
+
+    if (team.members.includes(req.user._id)) {
+      return res.status(400).json({ error: 'You are already a member of this team' });
+    }
+
+    team.members.push(req.user._id);
+    await team.save();
+
+    res.json(team);
+  } catch (error) {
+    console.error('Join team error:', error);
+    res.status(400).json({ error: 'Failed to join team' });
+  }
+});
+
+// Root route
 app.get('/api', (req, res) => {
   res.json({ message: 'Hello from the MERN backend!' });
 });
 
+// All routes
 // Handle all other routes for React client-side routing
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '../client/dist', 'index.html'));
