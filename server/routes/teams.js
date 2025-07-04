@@ -26,7 +26,7 @@ router.get('/', authMiddleware, async (req, res) => {
       });
 
     // Log the raw teams data for debugging
-    console.log('Fetched teams:', JSON.stringify(teams, null, 2));
+    // console.log('Fetched teams:', JSON.stringify(teams, null, 2));
 
     // Ensure members is an array and player.user is populated
     const formattedTeams = teams.map(team => ({

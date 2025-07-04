@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 
 const gameSchema = new mongoose.Schema({
   league: { type: mongoose.Schema.Types.ObjectId, ref: 'League', required: true },
+  season: { type: String, required: true },
   teams: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Team' }],
   date: { type: Date, required: true },
   location: { type: String },

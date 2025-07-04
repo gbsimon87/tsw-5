@@ -40,14 +40,12 @@ export default function ManageGames() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch league
         const leagueResponse = await axios.get(`/api/leagues/${leagueId}`, {
           headers: { Authorization: `Bearer ${user.token}` },
         });
         const leagueData = leagueResponse.data;
         setLeague(leagueData);
 
-        // Check if user is admin or manager
         const isAdmin = leagueData.admins?.some(admin => admin._id === user._id) || false;
         const isManager = leagueData.managers?.some(manager => manager._id === user._id) || false;
         if (!isAdmin && !isManager) {
@@ -56,22 +54,24 @@ export default function ManageGames() {
           return;
         }
 
-        // Fetch teams for the current season
-        const teamsResponse = await axios.get(`/api/teams?leagueId=${leagueId}&season=${leagueData.season || ''}`, {
+        const teamsResponse = await axios.get(`/api/teams?leagueId=${leagueId}&season=${leagueData.season || 'Season 1'}`, {
           headers: { Authorization: `Bearer ${user.token}` },
         });
         setTeams(teamsResponse.data || []);
 
-        // Fetch players for the league
         const playersResponse = await axios.get(`/api/players?leagueId=${leagueId}`, {
           headers: { Authorization: `Bearer ${user.token}` },
         });
         setPlayers(playersResponse.data || []);
 
-        // Fetch games for the current season
-        const gamesResponse = await axios.get(`/api/games?leagueId=${leagueId}&season=${leagueData.season || ''}`, {
-          headers: { Authorization: `Bearer ${user.token}` },
+        const gamesResponse = await axios.get(`/api/games?leagueId=${leagueId}&season=${leagueData.season || 'Season 1'}&t=${Date.now()}`, {
+          headers: {
+            Authorization: `Bearer ${user.token}`,
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache',
+          },
         });
+        console.log('Fetched games:', gamesResponse.data);
         setGames(gamesResponse.data || []);
 
         setLoading(false);
@@ -133,19 +133,32 @@ export default function ManageGames() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      if (formData.teams[0] === formData.teams[1]) {
+        setError('Home and Away teams must be different');
+        return;
+      }
+
       const dateTime = new Date(`${formData.date}T${formData.time}`).toISOString();
       const payload = {
         ...formData,
         date: dateTime,
         league: leagueId,
-        season: league?.season || '',
+        season: league?.season || 'Season 1', // Ensure season is set
         teams: formData.teams.filter(id => id),
         gameDuration: parseInt(formData.gameDuration) || 0,
         venueCapacity: parseInt(formData.venueCapacity) || 0,
         attendance: parseInt(formData.attendance) || 0,
         fanRating: parseInt(formData.fanRating) || 0,
+        highlights: formData.highlights.filter(h => h.trim() !== ''),
+        mediaLinks: formData.mediaLinks.filter(link => link.url.trim() && link.type.trim()),
         isCompleted: formData.eventType === 'final' || formData.score.team1 > 0 || formData.score.team2 > 0,
       };
+
+      if (!editingGameId) {
+        delete payload.gameMVP; // Exclude gameMVP for new games
+      }
+
+      console.log('Game creation payload:', payload);
 
       if (editingGameId) {
         await axios.patch(`/api/games/${editingGameId}`, payload, {
@@ -157,13 +170,16 @@ export default function ManageGames() {
         });
       }
 
-      // Refresh games list
-      const gamesResponse = await axios.get(`/api/games?leagueId=${leagueId}&season=${league?.season || ''}`, {
-        headers: { Authorization: `Bearer ${user.token}` },
+      const gamesResponse = await axios.get(`/api/games?leagueId=${leagueId}&season=${league?.season || 'Season 1'}&t=${Date.now()}`, {
+        headers: {
+          Authorization: `Bearer ${user.token}`,
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache',
+        },
       });
+      console.log('Refreshed games:', gamesResponse.data);
       setGames(gamesResponse.data || []);
 
-      // Reset form
       setFormData({
         date: '',
         time: '',
@@ -254,7 +270,6 @@ export default function ManageGames() {
   return (
     <div className="min-h-[var(--page-height)] bg-gray-50 py-10 px-4">
       <div className="max-w-4xl mx-auto">
-        {/* Header */}
         <header className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 gap-4">
           <h1 className="text-3xl font-bold text-gray-800">Manage Games: {league?.name || 'League'}</h1>
           <div className="flex gap-3">
@@ -269,7 +284,6 @@ export default function ManageGames() {
           </div>
         </header>
 
-        {/* Game Creation Form */}
         <section className="bg-white shadow-xl rounded-2xl p-8 border border-gray-200 mb-8">
           <div className="flex items-center gap-3 mb-4">
             <PlusIcon className="w-6 h-6 text-blue-500" />
@@ -459,6 +473,67 @@ export default function ManageGames() {
                   className="mt-1 w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 />
               </div>
+              <div className="flex flex-col">
+                <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                  <UsersIcon className="w-5 h-5 text-gray-500" />
+                  Attendance (optional):
+                </label>
+                <input
+                  type="number"
+                  name="attendance"
+                  value={formData.attendance}
+                  onChange={handleInputChange}
+                  min="0"
+                  className="mt-1 w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                />
+              </div>
+              <div className="flex flex-col">
+                <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                  <DocumentTextIcon className="w-5 h-5 text-gray-500" />
+                  Previous Matchup Score (optional):
+                </label>
+                <input
+                  type="text"
+                  name="previousMatchupScore"
+                  value={formData.previousMatchupScore}
+                  onChange={handleInputChange}
+                  className="mt-1 w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                />
+              </div>
+              <div className="flex flex-col">
+                <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                  <StarIcon className="w-5 h-5 text-gray-500" />
+                  Fan Rating (optional):
+                </label>
+                <input
+                  type="number"
+                  name="fanRating"
+                  value={formData.fanRating}
+                  onChange={handleInputChange}
+                  min="0"
+                  max="10"
+                  className="mt-1 w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                />
+              </div>
+              {editingGameId && (
+                <div className="flex flex-col">
+                  <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                    <UserIcon className="w-5 h-5 text-gray-500" />
+                    Game MVP (optional):
+                  </label>
+                  <select
+                    name="gameMVP"
+                    value={formData.gameMVP}
+                    onChange={handleInputChange}
+                    className="mt-1 w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  >
+                    <option value="">Select MVP</option>
+                    {players.map(player => (
+                      <option key={player._id} value={player._id}>{player.name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
             </div>
             <div className="mt-4">
               <div className="flex items-center gap-2 mb-2">
@@ -594,7 +669,6 @@ export default function ManageGames() {
           </form>
         </section>
 
-        {/* Games List */}
         <section className="bg-white shadow-xl rounded-2xl p-8 border border-gray-200">
           <div className="flex items-center gap-3 mb-4">
             <StarIcon className="w-6 h-6 text-yellow-400" />

@@ -1,4 +1,12 @@
-[] - when creating a game for a league, I get an error: 
+[x] - After creating a game, we need to display it in the games list at the bottom of the ManageGames component.
+
+----------------------------------------------------------------
+
+[x] - When creating a game, we should not list the mvp as we don't know it yet.
+
+----------------------------------------------------------------
+
+[x] - when creating a game for a league, I get an error: 
 checkAdminOrManager: leagueId from body/query: undefined
 checkAdminOrManager: No leagueId provided
 

@@ -3,7 +3,7 @@ const Team = require('../models/Team');
 
 const checkAdminOrManager = async (req, res, next) => {
   try {
-    let leagueId = req.body.leagueId || req.query.leagueId;
+    let leagueId = req.body.leagueId || req.query.leagueId || req.body.league;
     console.log('checkAdminOrManager: leagueId from body/query:', leagueId);
 
     if (!leagueId && req.params.teamId) {
