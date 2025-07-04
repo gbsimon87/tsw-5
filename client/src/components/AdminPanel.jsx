@@ -43,97 +43,143 @@ export default function AdminPanel() {
   };
 
   return (
-    <div className="flex items-center justify-center">
-      <div className="bg-white p-8 rounded-lg w-full max-w-2xl">
-        <h1 className="text-2xl font-bold mb-6 text-center">Admin Panel</h1>
-        <h2 className="text-lg font-semibold mb-4">Your Leagues</h2>
-        {error && <p className="text-red-500 mb-4 text-center">{error}</p>}
-        {leagues.length === 0 ? (
-          <p className="text-center">No leagues found.</p>
-        ) : (
-          <ul className="space-y-2">
-            {leagues.map(league => (
-              <li key={league._id} className="p-2 bg-gray-50 rounded">
-                {league.admins.includes(user._id) ? (
-                  <Link to={`/leagues/${league._id}`} className="text-blue-500 hover:underline">
-                    {league.name}
-                  </Link>
-                ) : (
-                  league.name
-                )} ({league.sportType}, {league.visibility}) - {league.admins.includes(user._id) ? 'Admin' : 'Manager'}
-              </li>
-            ))}
-          </ul>
-        )}
-        <h2 className="text-lg font-semibold mt-6 mb-4">Create New League</h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Name:</label>
-            <input
-              type="text"
-              name="name"
-              value={formData.name}
-              onChange={handleInputChange}
-              required
-              className="mt-1 w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Logo URL (optional):</label>
-            <input
-              type="url"
-              name="logo"
-              value={formData.logo}
-              onChange={handleInputChange}
-              className="mt-1 w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Location (optional):</label>
-            <input
-              type="text"
-              name="location"
-              value={formData.location}
-              onChange={handleInputChange}
-              className="mt-1 w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Sport Type:</label>
-            <select
-              name="sportType"
-              value={formData.sportType}
-              onChange={handleInputChange}
-              required
-              className="mt-1 w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="basketball">Basketball</option>
-              <option value="soccer">Soccer</option>
-              <option value="baseball">Baseball</option>
-              <option value="hockey">Hockey</option>
-              <option value="football">Football</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Visibility:</label>
-            <select
-              name="visibility"
-              value={formData.visibility}
-              onChange={handleInputChange}
-              required
-              className="mt-1 w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="public">Public</option>
-              <option value="private">Private</option>
-            </select>
-          </div>
-          <button
-            type="submit"
-            className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 transition"
+    <div className="flex items-center justify-center min-h-screen bg-gray-50 py-12 px-4">
+      <div className="w-full max-w-3xl">
+        <header className="mb-10">
+          <h1 className="text-3xl font-extrabold mb-2 text-center text-gray-900">Admin Panel</h1>
+          <p className="text-gray-500 text-center">Manage your leagues and create new ones</p>
+        </header>
+
+        <div className="flex flex-col gap-8">
+          {/* Your Leagues Card */}
+          <section
+            aria-labelledby="your-leagues"
+            className="bg-white border border-gray-100 shadow-lg rounded-2xl p-8"
           >
-            Create League
-          </button>
-        </form>
+            <h2 id="your-leagues" className="text-xl font-semibold mb-6 text-gray-800">
+              Your Leagues
+            </h2>
+            {error && <p className="text-red-500 mb-6 text-center">{error}</p>}
+            {leagues.length === 0 ? (
+              <p className="text-gray-500 text-center">No leagues found.</p>
+            ) : (
+              <div className="space-y-6">
+                {leagues.map(league => (
+                  <article
+                    key={league._id}
+                    className="bg-gray-50 border border-gray-200 rounded-lg shadow flex flex-col p-6 hover:shadow-lg transition"
+                    aria-label={`League card for ${league.name}`}
+                  >
+                    <header className="mb-3 flex items-center justify-between">
+                      <h3 className="text-lg font-bold text-blue-700">
+                        {league.admins.includes(user._id) ? (
+                          <Link to={`/leagues/${league._id}`} className="hover:underline">
+                            {league.name}
+                          </Link>
+                        ) : (
+                          league.name
+                        )}
+                      </h3>
+                      <span className={`px-2 py-1 rounded text-xs font-semibold ${league.visibility === 'public' ? 'bg-blue-100 text-blue-700' : 'bg-gray-200 text-gray-700'}`}>
+                        {league.visibility.charAt(0).toUpperCase() + league.visibility.slice(1)}
+                      </span>
+                    </header>
+                    <dl className="space-y-2">
+                      <div className="flex gap-3 items-center">
+                        <dt className="text-gray-500 font-medium min-w-[100px]">Sport:</dt>
+                        <dd className="text-gray-800">{league.sportType}</dd>
+                      </div>
+                      <div className="flex gap-3 items-center">
+                        <dt className="text-gray-500 font-medium min-w-[100px]">Role:</dt>
+                        <dd className={league.admins.includes(user._id) ? "text-green-700 font-semibold" : "text-yellow-700 font-semibold"}>
+                          {league.admins.includes(user._id) ? 'Admin' : 'Manager'}
+                        </dd>
+                      </div>
+                    </dl>
+                  </article>
+                ))}
+              </div>
+            )}
+          </section>
+
+          {/* Create League Card */}
+          <section
+            aria-labelledby="create-league"
+            className="bg-white border border-gray-100 shadow-lg rounded-2xl p-8"
+          >
+            <h2 id="create-league" className="text-xl font-semibold mb-6 text-gray-800">
+              Create New League
+            </h2>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                <input
+                  type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Logo URL (optional)</label>
+                <input
+                  type="url"
+                  name="logo"
+                  value={formData.logo}
+                  onChange={handleInputChange}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Location (optional)</label>
+                <input
+                  type="text"
+                  name="location"
+                  value={formData.location}
+                  onChange={handleInputChange}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Sport Type</label>
+                <select
+                  name="sportType"
+                  value={formData.sportType}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="basketball">Basketball</option>
+                  <option value="soccer">Soccer</option>
+                  <option value="baseball">Baseball</option>
+                  <option value="hockey">Hockey</option>
+                  <option value="football">Football</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Visibility</label>
+                <select
+                  name="visibility"
+                  value={formData.visibility}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="public">Public</option>
+                  <option value="private">Private</option>
+                </select>
+              </div>
+              <button
+                type="submit"
+                className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              >
+                Create League
+              </button>
+            </form>
+          </section>
+        </div>
       </div>
     </div>
   );

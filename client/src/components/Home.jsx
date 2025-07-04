@@ -1,6 +1,14 @@
 import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
-import { SparklesIcon, UsersIcon, TrophyIcon, ChatBubbleLeftRightIcon } from '@heroicons/react/24/outline';
+import {
+  SparklesIcon,
+  UsersIcon,
+  TrophyIcon,
+  ChatBubbleLeftRightIcon,
+  UserCircleIcon,
+  Cog6ToothIcon,
+  ArrowRightEndOnRectangleIcon
+} from '@heroicons/react/24/outline';
 
 /**
  * Homepage landing page highlighting features and user value
@@ -34,13 +42,37 @@ function Home() {
           <p className="text-xl mb-8 text-blue-100">
             Connect, manage, and track your sports leagues with ease.
           </p>
-          <Link
-            to={isAuthenticated ? '/my-sporty' : '/public-leagues'}
-            className="bg-blue-500 text-white px-8 py-3 rounded-lg font-semibold shadow-lg hover:bg-blue-600 transition focus:ring-2 focus:ring-blue-500 focus:outline-none"
-            aria-label={isAuthenticated ? 'Go to My Sporty' : 'Explore Sporty Leagues'}
-          >
-            {isAuthenticated ? 'My Sporty' : 'Explore Leagues'}
-          </Link>
+          <div className="flex justify-center gap-4">
+            {isAuthenticated ? (
+              <>
+                <Link
+                  to="/my-sporty"
+                  className="inline-flex items-center bg-blue-500 text-white px-8 py-3 rounded-lg font-semibold shadow-lg hover:bg-blue-600 transition focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  aria-label="Go to My Sporty"
+                >
+                  <UserCircleIcon className="w-6 h-6 mr-2 text-blue-200" aria-hidden="true" />
+                  My Sporty
+                </Link>
+                <Link
+                  to="/admin"
+                  className="inline-flex items-center bg-white text-blue-700 px-8 py-3 rounded-lg font-semibold shadow-lg border border-blue-500 hover:bg-blue-50 transition focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  aria-label="Go to Admin Panel"
+                >
+                  <Cog6ToothIcon className="w-6 h-6 mr-2 text-blue-500" aria-hidden="true" />
+                  Admin Panel
+                </Link>
+              </>
+            ) : (
+              <Link
+                to="/login"
+                className="inline-flex items-center bg-blue-500 text-white px-8 py-3 rounded-lg font-semibold shadow-lg hover:bg-blue-600 transition focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                aria-label="Login"
+              >
+                <ArrowRightEndOnRectangleIcon className="w-6 h-6 mr-2 text-blue-200" aria-hidden="true" />
+                Login
+              </Link>
+            )}
+          </div>
         </div>
       </section>
 

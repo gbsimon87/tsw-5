@@ -452,7 +452,6 @@ app.patch('/api/leagues/:leagueId', authMiddleware, async (req, res) => {
 });
 
 // Team routes
-// Create a new team
 app.post('/api/teams', authMiddleware, async (req, res) => {
   try {
     const { name, logo, leagueId, season } = req.body;
@@ -489,6 +488,20 @@ app.post('/api/teams', authMiddleware, async (req, res) => {
   }
 });
 
+app.get('/api/teams/my-teams', authMiddleware, async (req, res) => {
+  try {
+    const teams = await Team.find({
+      'members.user': req.user._id
+    })
+      .populate('league', 'name sportType location')
+      .populate('members.user', 'name');
+    res.json(teams);
+  } catch (error) {
+    console.error('Get my teams error:', error);
+    res.status(400).json({ error: 'Failed to fetch user teams' });
+  }
+});
+
 app.post('/api/teams/join', authMiddleware, async (req, res) => {
   try {
     const { secretKey } = req.body;
@@ -510,6 +523,32 @@ app.post('/api/teams/join', authMiddleware, async (req, res) => {
       role: 'player',
       isActive: true,
     });
+    await team.save();
+
+    res.json(team);
+  } catch (error) {
+    console.error('Join team error:', error);
+    res.status(400).json({ error: 'Failed to join team' });
+  }
+});
+
+app.post('/api/teams/join', authMiddleware, async (req, res) => {
+  try {
+    const { secretKey } = req.body;
+    if (!secretKey) {
+      return res.status(400).json({ error: 'Secret key is required' });
+    }
+
+    const team = await Team.findOne({ secretKey }).populate('league');
+    if (!team) {
+      return res.status(404).json({ error: 'Team not found or invalid secret key' });
+    }
+
+    if (team.members.includes(req.user._id)) {
+      return res.status(400).json({ error: 'You are already a member of this team' });
+    }
+
+    team.members.push(req.user._id);
     await team.save();
 
     res.json(team);
@@ -611,33 +650,6 @@ app.patch('/api/teams/:teamId/members/:memberId', authMiddleware, async (req, re
   } catch (error) {
     console.error('Update team member error:', error);
     res.status(400).json({ error: 'Failed to update team member' });
-  }
-});
-
-// Join a team
-app.post('/api/teams/join', authMiddleware, async (req, res) => {
-  try {
-    const { secretKey } = req.body;
-    if (!secretKey) {
-      return res.status(400).json({ error: 'Secret key is required' });
-    }
-
-    const team = await Team.findOne({ secretKey }).populate('league');
-    if (!team) {
-      return res.status(404).json({ error: 'Team not found or invalid secret key' });
-    }
-
-    if (team.members.includes(req.user._id)) {
-      return res.status(400).json({ error: 'You are already a member of this team' });
-    }
-
-    team.members.push(req.user._id);
-    await team.save();
-
-    res.json(team);
-  } catch (error) {
-    console.error('Join team error:', error);
-    res.status(400).json({ error: 'Failed to join team' });
   }
 });
 

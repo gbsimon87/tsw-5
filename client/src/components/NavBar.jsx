@@ -1,7 +1,24 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
+import {
+  UserCircleIcon,
+  Cog6ToothIcon,
+  ArrowLeftEndOnRectangleIcon,
+  UserPlusIcon,
+  SparklesIcon,
+  InformationCircleIcon,
+} from '@heroicons/react/24/outline';
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline';
+
+const navIcons = {
+  "My Sporty": <UserCircleIcon className="w-5 h-5 text-gray-400" aria-hidden="true" />,
+  "Admin Panel": <Cog6ToothIcon className="w-5 h-5 text-gray-400" aria-hidden="true" />,
+  "Join a Team": <UserPlusIcon className="w-5 h-5 text-gray-400" aria-hidden="true" />,
+  "Upcoming Features": <SparklesIcon className="w-5 h-5 text-gray-400" aria-hidden="true" />,
+  "About": <InformationCircleIcon className="w-5 h-5 text-gray-400" aria-hidden="true" />,
+  "Log out": <ArrowLeftEndOnRectangleIcon className="w-5 h-5 text-gray-400" aria-hidden="true" />,
+};
 
 function NavBar() {
   const { user, logout } = useAuth();
@@ -99,18 +116,20 @@ function NavBar() {
                   <MenuItem>
                     <NavLink
                       to="/my-sporty"
-                      className="block px-4 py-2 text-sm text-gray-700 data-[focus]:bg-gray-100 data-[focus]:outline-none"
+                      className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 data-[focus]:bg-gray-100 data-[focus]:outline-none"
                       aria-label="My Sporty"
                     >
+                      <UserCircleIcon className="w-5 h-5 text-gray-400" aria-hidden="true" />
                       My Sporty
                     </NavLink>
                   </MenuItem>
                   <MenuItem>
                     <NavLink
                       to="/admin"
-                      className="block px-4 py-2 text-sm text-gray-700 data-[focus]:bg-gray-100 data-[focus]:outline-none"
+                      className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 data-[focus]:bg-gray-100 data-[focus]:outline-none"
                       aria-label="Admin Panel"
                     >
+                      <Cog6ToothIcon className="w-5 h-5 text-gray-400" aria-hidden="true" />
                       Admin Panel
                     </NavLink>
                   </MenuItem>
@@ -118,13 +137,21 @@ function NavBar() {
                     <a
                       href="#"
                       onClick={handleLogoutClick}
-                      className="block px-4 py-2 text-sm text-gray-700 data-[focus]:bg-gray-100 data-[focus]:outline-none"
+                      className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 data-[focus]:bg-gray-100 data-[focus]:outline-none"
                       aria-label="Log out"
                     >
+                      <ArrowLeftEndOnRectangleIcon className="w-5 h-5 text-gray-400" aria-hidden="true" />
                       Log out
                     </a>
                   </MenuItem>
+                  <MenuItem>
+                    <span className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 bg-gray-100">
+                      <UserCircleIcon className="w-5 h-5 text-gray-400" aria-hidden="true" />
+                      {user.name || user.email}
+                    </span>
+                  </MenuItem>
                 </MenuItems>
+
               </Menu>
             </div>
           )}
@@ -138,17 +165,33 @@ function NavBar() {
               as={NavLink}
               to={item.to}
               className={({ isActive }) =>
-                isActive
-                  ? 'bg-gray-900 text-white block rounded-md px-3 py-2 text-base font-medium'
-                  : 'text-gray-300 hover:bg-gray-700 hover:text-white block rounded-md px-3 py-2 text-base font-medium'
+                (isActive
+                  ? 'bg-gray-900 text-white'
+                  : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                ) +
+                ' flex items-center gap-3 block rounded-md px-3 py-2 text-base font-medium'
               }
               aria-label={`${item.name} page`}
             >
+              {navIcons[item.name] && (
+                <span aria-hidden="true">{navIcons[item.name]}</span>
+              )}
               {item.name}
             </DisclosureButton>
           ))}
+          {/* If you want to add a logout button in the mobile menu, add it here: */}
+          <DisclosureButton
+            as="button"
+            onClick={handleLogoutClick}
+            className="flex items-center gap-3 w-full text-left text-gray-300 hover:bg-gray-700 hover:text-white block rounded-md px-3 py-2 text-base font-medium"
+            aria-label="Log out"
+          >
+            <ArrowLeftEndOnRectangleIcon className="w-5 h-5 text-gray-400" aria-hidden="true" />
+            Log out
+          </DisclosureButton>
         </div>
       </DisclosurePanel>
+
     </Disclosure>
   );
 }
