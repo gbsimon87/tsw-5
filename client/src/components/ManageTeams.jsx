@@ -99,10 +99,10 @@ export default function ManageTeams() {
     setTimeout(() => setCopiedKey(null), 2000);
   };
 
-  const handleDeactivateMember = async (teamId, memberId) => {
+  const handleDeactivateMember = async (teamId, playerId) => {
     try {
       await axios.patch(
-        `/api/teams/${teamId}/members/${memberId}`,
+        `/api/teams/${teamId}/members/${playerId}`,
         { isActive: false },
         { headers: { Authorization: `Bearer ${user.token}` } }
       );
@@ -112,28 +112,34 @@ export default function ManageTeams() {
     }
   };
 
-  const handleChangeRole = async (teamId, memberId, newRole) => {
+  const handleChangeRole = async (teamId, playerId, newRole) => {
     try {
-      await axios.patch(
-        `/api/teams/${teamId}/members/${memberId}`,
-        { role: newRole },
+      console.log('Updating role:', { teamId, playerId, newRole, leagueId });
+      const response = await axios.patch(
+        `/api/teams/${teamId}/members/${playerId}`,
+        { role: newRole, leagueId },
         { headers: { Authorization: `Bearer ${user.token}` } }
       );
+      console.log('Update role response:', response.data);
       fetchTeams(selectedSeason);
     } catch (err) {
+      console.error('Change role error:', err.response || err);
       setError(err.response?.data?.error || 'Failed to change member role');
     }
   };
 
   const handleDeactivateTeam = async (teamId) => {
     try {
-      await axios.patch(
+      console.log('Deactivating team:', { teamId, leagueId });
+      const response = await axios.patch(
         `/api/teams/${teamId}`,
-        { isActive: false },
+        { isActive: false, leagueId },
         { headers: { Authorization: `Bearer ${user.token}` } }
       );
+      console.log('Deactivate team response:', response.data);
       fetchTeams(selectedSeason);
     } catch (err) {
+      console.error('Deactivate team error:', err.response || err);
       setError(err.response?.data?.error || 'Failed to deactivate team');
     }
   };
@@ -251,7 +257,6 @@ export default function ManageTeams() {
                     )}
                   </div>
 
-                  {/* Row 2: Secret Key and Copy Button */}
                   <div className="flex justify-between items-center space-x-2 mt-1 mt-8">
                     <span className="text-sm text-gray-600 font-mono">
                       Secret Key: {team.secretKey}
@@ -270,13 +275,14 @@ export default function ManageTeams() {
                       <p className="text-gray-500">No members in this team.</p>
                     ) : (
                       <ul className="space-y-2">
+                        {console.log(team)}
                         {team.members.map((member) => (
-                          <li key={member.user._id} className="flex items-center justify-between py-2">
+                          <li key={member.player._id} className="flex items-center justify-between py-2">
                             <div className="flex items-center gap-4">
-                              {member.user.picture ? (
+                              {member.player?.user?.picture ? (
                                 <img
-                                  src={member.user.picture}
-                                  alt={member.user.name}
+                                  src={member.player.user.picture}
+                                  alt={member.player.user.name || 'Member'}
                                   className="w-10 h-10 rounded-full shadow border-2 border-gray-200 bg-white"
                                 />
                               ) : (
@@ -285,14 +291,14 @@ export default function ManageTeams() {
                                 </div>
                               )}
                               <span className={`text-base ${member.isActive ? 'text-gray-800' : 'text-gray-400 italic'}`}>
-                                {member.user.name}
+                                {member.player?.user?.name || 'Unknown'}
                                 {!member.isActive && <span className="ml-2">(Inactive)</span>}
                               </span>
                             </div>
                             <div className="flex items-center gap-2">
                               <select
                                 value={member.role}
-                                onChange={(e) => handleChangeRole(team._id, member.user._id, e.target.value)}
+                                onChange={(e) => handleChangeRole(team._id, member.player._id, e.target.value)}
                                 className="p-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 disabled={!member.isActive}
                               >
@@ -301,9 +307,9 @@ export default function ManageTeams() {
                               </select>
                               {member.isActive && (
                                 <button
-                                  onClick={() => handleDeactivateMember(team._id, member.user._id)}
+                                  onClick={() => handleDeactivateMember(team._id, member.player._id)}
                                   className="bg-red-500 text-white px-2 py-1 rounded-lg hover:bg-red-600 transition focus:ring-2 focus:ring-red-500 focus:outline-none"
-                                  aria-label={`Deactivate member ${member.user.name}`}
+                                  aria-label={`Deactivate member ${member.player?.user?.name || 'Unknown'}`}
                                   title="Deactivate Member"
                                 >
                                   <ShieldExclamationIcon className="w-5 h-5" />

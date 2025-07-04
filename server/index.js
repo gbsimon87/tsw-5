@@ -7,6 +7,8 @@ const jwt = require('jsonwebtoken');
 const User = require('./models/User');
 const League = require('./models/League');
 const Team = require('./models/Team');
+const Player = require('./models/Player');
+const Game = require('./models/Game');
 require('dotenv').config({ path: '.env' });
 
 const app = express();
@@ -30,6 +32,59 @@ const authMiddleware = async (req, res, next) => {
     console.error('Auth middleware error:', error);
     res.status(401).json({ error: 'Invalid token' });
   }
+};
+
+// PLAYER ROUTES
+// Middleware to check if user is admin or manager
+const checkAdminOrManager = async (req, res, next) => {
+  try {
+    let leagueId = req.body.leagueId || req.query.leagueId;
+    console.log('checkAdminOrManager: leagueId from body/query:', leagueId);
+
+    // If no leagueId is provided, try to get it from the team
+    if (!leagueId && req.params.teamId) {
+      const team = await Team.findById(req.params.teamId);
+      if (!team) {
+        console.error('checkAdminOrManager: Team not found for teamId:', req.params.teamId);
+        return res.status(404).json({ error: 'Team not found' });
+      }
+      leagueId = team.league;
+      console.log('checkAdminOrManager: leagueId from team.league:', leagueId);
+    }
+
+    if (!leagueId) {
+      console.error('checkAdminOrManager: No leagueId provided');
+      return res.status(400).json({ error: 'League ID is required' });
+    }
+
+    const league = await League.findById(leagueId);
+    if (!league) {
+      console.error('checkAdminOrManager: League not found for leagueId:', leagueId);
+      return res.status(404).json({ error: 'League not found' });
+    }
+
+    const isAdmin = league.admins.some(admin => admin._id.toString() === req.user._id.toString());
+    const isManager = league.managers.some(manager => manager._id.toString() === req.user._id.toString());
+    if (!isAdmin && !isManager) {
+      console.error('checkAdminOrManager: User not authorized:', req.user._id);
+      return res.status(403).json({ error: 'Unauthorized: Admin or manager access required' });
+    }
+
+    next();
+  } catch (err) {
+    console.error('Admin/Manager check error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+// Initialize player stats based on league scoring rules
+const initializeStats = async (leagueId) => {
+  const league = await League.findById(leagueId);
+  if (!league || !league.settings.scoringRules) return {};
+  return Object.keys(league.settings.scoringRules).reduce((stats, key) => {
+    stats[key] = 0;
+    return stats;
+  }, {});
 };
 
 // Authentication routes
@@ -215,32 +270,24 @@ app.get('/auth/me', async (req, res) => {
 });
 
 // League routes
-// Create a new league without default season
-app.post('/api/leagues', authMiddleware, async (req, res) => {
+// Create a league (admin only, simplified for context)
+app.post('/api/leagues/', authMiddleware, async (req, res) => {
   try {
-    const { name, logo, location, sportType, visibility } = req.body;
-    if (!name || !sportType) {
-      return res.status(400).json({ error: 'Name and sportType are required' });
-    }
-
-    const league = new League({
+    const { name, sportType, location, visibility, establishedYear } = req.body;
+    const league = await League.create({
       name,
-      logo,
-      location,
       sportType,
+      location,
       visibility,
+      establishedYear,
       admins: [req.user._id],
-      managers: [],
-      teams: [],
-      seasons: [],
-      season: '',
+      isActive: true,
+      seasons: [{ name: 'Season 1', startDate: new Date(), endDate: new Date(), isActive: true }],
     });
-
-    await league.save();
     res.status(201).json(league);
-  } catch (error) {
-    console.error('Create league error:', error);
-    res.status(400).json({ error: 'Failed to create league' });
+  } catch (err) {
+    console.error('Create league error:', err);
+    res.status(500).json({ error: 'Failed to create league' });
   }
 });
 
@@ -367,134 +414,128 @@ app.get('/api/leagues', authMiddleware, async (req, res) => {
   }
 });
 
+// Get a single league by ID
 app.get('/api/leagues/:leagueId', authMiddleware, async (req, res) => {
   try {
     const league = await League.findById(req.params.leagueId)
-      .populate('admins', 'name')
-      .populate('managers', 'name')
       .populate({
         path: 'teams',
-        populate: { path: 'members.user', select: 'name picture' },
+        populate: {
+          path: 'members.player',
+          model: 'Player',
+          populate: {
+            path: 'user',
+            model: 'User',
+            select: 'name'
+          }
+        }
+      })
+      .populate('admins', 'name')
+      .populate('managers', 'name')
+      .lean();
+
+    if (!league) return res.status(404).json({ error: 'League not found' });
+
+    // Ensure teams and members are arrays
+    league.teams = Array.isArray(league.teams) ? league.teams : [];
+    league.teams.forEach(team => {
+      team.members = Array.isArray(team.members) ? team.members : [];
+      team.members.forEach(member => {
+        member.player = member.player || { user: { name: 'Unknown' } };
       });
-    if (!league) {
-      return res.status(404).json({ error: 'League not found' });
-    }
-    if (!league.admins.some(admin => admin._id.equals(req.user._id))) {
-      return res.status(403).json({ error: 'You are not authorized to view this league' });
-    }
-    res.set('Cache-Control', 'no-cache'); // Prevent caching
+    });
+
     res.json(league);
-  } catch (error) {
-    console.error('Get league error:', error);
+  } catch (err) {
+    console.error('Get league error:', err);
     res.status(500).json({ error: 'Failed to fetch league' });
   }
 });
 
+// Update a league (admin only, simplified)
 app.patch('/api/leagues/:leagueId', authMiddleware, async (req, res) => {
   try {
     const league = await League.findById(req.params.leagueId);
-    if (!league) {
-      return res.status(404).json({ error: 'League not found' });
-    }
-    if (!league.admins.some(admin => admin._id.equals(req.user._id))) {
-      return res.status(403).json({ error: 'You are not authorized to edit this league' });
-    }
+    if (!league) return res.status(404).json({ error: 'League not found' });
 
-    const { name, sportType, visibility, logo, location, establishedYear, isActive, settings } = req.body;
-    if (!name || !sportType) {
-      return res.status(400).json({ error: 'Name and sportType are required' });
-    }
+    const isAdmin = league.admins.some(admin => admin._id.toString() === req.user._id.toString());
+    if (!isAdmin) return res.status(403).json({ error: 'Unauthorized: Admin access required' });
 
-    league.name = name;
-    if (league.sportType !== sportType) {
-      league.sportType = sportType;
-      const scoringRulesMap = {
-        basketball: { twoPointFGM: 2, threePointFGM: 3, freeThrowM: 1 },
-        hockey: { goal: 1 },
-        soccer: { goal: 1 },
-        baseball: { single: 1, double: 2, triple: 3, homeRun: 4 },
-        football: { touchdown: 6, fieldGoal: 3, extraPoint: 1, twoPointConversion: 2, safety: 2 },
-      };
-      league.settings = {
-        periodType: sportType === 'basketball' ? 'halves' : sportType === 'hockey' ? 'periods' : 'halves',
-        periodDuration: sportType === 'basketball' ? 24 : sportType === 'hockey' ? 20 : 45,
-        overtimeDuration: sportType === 'soccer' ? 15 : 5,
-        scoringRules: scoringRulesMap[sportType] || {},
-        statTypes: sportType === 'basketball'
-          ? [
-            'twoPointFGM', 'twoPointFGA', 'threePointFGM', 'threePointFGA',
-            'freeThrowM', 'freeThrowA', 'offensiveRebound', 'defensiveRebound',
-            'assist', 'steal', 'turnover', 'block', 'personalFoul',
-            'teamFoul', 'technicalFoul', 'flagrantFoul',
-          ]
-          : [],
-      };
-    }
-    league.visibility = visibility;
-    league.logo = logo || undefined;
-    league.location = location || undefined;
-    league.establishedYear = establishedYear || undefined;
-    league.isActive = isActive !== undefined ? isActive : league.isActive;
-
-    if (settings) {
-      if (settings.periodType) league.settings.periodType = settings.periodType;
-      if (settings.periodDuration) league.settings.periodDuration = settings.periodDuration;
-      if (settings.overtimeDuration) league.settings.overtimeDuration = settings.overtimeDuration;
-      if (settings.scoringRules) league.settings.scoringRules = settings.scoringRules;
-    }
-
+    Object.assign(league, req.body);
     await league.save();
     res.json(league);
-  } catch (error) {
-    console.error('Update league error:', error);
-    res.status(400).json({ error: 'Failed to update league' });
+  } catch (err) {
+    console.error('Update league error:', err);
+    res.status(500).json({ error: 'Failed to update league' });
   }
 });
 
-// Team routes
-app.post('/api/teams', authMiddleware, async (req, res) => {
+// Delete a league (admin only, simplified)
+app.delete('/api/leagues/:leagueId', authMiddleware, async (req, res) => {
   try {
-    const { name, logo, leagueId, season } = req.body;
-    if (!name || !leagueId || !season) {
-      return res.status(400).json({ error: 'Name, leagueId, and season are required' });
+    const league = await League.findById(req.params.leagueId);
+    if (!league) return res.status(404).json({ error: 'League not found' });
+
+    const isAdmin = league.admins.some(admin => admin._id.toString() === req.user._id.toString());
+    if (!isAdmin) return res.status(403).json({ error: 'Unauthorized: Admin access required' });
+
+    await league.deleteOne();
+    res.json({ message: 'League deleted' });
+  } catch (err) {
+    console.error('Delete league error:', err);
+    res.status(500).json({ error: 'Failed to delete league' });
+  }
+});
+
+// Get teams by leagueId and season
+app.get('/api/teams/', authMiddleware, async (req, res) => {
+  try {
+    const { leagueId, season } = req.query;
+    if (!leagueId || !season) {
+      return res.status(400).json({ error: 'leagueId and season are required' });
     }
 
-    const league = await League.findById(leagueId);
-    if (!league) {
-      return res.status(404).json({ error: 'League not found' });
-    }
-    if (!league.admins.some(admin => admin._id.equals(req.user._id))) {
-      return res.status(403).json({ error: 'You are not authorized to create teams' });
-    }
-    if (!league.seasons.some(s => s.name === season)) {
-      return res.status(400).json({ error: 'Season does not exist in league' });
-    }
+    const teams = await Team.find({ league: leagueId, season })
+      .populate({
+        path: 'members.player',
+        populate: {
+          path: 'user',
+          model: 'User',
+          select: 'name'
+        }
+      });
 
-    const team = new Team({
-      name,
-      logo,
-      league: leagueId,
-      season,
-      createdBy: req.user._id,
-    });
+    // Log the raw teams data for debugging
+    console.log('Fetched teams:', JSON.stringify(teams, null, 2));
 
-    await team.save();
-    league.teams.push(team._id);
-    await league.save();
-    res.status(201).json(team);
-  } catch (error) {
-    console.error('Create team error:', error);
-    res.status(400).json({ error: 'Failed to create team' });
+    // Ensure members is an array and player.user is populated
+    const formattedTeams = teams.map(team => ({
+      ...team.toObject(),
+      members: Array.isArray(team.members) ? team.members.map(member => ({
+        ...member.toObject(),
+        player: member.player ? {
+          ...member.player.toObject(),
+          user: member.player.user ? { name: member.player.user.name || 'Unknown' } : { name: 'Unknown' }
+        } : { user: { name: 'Unknown' } }
+      })) : []
+    }));
+
+    // Prevent caching to ensure fresh data
+    res.set('Cache-Control', 'no-store');
+    res.json(formattedTeams);
+  } catch (err) {
+    console.error('Get teams error:', err);
+    res.status(500).json({ error: 'Failed to fetch teams' });
   }
 });
 
 app.get('/api/teams/my-teams', authMiddleware, async (req, res) => {
   try {
     const teams = await Team.find({
-      'members.user': req.user._id
+      'members.player': req.user._id
     })
       .populate('league', 'name sportType location')
-      .populate('members.user', 'name');
+      .populate('members.player', 'name');
     res.json(teams);
   } catch (error) {
     console.error('Get my teams error:', error);
@@ -502,156 +543,407 @@ app.get('/api/teams/my-teams', authMiddleware, async (req, res) => {
   }
 });
 
-app.post('/api/teams/join', authMiddleware, async (req, res) => {
+// Create a team (admin/manager only)
+app.post('/api/teams/', authMiddleware, checkAdminOrManager, async (req, res) => {
   try {
-    const { secretKey } = req.body;
-    if (!secretKey) {
-      return res.status(400).json({ error: 'Secret key is required' });
+    const { name, leagueId, season, logo } = req.body;
+    if (!name || !leagueId || !season) {
+      return res.status(400).json({ error: 'name, leagueId, and season are required' });
     }
 
-    const team = await Team.findOne({ secretKey }).populate('league');
-    if (!team) {
-      return res.status(404).json({ error: 'Team not found or invalid secret key' });
-    }
-
-    if (team.members.some(member => member.user.equals(req.user._id))) {
-      return res.status(400).json({ error: 'You are already a member of this team' });
-    }
-
-    team.members.push({
-      user: req.user._id,
-      role: 'player',
+    const team = await Team.create({
+      name,
+      league: leagueId,
+      season,
+      logo,
+      createdBy: req.user._id,
       isActive: true,
+      members: []
     });
-    await team.save();
 
-    res.json(team);
-  } catch (error) {
-    console.error('Join team error:', error);
-    res.status(400).json({ error: 'Failed to join team' });
+    await League.findByIdAndUpdate(leagueId, { $push: { teams: team._id } });
+
+    res.status(201).json(team);
+  } catch (err) {
+    console.error('Create team error:', err);
+    res.status(500).json({ error: 'Failed to create team' });
   }
 });
 
-app.post('/api/teams/join', authMiddleware, async (req, res) => {
-  try {
-    const { secretKey } = req.body;
-    if (!secretKey) {
-      return res.status(400).json({ error: 'Secret key is required' });
-    }
-
-    const team = await Team.findOne({ secretKey }).populate('league');
-    if (!team) {
-      return res.status(404).json({ error: 'Team not found or invalid secret key' });
-    }
-
-    if (team.members.includes(req.user._id)) {
-      return res.status(400).json({ error: 'You are already a member of this team' });
-    }
-
-    team.members.push(req.user._id);
-    await team.save();
-
-    res.json(team);
-  } catch (error) {
-    console.error('Join team error:', error);
-    res.status(400).json({ error: 'Failed to join team' });
-  }
-});
-
-app.get('/api/teams', authMiddleware, async (req, res) => {
+// Get teams by leagueId and season
+app.get('/teams', authMiddleware, async (req, res) => {
   try {
     const { leagueId, season } = req.query;
-    if (!leagueId) {
-      return res.status(400).json({ error: 'leagueId is required' });
+    if (!leagueId || !season) {
+      return res.status(400).json({ error: 'leagueId and season are required' });
     }
 
-    const query = { league: leagueId };
-    if (season) {
-      query.season = season;
-    } else {
-      return res.json([]);
-    }
+    const teams = await Team.find({ league: leagueId, season })
+      .populate({
+        path: 'members.player',
+        populate: {
+          path: 'user',
+          model: 'User',
+          select: 'name'
+        }
+      });
 
-    const teams = await Team.find(query)
-      .populate('members.user', 'name picture')
-      .populate('createdBy', 'name');
-    res.json(teams);
-  } catch (error) {
-    console.error('Get teams error:', error);
-    res.status(400).json({ error: 'Failed to fetch teams' });
+    // Log the raw teams data for debugging
+    console.log('Fetched teams:', JSON.stringify(teams, null, 2));
+
+    // Ensure members is an array and player.user is populated
+    const formattedTeams = teams.map(team => ({
+      ...team.toObject(),
+      members: Array.isArray(team.members) ? team.members.map(member => ({
+        ...member.toObject(),
+        player: member.player ? {
+          ...member.player.toObject(),
+          user: member.player.user ? { name: member.player.user.name || 'Unknown' } : { name: 'Unknown' }
+        } : { user: { name: 'Unknown' } }
+      })) : []
+    }));
+
+    // Prevent caching to ensure fresh data
+    res.set('Cache-Control', 'no-store');
+    res.json(formattedTeams);
+  } catch (err) {
+    console.error('Get teams error:', err);
+    res.status(500).json({ error: 'Failed to fetch teams' });
   }
 });
 
-app.patch('/api/teams/:teamId', authMiddleware, async (req, res) => {
+// Update a team (admin/manager only)
+app.patch('/api/teams/:teamId', authMiddleware, checkAdminOrManager, async (req, res) => {
   try {
     const { teamId } = req.params;
     const { isActive } = req.body;
 
     const team = await Team.findById(teamId);
-    if (!team) {
-      return res.status(404).json({ error: 'Team not found' });
-    }
+    if (!team) return res.status(404).json({ error: 'Team not found' });
 
-    const league = await League.findById(team.league);
-    if (!league) {
-      return res.status(404).json({ error: 'League not found' });
-    }
-    if (!league.admins.some(admin => admin._id.equals(req.user._id))) {
-      return res.status(403).json({ error: 'You are not authorized to modify this team' });
-    }
-
-    if (isActive !== undefined) {
-      team.isActive = isActive;
-    }
-
+    if (isActive !== undefined) team.isActive = isActive;
     await team.save();
+
     res.json(team);
-  } catch (error) {
-    console.error('Update team error:', error);
-    res.status(400).json({ error: 'Failed to update team' });
+  } catch (err) {
+    console.error('Update team error:', err);
+    res.status(500).json({ error: 'Failed to update team' });
   }
 });
 
-app.patch('/api/teams/:teamId/members/:memberId', authMiddleware, async (req, res) => {
+// Update a team member (admin/manager only)
+app.patch('/api/teams/:teamId/members/:memberId', authMiddleware, checkAdminOrManager, async (req, res) => {
   try {
     const { teamId, memberId } = req.params;
     const { isActive, role } = req.body;
 
-    const team = await Team.findById(teamId);
-    if (!team) {
-      return res.status(404).json({ error: 'Team not found' });
-    }
-
-    const league = await League.findById(team.league);
-    if (!league) {
-      return res.status(404).json({ error: 'League not found' });
-    }
-    if (!league.admins.some(admin => admin._id.equals(req.user._id))) {
-      return res.status(403).json({ error: 'You are not authorized to modify team members' });
-    }
-
-    const member = team.members.find(m => m?.user?.equals(memberId));
-    if (!member) {
-      return res.status(404).json({ error: 'Member not found in team' });
-    }
-
-    if (isActive !== undefined) {
-      member.isActive = isActive;
-    }
-    if (role) {
-      if (!['player', 'manager'].includes(role)) {
-        return res.status(400).json({ error: 'Invalid role' });
+    const team = await Team.findById(teamId).populate({
+      path: 'members.player',
+      populate: {
+        path: 'user',
+        model: 'User',
+        select: 'name'
       }
-      member.role = role;
-    }
+    });
+    if (!team) return res.status(404).json({ error: 'Team not found' });
+
+    const member = team.members.find(m => m.player._id.toString() === memberId);
+    if (!member) return res.status(404).json({ error: 'Member not found' });
+
+    if (isActive !== undefined) member.isActive = isActive;
+    if (role) member.role = role;
 
     await team.save();
+
+    // Return the updated team with populated data
     res.json(team);
-  } catch (error) {
-    console.error('Update team member error:', error);
-    res.status(400).json({ error: 'Failed to update team member' });
+  } catch (err) {
+    console.error('Update team member error:', err);
+    res.status(500).json({ error: 'Failed to update member' });
   }
 });
+
+// Join a team
+app.post('/api/teams/join', authMiddleware, async (req, res) => {
+  try {
+    const { secretKey } = req.body;
+    const userId = req.user._id;
+
+    const team = await Team.findOne({ secretKey }).populate('league');
+    if (!team) return res.status(404).json({ error: 'Invalid team key' });
+
+    const isMember = team.members.some(member => member.player.toString() === userId.toString());
+    if (isMember) return res.status(400).json({ error: 'User is already a member of this team' });
+
+    let player = await Player.findOne({ user: userId, league: team.league });
+    if (!player) {
+      const stats = await initializeStats(team.league);
+      player = await Player.create({
+        user: userId,
+        league: team.league,
+        teams: [team._id],
+        stats,
+      });
+    } else {
+      if (!player.teams.includes(team._id)) {
+        player.teams.push(team._id);
+        await player.save();
+      }
+    }
+
+    team.members.push({ player: player._id, role: 'player', isActive: true });
+    await team.save();
+
+    res.json({ message: 'Joined team successfully', team });
+  } catch (err) {
+    console.error('Join team error:', err);
+    res.status(500).json({ error: 'Failed to join team' });
+  }
+});
+
+// Create a player (admin/manager only)
+app.post('/api/players', authMiddleware, checkAdminOrManager, async (req, res) => {
+  try {
+    const { userId, leagueId, position, bio, dateOfBirth, nationality } = req.body;
+    if (!userId || !leagueId) {
+      return res.status(400).json({ error: 'userId and leagueId are required' });
+    }
+
+    const existingPlayer = await Player.findOne({ user: userId, league: leagueId });
+    if (existingPlayer) {
+      return res.status(400).json({ error: 'Player already exists for this user and league' });
+    }
+
+    const stats = await initializeStats(leagueId);
+    const player = await Player.create({
+      user: userId,
+      league: leagueId,
+      stats,
+      position,
+      bio,
+      dateOfBirth,
+      nationality,
+      teams: [],
+      gamesPlayed: 0,
+      totalGamesWon: 0,
+      highestScore: 0,
+      careerAvgPoints: 0,
+      careerRebounds: 0,
+      careerSteals: 0,
+      playerRank: 0,
+    });
+
+    res.status(201).json(player);
+  } catch (err) {
+    console.error('Create player error:', err);
+    res.status(500).json({ error: 'Failed to create player' });
+  }
+});
+
+// Get players (filter by leagueId)
+app.get('/api/players', authMiddleware, async (req, res) => {
+  try {
+    const { leagueId } = req.query;
+    const query = leagueId ? { league: leagueId } : {};
+    const players = await Player.find(query).populate('user', 'name').populate('teams', 'name');
+    res.json(players);
+  } catch (err) {
+    console.error('Get players error:', err);
+    res.status(500).json({ error: 'Failed to fetch players' });
+  }
+});
+
+// Update a player (admin/manager or own profile)
+app.patch('/api/players/:playerId', authMiddleware, async (req, res) => {
+  try {
+    const { playerId } = req.params;
+    const { position, bio, dateOfBirth, nationality, injuries, playerHistory, recentInjuries } = req.body;
+
+    const player = await Player.findById(playerId).populate('user');
+    if (!player) return res.status(404).json({ error: 'Player not found' });
+
+    const isAdmin = await League.findById(player.league)
+      .then(league => league?.admins.some(admin => admin._id.toString() === req.user._id.toString()));
+    const isManager = await League.findById(player.league)
+      .then(league => league?.managers.some(manager => manager._id.toString() === req.user._id.toString()));
+    const isOwnProfile = player.user._id.toString() === req.user._id.toString();
+
+    if (!isAdmin && !isManager && !isOwnProfile) {
+      return res.status(403).json({ error: 'Unauthorized: Admin, manager, or own profile access required' });
+    }
+
+    // Only admins/managers can update sensitive fields
+    const updateFields = isAdmin || isManager ? req.body : { position, bio, dateOfBirth, nationality, injuries, playerHistory, recentInjuries };
+    Object.assign(player, updateFields);
+    await player.save();
+
+    res.json(player);
+  } catch (err) {
+    console.error('Update player error:', err);
+    res.status(500).json({ error: 'Failed to update player' });
+  }
+});
+
+// Delete a player (admin/manager only)
+app.delete('/api/players/:playerId', authMiddleware, checkAdminOrManager, async (req, res) => {
+  try {
+    const { playerId } = req.params;
+    const player = await Player.findById(playerId);
+    if (!player) return res.status(404).json({ error: 'Player not found' });
+
+    // Remove player from teams
+    await Team.updateMany(
+      { 'members.player': playerId },
+      { $pull: { members: { player: playerId } } }
+    );
+
+    await player.deleteOne();
+    res.json({ message: 'Player deleted' });
+  } catch (err) {
+    console.error('Delete player error:', err);
+    res.status(500).json({ error: 'Failed to delete player' });
+  }
+});
+
+// GAME ROUTES
+// Get games for a league and season
+app.get('/api/games', authMiddleware, async (req, res) => {
+  try {
+    const { leagueId, season } = req.query;
+    if (!leagueId) return res.status(400).json({ error: 'leagueId is required' });
+
+    const games = await Game.find({ league: leagueId, season })
+      .populate('teams', 'name')
+      .populate('gameMVP', 'user')
+      .lean();
+
+    // Ensure teams is an array and populate user.name for gameMVP
+    const populatedGames = games.map(game => ({
+      ...game,
+      teams: Array.isArray(game.teams) ? game.teams : [],
+      gameMVP: game.gameMVP ? { ...game.gameMVP, name: game.gameMVP.user?.name || 'Unknown' } : null,
+    }));
+
+    res.json(populatedGames);
+  } catch (err) {
+    console.error('Get games error:', err);
+    res.status(500).json({ error: 'Failed to fetch games' });
+  }
+});
+
+// Create a game (admin/manager only)
+app.post('/api/games', authMiddleware, checkAdminOrManager, async (req, res) => {
+  try {
+    const { league, season, date, teams, location, venue, venueCapacity, score, matchType, eventType, gameDuration, weatherConditions, referee, attendance, previousMatchupScore, fanRating, highlights, matchReport, mediaLinks, gameMVP } = req.body;
+
+    if (!league || !date || !teams || teams.length !== 2 || teams[0] === teams[1]) {
+      return res.status(400).json({ error: 'Invalid game data: league, date, and two unique teams required' });
+    }
+
+    const game = await Game.create({
+      league,
+      season,
+      date,
+      teams,
+      location,
+      venue,
+      venueCapacity,
+      score,
+      matchType,
+      eventType,
+      gameDuration,
+      weatherConditions,
+      referee,
+      attendance,
+      previousMatchupScore,
+      fanRating,
+      highlights,
+      matchReport,
+      mediaLinks,
+      gameMVP,
+      isCompleted: eventType === 'final' || score.team1 > 0 || score.team2 > 0,
+    });
+
+    const populatedGame = await Game.findById(game._id)
+      .populate('teams', 'name')
+      .populate('gameMVP', 'user')
+      .lean();
+
+    populatedGame.gameMVP = populatedGame.gameMVP ? { ...populatedGame.gameMVP, name: populatedGame.gameMVP.user?.name || 'Unknown' } : null;
+
+    res.status(201).json(populatedGame);
+  } catch (err) {
+    console.error('Create game error:', err);
+    res.status(500).json({ error: 'Failed to create game' });
+  }
+});
+
+// Update a game (admin/manager only)
+app.patch('/api/games/:gameId', authMiddleware, checkAdminOrManager, async (req, res) => {
+  try {
+    const { gameId } = req.params;
+    const { teams, date, location, venue, venueCapacity, score, matchType, eventType, gameDuration, weatherConditions, referee, attendance, previousMatchupScore, fanRating, highlights, matchReport, mediaLinks, gameMVP } = req.body;
+
+    const game = await Game.findById(gameId);
+    if (!game) return res.status(404).json({ error: 'Game not found' });
+
+    if (teams && (teams.length !== 2 || teams[0] === teams[1])) {
+      return res.status(400).json({ error: 'Exactly two unique teams required' });
+    }
+
+    Object.assign(game, {
+      teams,
+      date,
+      location,
+      venue,
+      venueCapacity,
+      score,
+      matchType,
+      eventType,
+      gameDuration,
+      weatherConditions,
+      referee,
+      attendance,
+      previousMatchupScore,
+      fanRating,
+      highlights,
+      matchReport,
+      mediaLinks,
+      gameMVP,
+      isCompleted: eventType === 'final' || (score && (score.team1 > 0 || score.team2 > 0)),
+    });
+
+    await game.save();
+
+    const populatedGame = await Game.findById(gameId)
+      .populate('teams', 'name')
+      .populate('gameMVP', 'user')
+      .lean();
+
+    populatedGame.gameMVP = populatedGame.gameMVP ? { ...populatedGame.gameMVP, name: populatedGame.gameMVP.user?.name || 'Unknown' } : null;
+
+    res.json(populatedGame);
+  } catch (err) {
+    console.error('Update game error:', err);
+    res.status(500).json({ error: 'Failed to update game' });
+  }
+});
+
+// Delete a game (admin/manager only)
+app.delete('/api/games/:gameId', authMiddleware, checkAdminOrManager, async (req, res) => {
+  try {
+    const { gameId } = req.params;
+    const game = await Game.findById(gameId);
+    if (!game) return res.status(404).json({ error: 'Game not found' });
+
+    await game.deleteOne();
+    res.json({ message: 'Game deleted' });
+  } catch (err) {
+    console.error('Delete game error:', err);
+    res.status(500).json({ error: 'Failed to delete game' });
+  }
+});
+
 
 // Root route
 app.get('/api', (req, res) => {

@@ -108,6 +108,14 @@ export default function ManageLeague() {
               <UsersIcon className="w-5 h-5" />
               Manage Teams
             </Link>
+            <Link
+              to={`/leagues/${leagueId}/games`}
+              className="flex items-center gap-2 bg-white text-blue-700 border border-blue-600 px-5 py-2 rounded-lg font-semibold shadow hover:bg-blue-50 transition focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              aria-label="Manage Games"
+            >
+              <CalendarIcon className="w-5 h-5" />
+              Manage Games
+            </Link>
           </div>
         </header>
 
@@ -283,6 +291,39 @@ export default function ManageLeague() {
                   <div key={team._id} className="flex items-center bg-white p-3 rounded-md border border-gray-200">
                     <UsersIcon className="w-4 h-4 mr-2.5 text-gray-500" />
                     <span>{team.name}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="ml-6 text-gray-600">No teams defined</p>
+            )}
+          </section>
+
+          <section className="mt-8">
+            <div className="flex items-center mb-2">
+              <UsersIcon className="w-5 h-5 mr-3 text-teal-500" />
+              <h3 className="font-semibold text-gray-800">Teams and Members</h3>
+            </div>
+            {league.teams.length > 0 ? (
+              <div className="space-y-4 ml-6">
+                {league.teams.map((team) => (
+                  <div key={team._id} className="bg-white p-3 rounded-md border border-gray-200">
+                    <div className="flex items-center">
+                      <UsersIcon className="w-4 h-4 mr-2.5 text-gray-500" />
+                      <span className="font-medium">{team.name}</span>
+                    </div>
+                    <div className="ml-6 mt-2">
+                      {team.members.length > 0 ? (
+                        team.members.map((member) => (
+                          <div key={member.player._id} className="flex items-center bg-gray-50 p-2 rounded-md border border-gray-200 mt-1">
+                            <UserGroupIcon className="w-4 h-4 mr-2.5 text-gray-500" />
+                            <span>{member.player.user.name} ({member.role})</span>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-gray-600">No members</p>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
