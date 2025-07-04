@@ -1,3 +1,13 @@
+[] - We need a component to track game stats per player, and update a game.
+- we will navigate here when we click the 'Edit' button on a game from the ManageGames component
+- we need to decide the url path for this component
+- It should be called GameTracking
+- for the moment, it should show two columns, one for each team.
+- in a vertical view for each team, include:
+- team name
+- a container with each player, using cards (include player name and image if available)
+----------------------------------------------------------------
+
 [x] - After creating a game, we need to display it in the games list at the bottom of the ManageGames component.
 
 ----------------------------------------------------------------

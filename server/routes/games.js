@@ -5,6 +5,44 @@ const Game = require('../models/Game');
 const authMiddleware = require('../middleware/authMiddleware');
 const checkAdminOrManager = require('../middleware/adminOrManagerMiddleware');
 
+// Get a single game by ID
+router.get('/:gameId', authMiddleware, async (req, res) => {
+  try {
+    const { gameId } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(gameId)) {
+      return res.status(400).json({ error: 'Invalid gameId' });
+    }
+
+    const game = await Game.findById(gameId)
+      .populate('teams', 'name')
+      .populate({
+        path: 'gameMVP',
+        populate: {
+          path: 'user',
+          model: 'User',
+          select: 'name'
+        }
+      })
+      .lean();
+
+    if (!game) {
+      return res.status(404).json({ error: 'Game not found' });
+    }
+
+    const populatedGame = {
+      ...game,
+      teams: Array.isArray(game.teams) ? game.teams : [],
+      gameMVP: game.gameMVP ? { ...game.gameMVP, name: game.gameMVP.user?.name || 'Unknown' } : null,
+    };
+
+    res.set('Cache-Control', 'no-store');
+    res.json(populatedGame);
+  } catch (err) {
+    console.error('Get game error:', err);
+    res.status(500).json({ error: 'Failed to fetch game' });
+  }
+});
+
 // Get games for a league and season
 router.get('/', authMiddleware, async (req, res) => {
   try {
@@ -15,7 +53,7 @@ router.get('/', authMiddleware, async (req, res) => {
       return res.status(400).json({ error: 'Invalid leagueId' });
     }
 
-    console.log('GET /api/games query:', { leagueId, season });
+    // console.log('GET /api/games query:', { leagueId, season });
 
     const games = await Game.find({ league: leagueId, season })
       .populate('teams', 'name')
@@ -29,7 +67,7 @@ router.get('/', authMiddleware, async (req, res) => {
       })
       .lean();
 
-    console.log('Fetched games:', JSON.stringify(games, null, 2));
+    // console.log('Fetched games:', JSON.stringify(games, null, 2));
 
     const populatedGames = games.map(game => ({
       ...game,
@@ -94,7 +132,7 @@ router.post('/', authMiddleware, checkAdminOrManager, async (req, res) => {
       gameData.gameMVP = gameMVP;
     }
 
-    console.log('Creating game with data:', gameData);
+    // console.log('Creating game with data:', gameData);
 
     const game = await Game.create(gameData);
 
@@ -122,10 +160,11 @@ router.post('/', authMiddleware, checkAdminOrManager, async (req, res) => {
 });
 
 // Update a game (admin/manager only)
+// Update a game (admin/manager only)
 router.patch('/:gameId', authMiddleware, checkAdminOrManager, async (req, res) => {
   try {
     const { gameId } = req.params;
-    const { teams, date, location, venue, venueCapacity, score, matchType, eventType, gameDuration, weatherConditions, referee, attendance, previousMatchupScore, fanRating, highlights, matchReport, mediaLinks, gameMVP } = req.body;
+    const { teams, date, location, venue, venueCapacity, score, matchType, eventType, gameDuration, weatherConditions, referee, attendance, previousMatchupScore, fanRating, highlights, matchReport, mediaLinks, gameMVP, season, playerStats } = req.body;
 
     const game = await Game.findById(gameId);
     if (!game) return res.status(404).json({ error: 'Game not found' });
@@ -133,37 +172,66 @@ router.patch('/:gameId', authMiddleware, checkAdminOrManager, async (req, res) =
     if (teams && (teams.length !== 2 || teams[0] === teams[1])) {
       return res.status(400).json({ error: 'Exactly two unique teams required' });
     }
+    if (season && (typeof season !== 'string' || season.trim() === '')) {
+      return res.status(400).json({ error: 'Invalid season: must be a non-empty string' });
+    }
 
-    Object.assign(game, {
-      teams,
-      date,
-      location,
-      venue,
-      venueCapacity,
-      score,
-      matchType,
-      eventType,
-      gameDuration,
-      weatherConditions,
-      referee,
-      attendance,
-      previousMatchupScore,
-      fanRating,
-      highlights,
-      matchReport,
-      mediaLinks,
-      gameMVP,
+    const validMediaLinks = mediaLinks ? mediaLinks.filter(link => link.url.trim() && link.type.trim()) : [];
+
+    const updateData = {
+      teams: teams || game.teams,
+      date: date || game.date,
+      season: season || game.season,
+      location: location !== undefined ? location : game.location,
+      venue: venue !== undefined ? venue : game.venue,
+      venueCapacity: venueCapacity !== undefined ? venueCapacity : game.venueCapacity,
+      score: score || game.score,
+      matchType: matchType || game.matchType,
+      eventType: eventType || game.eventType,
+      gameDuration: gameDuration !== undefined ? gameDuration : game.gameDuration,
+      weatherConditions: weatherConditions !== undefined ? weatherConditions : game.weatherConditions,
+      referee: referee !== undefined ? referee : game.referee,
+      attendance: attendance !== undefined ? attendance : game.attendance,
+      previousMatchupScore: previousMatchupScore !== undefined ? previousMatchupScore : game.previousMatchupScore,
+      fanRating: fanRating !== undefined ? fanRating : game.fanRating,
+      highlights: highlights ? highlights.filter(h => h.trim()) : game.highlights,
+      matchReport: matchReport !== undefined ? matchReport : game.matchReport,
+      mediaLinks: validMediaLinks.length > 0 ? validMediaLinks : game.mediaLinks,
       isCompleted: eventType === 'final' || (score && (score.team1 > 0 || score.team2 > 0)),
-    });
+    };
 
+    if (gameMVP && mongoose.Types.ObjectId.isValid(gameMVP)) {
+      updateData.gameMVP = gameMVP;
+    } else if (gameMVP === null || gameMVP === '') {
+      updateData.gameMVP = null;
+    }
+
+    // Handle playerStats if provided
+    if (playerStats && Array.isArray(playerStats)) {
+      updateData.playerStats = playerStats.map(stat => ({
+        player: mongoose.Types.ObjectId.isValid(stat.player) ? stat.player : null,
+        stats: stat.stats || {},
+      })).filter(stat => stat.player); // Remove invalid entries
+    }
+
+    Object.assign(game, updateData);
     await game.save();
 
     const populatedGame = await Game.findById(gameId)
       .populate('teams', 'name')
-      .populate('gameMVP', 'user')
+      .populate({
+        path: 'gameMVP',
+        populate: {
+          path: 'user',
+          model: 'User',
+          select: 'name'
+        }
+      })
       .lean();
 
-    populatedGame.gameMVP = populatedGame.gameMVP ? { ...populatedGame.gameMVP, name: populatedGame.gameMVP.user?.name || 'Unknown' } : null;
+    if (populatedGame.gameMVP) {
+      populatedGame.gameMVP.name = populatedGame.gameMVP.user?.name || 'Unknown';
+    }
 
     res.json(populatedGame);
   } catch (err) {

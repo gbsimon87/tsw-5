@@ -12,7 +12,7 @@ const gameSchema = new mongoose.Schema({
   },
   playerStats: [{
     player: { type: mongoose.Schema.Types.ObjectId, ref: 'Player' },
-    stats: mongoose.Schema.Types.Mixed, // Dynamic stats based on league.settings.scoringRules
+    stats: mongoose.Schema.Types.Mixed, // Dynamic stats based on league.settings.statTypes
   }],
   highlights: [{ type: String }],
   matchReport: { type: String },

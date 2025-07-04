@@ -37,7 +37,7 @@ export default function MySporty() {
         const response = await axios.get('/api/teams/my-teams?t=' + Date.now(), {
           headers: { Authorization: `Bearer ${user.token}` },
         });
-        console.log('Fetched teams:', response.data);
+        // console.log('Fetched teams:', response.data);
         setTeams(response.data);
         setLoading(false);
       } catch (err) {

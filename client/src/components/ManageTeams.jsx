@@ -114,13 +114,13 @@ export default function ManageTeams() {
 
   const handleChangeRole = async (teamId, playerId, newRole) => {
     try {
-      console.log('Updating role:', { teamId, playerId, newRole, leagueId });
+      // console.log('Updating role:', { teamId, playerId, newRole, leagueId });
       const response = await axios.patch(
         `/api/teams/${teamId}/members/${playerId}`,
         { role: newRole, leagueId },
         { headers: { Authorization: `Bearer ${user.token}` } }
       );
-      console.log('Update role response:', response.data);
+      // console.log('Update role response:', response.data);
       fetchTeams(selectedSeason);
     } catch (err) {
       console.error('Change role error:', err.response || err);
@@ -130,13 +130,13 @@ export default function ManageTeams() {
 
   const handleDeactivateTeam = async (teamId) => {
     try {
-      console.log('Deactivating team:', { teamId, leagueId });
+      // console.log('Deactivating team:', { teamId, leagueId });
       const response = await axios.patch(
         `/api/teams/${teamId}`,
         { isActive: false, leagueId },
         { headers: { Authorization: `Bearer ${user.token}` } }
       );
-      console.log('Deactivate team response:', response.data);
+      // console.log('Deactivate team response:', response.data);
       fetchTeams(selectedSeason);
     } catch (err) {
       console.error('Deactivate team error:', err.response || err);
@@ -275,7 +275,7 @@ export default function ManageTeams() {
                       <p className="text-gray-500">No members in this team.</p>
                     ) : (
                       <ul className="space-y-2">
-                        {console.log(team)}
+                        {/* {console.log(team)} */}
                         {team.members.map((member) => (
                           <li key={member.player._id} className="flex items-center justify-between py-2">
                             <div className="flex items-center gap-4">

@@ -4,7 +4,7 @@ const Team = require('../models/Team');
 const checkAdminOrManager = async (req, res, next) => {
   try {
     let leagueId = req.body.leagueId || req.query.leagueId || req.body.league;
-    console.log('checkAdminOrManager: leagueId from body/query:', leagueId);
+    // console.log('checkAdminOrManager: leagueId from body/query:', leagueId);
 
     if (!leagueId && req.params.teamId) {
       const team = await Team.findById(req.params.teamId);
@@ -13,7 +13,7 @@ const checkAdminOrManager = async (req, res, next) => {
         return res.status(404).json({ error: 'Team not found' });
       }
       leagueId = team.league;
-      console.log('checkAdminOrManager: leagueId from team.league:', leagueId);
+      // console.log('checkAdminOrManager: leagueId from team.league:', leagueId);
     }
 
     if (!leagueId) {

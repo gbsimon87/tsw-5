@@ -71,7 +71,7 @@ export default function ManageGames() {
             'Pragma': 'no-cache',
           },
         });
-        console.log('Fetched games:', gamesResponse.data);
+        // console.log('Fetched games:', gamesResponse.data);
         setGames(gamesResponse.data || []);
 
         setLoading(false);
@@ -158,7 +158,7 @@ export default function ManageGames() {
         delete payload.gameMVP; // Exclude gameMVP for new games
       }
 
-      console.log('Game creation payload:', payload);
+      // console.log('Game creation payload:', payload);
 
       if (editingGameId) {
         await axios.patch(`/api/games/${editingGameId}`, payload, {
@@ -177,7 +177,7 @@ export default function ManageGames() {
           'Pragma': 'no-cache',
         },
       });
-      console.log('Refreshed games:', gamesResponse.data);
+      // console.log('Refreshed games:', gamesResponse.data);
       setGames(gamesResponse.data || []);
 
       setFormData({
@@ -210,31 +210,7 @@ export default function ManageGames() {
   };
 
   const handleEditGame = (game) => {
-    const date = new Date(game.date);
-    const dateStr = date.toISOString().split('T')[0];
-    const timeStr = date.toTimeString().slice(0, 5);
-    setFormData({
-      date: dateStr,
-      time: timeStr,
-      teams: Array.isArray(game.teams) && game.teams.length >= 2 ? game.teams.map(team => team?._id || '') : ['', ''],
-      location: game.location || '',
-      venue: game.venue || '',
-      venueCapacity: game.venueCapacity || '',
-      score: game.score || { team1: 0, team2: 0 },
-      matchType: game.matchType || 'league',
-      eventType: game.eventType || 'regular',
-      gameDuration: game.gameDuration || '',
-      weatherConditions: game.weatherConditions || '',
-      referee: game.referee || '',
-      attendance: game.attendance || '',
-      previousMatchupScore: game.previousMatchupScore || '',
-      fanRating: game.fanRating || 0,
-      highlights: game.highlights?.length > 0 ? game.highlights : [''],
-      matchReport: game.matchReport || '',
-      mediaLinks: game.mediaLinks?.length > 0 ? game.mediaLinks : [{ url: '', type: '' }],
-      gameMVP: game.gameMVP?._id || '',
-    });
-    setEditingGameId(game._id);
+    navigate(`/leagues/${leagueId}/games/${game._id}/tracking`);
   };
 
   const handleDeleteGame = async (gameId) => {

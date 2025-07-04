@@ -191,7 +191,7 @@ router.get('/my-teams', authMiddleware, async (req, res) => {
     // Find Player documents for the user
     const players = await Player.find({ user: req.user._id });
     const playerIds = players.map(player => player._id);
-    console.log('User player IDs:', playerIds);
+    // console.log('User player IDs:', playerIds);
 
     // Find teams where the user is a member (via Player ID)
     const teams = await Team.find({
@@ -207,7 +207,7 @@ router.get('/my-teams', authMiddleware, async (req, res) => {
         }
       });
 
-    console.log('Fetched user teams:', JSON.stringify(teams, null, 2));
+    // console.log('Fetched user teams:', JSON.stringify(teams, null, 2));
 
     // Prevent caching to ensure fresh data
     res.set('Cache-Control', 'no-store');
