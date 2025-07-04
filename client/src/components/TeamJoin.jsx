@@ -21,10 +21,11 @@ export default function TeamJoin() {
         { secretKey: joinFormData.secretKey },
         { headers: { Authorization: `Bearer ${user.token}` } }
       );
-      setSuccess(`Successfully joined team: ${response.data.name}`);
+      setSuccess(`Successfully joined team: ${response.data.team.name}`);
       setJoinFormData({ secretKey: '' });
       setError(null);
     } catch (err) {
+      console.error('Join team error:', err.response || err);
       setError(
         err.response?.status === 400
           ? err.response.data.error

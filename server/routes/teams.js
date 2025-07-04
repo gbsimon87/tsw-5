@@ -132,7 +132,16 @@ router.post('/join', authMiddleware, async (req, res) => {
     const { secretKey } = req.body;
     const userId = req.user._id;
 
-    const team = await Team.findOne({ secretKey }).populate('league');
+    const team = await Team.findOne({ secretKey })
+      .populate('league')
+      .populate({
+        path: 'members.player',
+        populate: {
+          path: 'user',
+          model: 'User',
+          select: 'name'
+        }
+      });
     if (!team) return res.status(404).json({ error: 'Invalid team key' });
 
     const isMember = team.members.some(member => member.player.toString() === userId.toString());
@@ -157,7 +166,19 @@ router.post('/join', authMiddleware, async (req, res) => {
     team.members.push({ player: player._id, role: 'player', isActive: true });
     await team.save();
 
-    res.json({ message: 'Joined team successfully', team });
+    // Re-fetch team with populated data to ensure consistency
+    const populatedTeam = await Team.findById(team._id)
+      .populate('league')
+      .populate({
+        path: 'members.player',
+        populate: {
+          path: 'user',
+          model: 'User',
+          select: 'name'
+        }
+      });
+
+    res.json({ message: 'Joined team successfully', team: populatedTeam });
   } catch (err) {
     console.error('Join team error:', err);
     res.status(500).json({ error: 'Failed to join team' });
