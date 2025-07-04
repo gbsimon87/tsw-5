@@ -1,6 +1,22 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
+import {
+  FlagIcon,
+  PlusIcon,
+  TrashIcon,
+  PencilIcon,
+  TrophyIcon,
+  EyeIcon,
+  MapPinIcon,
+  ClockIcon,
+  StarIcon,
+  CalendarIcon,
+  Cog6ToothIcon,
+  KeyIcon,
+  ClipboardDocumentIcon,
+  UsersIcon,
+  ListBulletIcon
+} from '@heroicons/react/24/outline';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 
@@ -61,7 +77,6 @@ export default function ManageLeagueEdit() {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
   const [league, setLeague] = useState(null);
-  // Add new state variables in the component
   const [newSeasonData, setNewSeasonData] = useState({
     name: '',
     startDate: '',
@@ -70,8 +85,6 @@ export default function ManageLeagueEdit() {
   const [carryOverTeams, setCarryOverTeams] = useState([]);
   const [previousSeasonTeams, setPreviousSeasonTeams] = useState([]);
 
-  // Add useEffect to fetch previous season teams
-  // Modify the existing fetchLeague useEffect to include fetching previous season teams
   useEffect(() => {
     const fetchLeague = async () => {
       try {
@@ -100,7 +113,6 @@ export default function ManageLeagueEdit() {
           });
         }
 
-        // Fetch previous season teams if a season is active
         if (leagueData.season) {
           try {
             const teamsResponse = await axios.get(`/api/teams?leagueId=${leagueId}&season=${leagueData.season}`, {
@@ -127,7 +139,6 @@ export default function ManageLeagueEdit() {
     fetchLeague();
   }, [leagueId, user.token]);
 
-  // Add new handlers
   const handleSeasonInputChange = (e) => {
     const { name, value } = e.target;
     setNewSeasonData({ ...newSeasonData, [name]: value });
@@ -141,8 +152,8 @@ export default function ManageLeagueEdit() {
         { headers: { Authorization: `Bearer ${user.token}` } }
       );
       setLeague(response.data);
-      setPreviousSeasonTeams([]); // Clear previous season teams since no season is active
-      setCarryOverTeams([]); // Reset selected teams
+      setPreviousSeasonTeams([]);
+      setCarryOverTeams([]);
       setError(null);
     } catch (err) {
       console.error('End season client error:', err.response || err);
@@ -237,7 +248,6 @@ export default function ManageLeagueEdit() {
     }
   };
 
-  // Update scoringRules when sportType changes
   useEffect(() => {
     if (formData.sportType !== formData.settings.scoringRules.sportType) {
       setFormData({
@@ -250,42 +260,89 @@ export default function ManageLeagueEdit() {
     }
   }, [formData.sportType]);
 
+  const handleCopyKey = () => {
+    if (league?.secretKey) {
+      navigator.clipboard.writeText(league.secretKey);
+      alert('Secret key copied to clipboard!');
+    }
+  };
+
   if (loading) {
-    return <div className="text-center mt-8">Loading...</div>;
+    return (
+      <div className="min-h-[var(--page-height)] bg-gray-50 flex items-center justify-center">
+        <p className="text-center text-gray-600 text-lg">Loading...</p>
+      </div>
+    );
   }
 
   if (error) {
-    return <div className="text-center mt-8 text-red-500">{error}</div>;
+    return (
+      <div className="min-h-[var(--page-height)] bg-gray-50 flex items-center justify-center">
+        <p className="text-center text-red-500 text-lg">{error}</p>
+      </div>
+    );
   }
 
   return (
-    <div className="flex items-center justify-center">
-      <div className="w-full min-h-screen bg-gray-100 p-8">
-        <div className="max-w-4xl mx-auto">
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <h1 className="text-3xl font-bold mb-6 text-gray-800">{formData.name}</h1>
-            <h2 className="text-2xl font-semibold mb-4">Edit Details</h2>
-            {error && <p className="text-red-500 mb-4 text-center">{error}</p>}
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Name:</label>
+    <div className="min-h-[var(--page-height)] bg-gray-50 py-10 px-4">
+      <div className="max-w-4xl mx-auto">
+        {/* Header with actions */}
+        <header className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 gap-4">
+          <h1 className="text-3xl font-bold text-gray-800">{formData.name}</h1>
+          <div className="flex gap-3">
+            <button
+              type="submit"
+              form="leagueForm"
+              className="flex items-center gap-2 bg-blue-600 text-white px-5 py-2 rounded-lg font-semibold shadow hover:bg-blue-700 transition focus:ring-2 focus:ring-blue-500 focus:outline-none"
+            >
+              <PencilIcon className="w-5 h-5" />
+              Save Changes
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate(`/leagues/${leagueId}`)}
+              className="flex items-center gap-2 bg-white text-blue-700 border border-blue-600 px-5 py-2 rounded-lg font-semibold shadow hover:bg-blue-50 transition focus:ring-2 focus:ring-blue-500 focus:outline-none"
+            >
+              <UsersIcon className="w-5 h-5" />
+              Cancel
+            </button>
+          </div>
+        </header>
+
+        {/* League Details */}
+        <section className="bg-white shadow-xl rounded-2xl p-8 border border-gray-200 mb-8">
+          <header className="flex items-center gap-3 mb-4">
+            <StarIcon className="w-6 h-6 text-yellow-400" />
+            <h2 className="text-2xl font-semibold text-gray-800">Edit League Details</h2>
+          </header>
+          {error && <p className="text-red-500 mb-4 text-center">{error}</p>}
+          <form id="leagueForm" onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="flex flex-col">
+                <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                  <TrophyIcon className="w-5 h-5 text-gray-500" />
+                  Name:
+                </label>
                 <input
                   type="text"
                   name="name"
                   value={formData.name}
                   onChange={handleInputChange}
                   required
-                  className="mt-1 w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="mt-1 w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Sport Type:</label>
+              <div className="flex flex-col">
+                <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                  <TrophyIcon className="w-5 h-5 text-gray-500" />
+                  Sport Type:
+                </label>
                 <select
                   name="sportType"
                   value={formData.sportType}
                   onChange={handleInputChange}
                   required
-                  className="mt-1 w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="mt-1 w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 >
                   <option value="basketball">Basketball</option>
                   <option value="soccer">Soccer</option>
@@ -294,75 +351,83 @@ export default function ManageLeagueEdit() {
                   <option value="football">Football</option>
                 </select>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Visibility:</label>
+              <div className="flex flex-col">
+                <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                  <EyeIcon className="w-5 h-5 text-gray-500" />
+                  Visibility:
+                </label>
                 <select
                   name="visibility"
                   value={formData.visibility}
                   onChange={handleInputChange}
                   required
-                  className="mt-1 w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="mt-1 w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 >
                   <option value="public">Public</option>
                   <option value="private">Private</option>
                 </select>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Logo URL (optional):</label>
-                <input
-                  type="url"
-                  name="logo"
-                  value={formData.logo}
-                  onChange={handleInputChange}
-                  className="mt-1 w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Location (optional):</label>
+              <div className="flex flex-col">
+                <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                  <MapPinIcon className="w-5 h-5 text-gray-500" />
+                  Location (optional):
+                </label>
                 <input
                   type="text"
                   name="location"
                   value={formData.location}
                   onChange={handleInputChange}
-                  className="mt-1 w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="mt-1 w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Established Year (optional):</label>
+              <div className="flex flex-col">
+                <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                  <ClockIcon className="w-5 h-5 text-gray-500" />
+                  Established Year (optional):
+                </label>
                 <input
                   type="number"
                   name="establishedYear"
                   value={formData.establishedYear}
                   onChange={handleInputChange}
-                  className="mt-1 w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="mt-1 w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Active:</label>
+              <div className="flex items-center gap-2">
+                <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                  <FlagIcon className="w-5 h-5 text-gray-500" />
+                  Active:
+                </label>
                 <input
                   type="checkbox"
                   name="isActive"
                   checked={formData.isActive}
                   onChange={handleInputChange}
-                  className="mt-1 h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  className="mt-1 h-4 w-4 text-blue-600 border-gray-200 rounded focus:ring-2 focus:ring-blue-500"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Period Type:</label>
+              <div className="flex flex-col">
+                <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                  <Cog6ToothIcon className="w-5 h-5 text-gray-500" />
+                  Period Type:
+                </label>
                 <select
                   name="settings.periodType"
                   value={formData.settings.periodType}
                   onChange={handleInputChange}
                   required
-                  className="mt-1 w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="mt-1 w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 >
                   <option value="halves">Halves</option>
                   <option value="quarters">Quarters</option>
                   <option value="periods">Periods</option>
                 </select>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Period Duration (minutes):</label>
+              <div className="flex flex-col">
+                <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                  <ClockIcon className="w-5 h-5 text-gray-500" />
+                  Period Duration (minutes):
+                </label>
                 <input
                   type="number"
                   name="settings.periodDuration"
@@ -370,11 +435,14 @@ export default function ManageLeagueEdit() {
                   onChange={handleInputChange}
                   required
                   min="1"
-                  className="mt-1 w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="mt-1 w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Overtime Duration (minutes):</label>
+              <div className="flex flex-col">
+                <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                  <ClockIcon className="w-5 h-5 text-gray-500" />
+                  Overtime Duration (minutes):
+                </label>
                 <input
                   type="number"
                   name="settings.overtimeDuration"
@@ -382,134 +450,169 @@ export default function ManageLeagueEdit() {
                   onChange={handleInputChange}
                   required
                   min="1"
-                  className="mt-1 w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="mt-1 w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Scoring Rules:</label>
-                <div className="space-y-2 ml-4">
-                  {Object.keys(formData.settings.scoringRules).map((rule) => (
-                    <div key={rule} className="flex items-center">
-                      <label className="text-sm text-gray-600">
-                        {semanticScoringRulesMap[formData.sportType][rule] || rule}:
-                      </label>
-                      <input
-                        type="number"
-                        name="settings.scoringRules"
-                        data-rule={rule}
-                        value={formData.settings.scoringRules[rule]}
-                        onChange={handleInputChange}
-                        min="0"
-                        className="ml-2 w-24 p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                  ))}
-                </div>
+            </div>
+            <div className="mt-4">
+              <div className="flex items-center mb-2">
+                <ListBulletIcon className="w-5 h-5 mr-3 text-gray-500" />
+                <h3 className="font-semibold text-gray-800">Scoring Rules</h3>
               </div>
-              <div className="flex space-x-4">
+              <div className="space-y-2 ml-6">
+                {Object.keys(formData.settings.scoringRules).map((rule) => (
+                  <div key={rule} className="flex items-center bg-white p-3 rounded-md border border-gray-200">
+                    <ListBulletIcon className="w-4 h-4 mr-2.5 text-gray-500" />
+                    <span className="font-medium text-gray-600">
+                      {semanticScoringRulesMap[formData.sportType][rule] || rule}:
+                    </span>
+                    <input
+                      type="number"
+                      name="settings.scoringRules"
+                      data-rule={rule}
+                      value={formData.settings.scoringRules[rule]}
+                      onChange={handleInputChange}
+                      min="0"
+                      className="ml-2 w-24 p-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="mt-4">
+              <div className="flex items-center mb-2">
+                <KeyIcon className="w-5 h-5 mr-3 text-gray-500" />
+                <h3 className="font-semibold text-gray-800">Secret Key</h3>
+              </div>
+              <div className="flex items-center bg-white p-3 rounded-md border border-gray-200 ml-6">
+                <ClipboardDocumentIcon className="w-4 h-4 mr-2.5 text-gray-500" />
+                <span className="font-mono text-gray-800">
+                  {league.secretKey
+                    ? `${league.secretKey.slice(0, 8)}...${league.secretKey.slice(-4)}`
+                    : 'Not set'}
+                </span>
                 <button
-                  type="submit"
-                  className="flex-1 bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                >
-                  Save League Changes
-                </button>
-                <button
+                  onClick={handleCopyKey}
+                  className="ml-4 bg-blue-600 text-white px-3 py-1 rounded-md hover:bg-blue-700 transition focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  aria-label="Copy Secret Key"
                   type="button"
-                  onClick={() => navigate(`/leagues/${leagueId}`)}
-                  className="flex-1 bg-gray-300 text-gray-800 py-2 rounded-lg hover:bg-gray-400 transition focus:ring-2 focus:ring-gray-500 focus:outline-none"
+                  disabled={!league.secretKey}
                 >
-                  Cancel
+                  <ClipboardDocumentIcon className="w-4 h-4" />
                 </button>
               </div>
+            </div>
+          </form>
+        </section>
+
+        {/* Season Management */}
+        <section className="bg-white shadow-xl rounded-2xl p-8 border border-gray-200">
+          <div className="flex items-center gap-3 mb-4">
+            <CalendarIcon className="w-6 h-6 text-purple-500" />
+            <h2 className="text-2xl font-semibold text-gray-800">Season Management</h2>
+          </div>
+          {league.season && league.seasons.some(s => s.isActive) && (
+            <div className="mb-6">
+              <div className="flex items-center mb-2">
+                <CalendarIcon className="w-5 h-5 mr-3 text-gray-500" />
+                <h3 className="font-semibold text-gray-800">Current Season: {league.season}</h3>
+              </div>
+              <button
+                onClick={handleEndSeason}
+                className="flex items-center gap-2 bg-red-600 text-white px-5 py-2 rounded-lg font-semibold shadow hover:bg-red-700 transition focus:ring-2 focus:ring-red-500 focus:outline-none"
+              >
+                <TrashIcon className="w-5 h-5" />
+                End Current Season
+              </button>
+            </div>
+          )}
+          <div className="mt-4">
+            <div className="flex items-center mb-2">
+              <PlusIcon className="w-5 h-5 mr-3 text-gray-500" />
+              <h3 className="font-semibold text-gray-800">Create New Season</h3>
+            </div>
+            <form onSubmit={handleCreateSeason} className="space-y-4">
+              <div className="flex flex-col">
+                <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                  <CalendarIcon className="w-5 h-5 text-gray-500" />
+                  Season Name:
+                </label>
+                <input
+                  type="text"
+                  name="name"
+                  value={newSeasonData.name}
+                  onChange={handleSeasonInputChange}
+                  required
+                  className="mt-1 w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                />
+              </div>
+              <div className="flex flex-col">
+                <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                  <CalendarIcon className="w-5 h-5 text-gray-500" />
+                  Start Date:
+                </label>
+                <input
+                  type="date"
+                  name="startDate"
+                  value={newSeasonData.startDate}
+                  onChange={handleSeasonInputChange}
+                  required
+                  className="mt-1 w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                />
+              </div>
+              <div className="flex flex-col">
+                <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                  <CalendarIcon className="w-5 h-5 text-gray-500" />
+                  End Date:
+                </label>
+                <input
+                  type="date"
+                  name="endDate"
+                  value={newSeasonData.endDate}
+                  onChange={handleSeasonInputChange}
+                  required
+                  className="mt-1 w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                />
+              </div>
+              <button
+                type="submit"
+                className="flex items-center gap-2 justify-center w-full bg-blue-600 text-white px-5 py-2 rounded-lg font-semibold shadow hover:bg-blue-700 transition focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              >
+                <PlusIcon className="w-5 h-5" />
+                Create Season
+              </button>
             </form>
           </div>
-          <div className="bg-white p-6 rounded-lg shadow-md mt-8">
-            <div className="mt-8">
-              <h2 className="text-2xl font-semibold mb-4">Season Management</h2>
-              {league.season && league.seasons.some(s => s.isActive) && (
-                <div className="mb-6">
-                  <h3 className="text-lg font-medium mb-2">Current Season: {league.season}</h3>
-                  <button
-                    onClick={handleEndSeason}
-                    className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition focus:ring-2 focus:ring-red-500 focus:outline-none flex items-center"
-                  >
-                    <TrashIcon className="w-5 h-5 mr-2" />
-                    End Current Season
-                  </button>
-                </div>
-              )}
-              <h3 className="text-lg font-medium mb-2">Create New Season</h3>
-              <form onSubmit={handleCreateSeason} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Season Name:</label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={newSeasonData.name}
-                    onChange={handleSeasonInputChange}
-                    required
-                    className="mt-1 w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Start Date:</label>
-                  <input
-                    type="date"
-                    name="startDate"
-                    value={newSeasonData.startDate}
-                    onChange={handleSeasonInputChange}
-                    required
-                    className="mt-1 w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">End Date:</label>
-                  <input
-                    type="date"
-                    name="endDate"
-                    value={newSeasonData.endDate}
-                    onChange={handleSeasonInputChange}
-                    required
-                    className="mt-1 w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <button
-                  type="submit"
-                  className="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition focus:ring-2 focus:ring-blue-500 focus:outline-none flex items-center justify-center"
-                >
-                  <PlusIcon className="w-5 h-5 mr-2" />
-                  Create Season
-                </button>
-              </form>
-              {previousSeasonTeams.length > 0 && (
-                <div className="mt-6">
-                  <h3 className="text-lg font-medium mb-2">Carry Over Teams from Previous Season</h3>
-                  <div className="space-y-2">
-                    {previousSeasonTeams.map((team) => (
-                      <div key={team._id} className="flex items-center">
-                        <input
-                          type="checkbox"
-                          checked={carryOverTeams.includes(team._id)}
-                          onChange={() => toggleTeamSelection(team._id)}
-                          className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                        />
-                        <span className="ml-2">{team.name}</span>
-                      </div>
-                    ))}
+          {previousSeasonTeams.length > 0 && (
+            <div className="mt-6">
+              <div className="flex items-center mb-2">
+                <UsersIcon className="w-5 h-5 mr-3 text-teal-500" />
+                <h3 className="font-semibold text-gray-800">Carry Over Teams from Previous Season</h3>
+              </div>
+              <div className="space-y-2 ml-6">
+                {previousSeasonTeams.map((team) => (
+                  <div key={team._id} className="flex items-center bg-white p-3 rounded-md border border-gray-200">
+                    <input
+                      type="checkbox"
+                      checked={carryOverTeams.includes(team._id)}
+                      onChange={() => toggleTeamSelection(team._id)}
+                      className="h-4 w-4 text-blue-600 border-gray-200 rounded focus:ring-2 focus:ring-blue-500 mr-2.5"
+                    />
+                    <span>{team.name}</span>
                   </div>
-                  <button
-                    onClick={handleCarryOverTeams}
-                    className="mt-4 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition focus:ring-2 focus:ring-green-500 focus:outline-none flex items-center"
-                    disabled={carryOverTeams.length === 0}
-                  >
-                    <PlusIcon className="w-5 h-5 mr-2" />
-                    Carry Over Selected Teams
-                  </button>
-                </div>
-              )}
+                ))}
+              </div>
+              <button
+                onClick={handleCarryOverTeams}
+                className="mt-4 flex items-center gap-2 bg-green-600 text-white px-5 py-2 rounded-lg font-semibold shadow hover:bg-green-700 transition focus:ring-2 focus:ring-green-500 focus:outline-none"
+                disabled={carryOverTeams.length === 0}
+              >
+                <PlusIcon className="w-5 h-5" />
+                Carry Over Selected Teams
+              </button>
             </div>
-          </div>
-        </div>
+          )}
+        </section>
       </div>
     </div>
   );

@@ -4,10 +4,10 @@ import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import {
   ArrowLeftIcon,
-  UserCircleIcon,
-  ShieldCheckIcon,
   ShieldExclamationIcon,
   TrashIcon,
+  UserGroupIcon,
+  UserCircleIcon
 } from '@heroicons/react/24/outline';
 
 export default function ManageTeams() {
@@ -156,7 +156,7 @@ export default function ManageTeams() {
         </div>
 
         {selectedSeason && (
-          <div className="bg-white p-6 rounded-lg shadow-md mb-8">
+          <div className="bg-white p-4 rounded-lg shadow-md mb-8">
             <h2 className="text-2xl font-semibold mb-4">Create New Team</h2>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
@@ -190,12 +190,12 @@ export default function ManageTeams() {
           </div>
         )}
         {!selectedSeason && (
-          <div className="bg-white p-6 rounded-lg shadow-md mb-8">
+          <div className="bg-white p-4 rounded-lg shadow-md mb-8">
             <p className="text-center text-gray-500">Please select a season to create a team.</p>
           </div>
         )}
 
-        <div className="bg-white p-6 rounded-lg shadow-md">
+        <div className="bg-white p-4 rounded-lg shadow-md">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-2xl font-semibold">Teams</h2>
             <div className="flex items-center">
@@ -219,34 +219,50 @@ export default function ManageTeams() {
             <div className="space-y-6">
               {teams.map((team) => (
                 <div key={team._id} className="border-b border-gray-200 pb-4">
-                  <div className="flex justify-between items-center mb-2">
-                    <div className="flex items-center">
+                  <div className="flex items-center justify-between py-2">
+                    <div className="flex items-center gap-5">
                       {team.logo ? (
-                        <img src={team.logo} alt={team.name} className="w-10 h-10 rounded-full mr-3" />
+                        <img
+                          src={team.logo}
+                          alt={team.name}
+                          className="w-12 h-12 rounded-full shadow border-2 border-gray-200 bg-white"
+                        />
                       ) : (
-                        <div className="w-10 h-10 rounded-full bg-white border" style={{ borderColor: 'rgb(31 41 55)' }} />
+                        <div className="w-12 h-12 rounded-full bg-gray-100 border-2 border-gray-300 flex items-center justify-center shadow mr-0">
+                          <UserGroupIcon className="w-6 h-6 text-gray-400" aria-hidden="true" />
+                        </div>
                       )}
-                      <h3 className="text-xl font-medium">{team.name} {team.isActive ? '' : '(Inactive)'}</h3>
+                      <h3 className="text-xl font-medium flex items-center gap-2">
+                        {team.name}
+                        {!team.isActive && (
+                          <span className="text-sm text-gray-400 font-normal">(Inactive)</span>
+                        )}
+                      </h3>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <span className="text-sm text-gray-600">Secret Key: {team.secretKey}</span>
+                    {team.isActive && (
                       <button
-                        onClick={() => copyToClipboard(team.secretKey)}
-                        className="bg-blue-500 text-white px-2 py-1 rounded-lg hover:bg-blue-600 transition focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                        aria-label={`Copy secret key for ${team.name}`}
+                        onClick={() => handleDeactivateTeam(team._id)}
+                        className="bg-red-500 text-white px-3 py-2 rounded-lg hover:bg-red-600 transition focus:ring-2 focus:ring-red-500 focus:outline-none"
+                        aria-label={`Deactivate team ${team.name}`}
+                        title="Archive/Deactivate"
                       >
-                        {copiedKey === team.secretKey ? 'Copied!' : 'Copy Key'}
+                        <TrashIcon className="w-5 h-5" />
                       </button>
-                      {team.isActive && (
-                        <button
-                          onClick={() => handleDeactivateTeam(team._id)}
-                          className="bg-red-500 text-white px-2 py-1 rounded-lg hover:bg-red-600 transition focus:ring-2 focus:ring-red-500 focus:outline-none"
-                          aria-label={`Deactivate team ${team.name}`}
-                        >
-                          <TrashIcon className="w-5 h-5" />
-                        </button>
-                      )}
-                    </div>
+                    )}
+                  </div>
+
+                  {/* Row 2: Secret Key and Copy Button */}
+                  <div className="flex justify-between items-center space-x-2 mt-1 mt-8">
+                    <span className="text-sm text-gray-600 font-mono">
+                      Secret Key: {team.secretKey}
+                    </span>
+                    <button
+                      onClick={() => copyToClipboard(team.secretKey)}
+                      className="bg-blue-500 text-white px-2 py-1 rounded-lg hover:bg-blue-600 transition focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                      aria-label={`Copy secret key for ${team.name}`}
+                    >
+                      {copiedKey === team.secretKey ? 'Copied!' : 'Copy Key'}
+                    </button>
                   </div>
                   <div className="mt-4">
                     <h4 className="text-lg font-medium mb-2">Members</h4>
@@ -255,16 +271,25 @@ export default function ManageTeams() {
                     ) : (
                       <ul className="space-y-2">
                         {team.members.map((member) => (
-                          <li key={member.user._id} className="flex items-center justify-between">
-                            <div className="flex items-center">
+                          <li key={member.user._id} className="flex items-center justify-between py-2">
+                            <div className="flex items-center gap-4">
                               {member.user.picture ? (
-                                <img src={member.user.picture} alt={member.user.name} className="w-8 h-8 rounded-full mr-2" />
+                                <img
+                                  src={member.user.picture}
+                                  alt={member.user.name}
+                                  className="w-10 h-10 rounded-full shadow border-2 border-gray-200 bg-white"
+                                />
                               ) : (
-                                <div className="w-8 h-8 rounded-full bg-white border" style={{ borderColor: 'rgb(31 41 55)' }} />
+                                <div className="w-10 h-10 rounded-full bg-gray-100 border-2 border-gray-300 flex items-center justify-center shadow">
+                                  <UserCircleIcon className="w-6 h-6 text-gray-400" aria-hidden="true" />
+                                </div>
                               )}
-                              <span>{member.user.name} {member.isActive ? '' : '(Inactive)'}</span>
+                              <span className={`text-base ${member.isActive ? 'text-gray-800' : 'text-gray-400 italic'}`}>
+                                {member.user.name}
+                                {!member.isActive && <span className="ml-2">(Inactive)</span>}
+                              </span>
                             </div>
-                            <div className="flex items-center space-x-2">
+                            <div className="flex items-center gap-2">
                               <select
                                 value={member.role}
                                 onChange={(e) => handleChangeRole(team._id, member.user._id, e.target.value)}
@@ -279,6 +304,7 @@ export default function ManageTeams() {
                                   onClick={() => handleDeactivateMember(team._id, member.user._id)}
                                   className="bg-red-500 text-white px-2 py-1 rounded-lg hover:bg-red-600 transition focus:ring-2 focus:ring-red-500 focus:outline-none"
                                   aria-label={`Deactivate member ${member.user.name}`}
+                                  title="Deactivate Member"
                                 >
                                   <ShieldExclamationIcon className="w-5 h-5" />
                                 </button>

@@ -49,7 +49,7 @@ export default function MySporty() {
           <p className="text-center text-gray-600">You are not a member of any teams yet.</p>
         )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 gap-8">
           {teams.map((team) => {
             const member = team.members.find((m) => m.user._id === user._id);
             const memberSince = new Date(team.createdAt).toLocaleDateString('en-US', {
