@@ -73,7 +73,7 @@ async function seedDatabase() {
     const users = [];
     const adminUsers = [];
     for (let i = 0; i < 4; i++) {
-      const email = `admin${i + 1}@league${i + 1}.com`;
+      const email = `admin${i + 1}@admin${i + 1}.com`;
       const name = faker.person.fullName();
       const hashedPassword = await bcrypt.hash('password', 10);
       adminUsers.push({
@@ -84,7 +84,20 @@ async function seedDatabase() {
       });
     }
 
-    for (let i = 0; i < 240; i++) {
+    // Create first 5 player users with specific emails
+    for (let i = 1; i <= 5; i++) {
+      const email = `player${i}@player${i}.com`;
+      const name = `Player ${i}`;
+      const hashedPassword = await bcrypt.hash('password', 10);
+      users.push({
+        email,
+        name,
+        password: hashedPassword,
+        emailVerified: false
+      });
+    }
+
+    for (let i = 0; i < 235; i++) {
       const email = faker.internet.email({ provider: 'example.com' });
       const name = faker.person.fullName();
       const hashedPassword = await bcrypt.hash('password', 10);
