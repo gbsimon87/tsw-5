@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useAuth } from '../context/AuthContext';
 import {
   BuildingOfficeIcon,
   TrophyIcon,
@@ -10,6 +9,8 @@ import {
   CheckCircleIcon,
   XCircleIcon,
 } from '@heroicons/react/24/outline';
+import { useAuth } from '../context/AuthContext';
+import TeamJoin from './TeamJoin';
 
 export default function MySporty() {
   const { user } = useAuth();
@@ -50,20 +51,42 @@ export default function MySporty() {
     fetchPlayerIds().then(fetchTeams);
   }, [user._id, user.token]);
 
+  // 🔽 If loading or error, render fallback UI
+  if (loading) {
+    return (
+      <div className="h-[var(--page-height)] flex items-center justify-center text-gray-600">
+        Loading teams...
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="h-[var(--page-height)] flex items-center justify-center text-red-500">
+        {error}
+      </div>
+    );
+  }
+
+  // 🔽 If no teams, show join form
+  if (teams.length === 0) {
+    return <TeamJoin />;
+  }
+
   return (
     <div className="h-[var(--page-height)] bg-white p-6">
       <div className="max-w-7xl mx-auto">
         <div className="block mb-8">
-          <h1 className="text-3xl font-bold text-gray-800">MySporty</h1>
+          <h1 className="text-3xl font-bold text-gray-800 mb-4">MySporty</h1>
           <div className="flex items-center space-x-4">
-            <p className="text-lg text-gray-600">Welcome, {user.name} ({user.email})</p>
+            <p className="text-lg text-gray-600">Welcome, {user.name}</p>
           </div>
         </div>
 
         {loading && <p className="text-center text-gray-600">Loading teams...</p>}
         {error && <p className="text-center text-red-500">{error}</p>}
         {!loading && !error && teams.length === 0 && (
-          <p className="text-center text-gray-600">You are not a member of any teams yet.</p>
+          <p className="text-left text-gray-600">You are not a member of any teams yet.</p>
         )}
 
         <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 gap-8">

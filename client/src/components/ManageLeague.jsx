@@ -94,7 +94,7 @@ export default function ManageLeague() {
           <div className="flex gap-3">
             <Link
               to={`/leagues/${leagueId}/edit`}
-              className="flex items-center gap-2 bg-blue-600 text-white px-5 py-2 rounded-lg font-semibold shadow hover:bg-blue-700 transition focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              className="flex items-center gap-2 bg-white text-blue-700 border border-blue-600 px-5 py-2 rounded-lg font-semibold shadow hover:bg-blue-50 transition focus:ring-2 focus:ring-blue-500 focus:outline-none"
               aria-label="Edit League"
             >
               <PencilIcon className="w-5 h-5" />

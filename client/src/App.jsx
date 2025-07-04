@@ -1,4 +1,3 @@
-import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { AuthProvider } from './context/AuthContext';
@@ -20,10 +19,14 @@ import TeamJoin from './components/TeamJoin';
 import './App.css';
 
 function AppContent() {
-  const location = useLocation();
+const location = useLocation();
   // Define routes where navbar should NOT be shown
-  const hideNavbarRoutes = [];
-  const showNavbar = !hideNavbarRoutes.includes(location.pathname);
+  const hideNavbarRoutes = [
+    /^\/leagues\/[^/]+\/games\/[^/]+\/tracking$/
+  ];
+  const showNavbar = !hideNavbarRoutes.some(route =>
+    route instanceof RegExp ? route.test(location.pathname) : route === location.pathname
+  );
 
   return (
     <div className="App">

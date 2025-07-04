@@ -43,7 +43,7 @@ export default function AdminPanel() {
   };
 
   return (
-    <div className="flex items-center justify-center h-[var(--page-height)] bg-gray-50 py-12 px-4 pt-12">
+    <div className="flex items-center justify-center bg-gray-50 py-12 px-4 pt-12">
       <div className="w-full max-w-3xl">
         <header className="mb-10">
           <h1 className="text-3xl font-extrabold mb-2 text-center text-gray-900">Admin Panel</h1>

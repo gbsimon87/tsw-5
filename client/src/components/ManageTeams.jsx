@@ -224,7 +224,7 @@ export default function ManageTeams() {
           ) : (
             <div className="space-y-6">
               {teams.map((team) => (
-                <div key={team._id} className="border-b border-gray-200 pb-4">
+                <div key={team._id} className="border-b border-gray-200 pb-8 mb-12">
                   <div className="flex items-center justify-between py-2">
                     <div className="flex items-center gap-5">
                       {team.logo ? (
