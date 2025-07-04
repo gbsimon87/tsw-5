@@ -215,7 +215,7 @@ app.get('/auth/me', async (req, res) => {
 });
 
 // League routes
-// Create a new league
+// Create a new league without default season
 app.post('/api/leagues', authMiddleware, async (req, res) => {
   try {
     const { name, logo, location, sportType, visibility } = req.body;
@@ -231,7 +231,9 @@ app.post('/api/leagues', authMiddleware, async (req, res) => {
       visibility,
       admins: [req.user._id],
       managers: [],
-      teams: []
+      teams: [],
+      seasons: [],
+      season: '',
     });
 
     await league.save();
@@ -239,6 +241,113 @@ app.post('/api/leagues', authMiddleware, async (req, res) => {
   } catch (error) {
     console.error('Create league error:', error);
     res.status(400).json({ error: 'Failed to create league' });
+  }
+});
+
+// Add updated PATCH /api/leagues/:leagueId/end-season
+app.patch('/api/leagues/:leagueId/end-season', authMiddleware, async (req, res) => {
+  try {
+    const { leagueId } = req.params;
+    const league = await League.findById(leagueId);
+    if (!league) {
+      return res.status(404).json({ error: 'League not found' });
+    }
+    if (!league.admins.some(admin => admin._id.equals(req.user._id))) {
+      return res.status(403).json({ error: 'You are not authorized to end seasons' });
+    }
+
+    const activeSeason = league.seasons.find(s => s.isActive);
+    if (!activeSeason) {
+      return res.status(400).json({ error: 'No active season to end' });
+    }
+
+    activeSeason.isActive = false;
+    await league.save(); // Triggers pre('save') to clear league.season
+    res.json(league);
+  } catch (error) {
+    console.error('End season error:', error);
+    res.status(400).json({ error: 'Failed to end season' });
+  }
+});
+
+app.post('/api/leagues/:leagueId/seasons', authMiddleware, async (req, res) => {
+  try {
+    const { leagueId } = req.params;
+    const { name, startDate, endDate } = req.body;
+    if (!name || !startDate || !endDate) {
+      return res.status(400).json({ error: 'Season name, start date, and end date are required' });
+    }
+
+    const league = await League.findById(leagueId);
+    if (!league) {
+      return res.status(404).json({ error: 'League not found' });
+    }
+    if (!league.admins.some(admin => admin._id.equals(req.user._id))) {
+      return res.status(403).json({ error: 'You are not authorized to create seasons' });
+    }
+
+    if (league.seasons.some(s => s.name === name)) {
+      return res.status(400).json({ error: 'Season name already exists' });
+    }
+
+    league.seasons.forEach(s => (s.isActive = false));
+    league.seasons.push({
+      name,
+      startDate: new Date(startDate),
+      endDate: new Date(endDate),
+      isActive: true,
+    });
+    league.season = name;
+    await league.save();
+    res.json(league);
+  } catch (error) {
+    console.error('Create season error:', error);
+    res.status(400).json({ error: 'Failed to create season' });
+  }
+});
+
+app.post('/api/leagues/:leagueId/teams/carry-over', authMiddleware, async (req, res) => {
+  try {
+    const { leagueId } = req.params;
+    const { teamIds, newSeason } = req.body;
+    if (!teamIds || !Array.isArray(teamIds) || !newSeason) {
+      return res.status(400).json({ error: 'Team IDs and new season are required' });
+    }
+
+    const league = await League.findById(leagueId);
+    if (!league) {
+      return res.status(404).json({ error: 'League not found' });
+    }
+    if (!league.admins.some(admin => admin._id.equals(req.user._id))) {
+      return res.status(403).json({ error: 'You are not authorized to carry over teams' });
+    }
+
+    if (!league.seasons.some(s => s.name === newSeason && s.isActive)) {
+      return res.status(400).json({ error: 'New season is not active' });
+    }
+
+    const teams = await Team.find({ _id: { $in: teamIds }, league: leagueId });
+    const newTeams = [];
+    for (const team of teams) {
+      const newTeam = new Team({
+        name: team.name,
+        league: leagueId,
+        season: newSeason,
+        logo: team.logo,
+        members: team.members,
+        createdBy: team.createdBy,
+        isActive: true,
+      });
+      await newTeam.save();
+      league.teams.push(newTeam._id);
+      newTeams.push(newTeam);
+    }
+
+    await league.save();
+    res.json(newTeams);
+  } catch (error) {
+    console.error('Carry over teams error:', error);
+    res.status(400).json({ error: 'Failed to carry over teams' });
   }
 });
 
@@ -260,13 +369,20 @@ app.get('/api/leagues', authMiddleware, async (req, res) => {
 
 app.get('/api/leagues/:leagueId', authMiddleware, async (req, res) => {
   try {
-    const league = await League.findById(req.params.leagueId).populate('admins', 'name').populate('managers', 'name').populate('teams');
+    const league = await League.findById(req.params.leagueId)
+      .populate('admins', 'name')
+      .populate('managers', 'name')
+      .populate({
+        path: 'teams',
+        populate: { path: 'members.user', select: 'name picture' },
+      });
     if (!league) {
       return res.status(404).json({ error: 'League not found' });
     }
     if (!league.admins.some(admin => admin._id.equals(req.user._id))) {
       return res.status(403).json({ error: 'You are not authorized to view this league' });
     }
+    res.set('Cache-Control', 'no-cache'); // Prevent caching
     res.json(league);
   } catch (error) {
     console.error('Get league error:', error);
@@ -339,9 +455,9 @@ app.patch('/api/leagues/:leagueId', authMiddleware, async (req, res) => {
 // Create a new team
 app.post('/api/teams', authMiddleware, async (req, res) => {
   try {
-    const { name, leagueId, logo, season } = req.body;
+    const { name, logo, leagueId, season } = req.body;
     if (!name || !leagueId || !season) {
-      return res.status(400).json({ error: 'Team name, league ID, and season are required' });
+      return res.status(400).json({ error: 'Name, leagueId, and season are required' });
     }
 
     const league = await League.findById(leagueId);
@@ -349,22 +465,23 @@ app.post('/api/teams', authMiddleware, async (req, res) => {
       return res.status(404).json({ error: 'League not found' });
     }
     if (!league.admins.some(admin => admin._id.equals(req.user._id))) {
-      return res.status(403).json({ error: 'You are not authorized to create teams in this league' });
+      return res.status(403).json({ error: 'You are not authorized to create teams' });
+    }
+    if (!league.seasons.some(s => s.name === season)) {
+      return res.status(400).json({ error: 'Season does not exist in league' });
     }
 
     const team = new Team({
       name,
+      logo,
       league: leagueId,
       season,
-      logo,
       createdBy: req.user._id,
-      members: [],
     });
 
     await team.save();
     league.teams.push(team._id);
     await league.save();
-
     res.status(201).json(team);
   } catch (error) {
     console.error('Create team error:', error);
@@ -405,24 +522,24 @@ app.post('/api/teams/join', authMiddleware, async (req, res) => {
 app.get('/api/teams', authMiddleware, async (req, res) => {
   try {
     const { leagueId, season } = req.query;
-    if (!leagueId || !season) {
-      return res.status(400).json({ error: 'League ID and season are required' });
+    if (!leagueId) {
+      return res.status(400).json({ error: 'leagueId is required' });
     }
 
-    const league = await League.findById(leagueId);
-    if (!league) {
-      return res.status(404).json({ error: 'League not found' });
-    }
-    if (!league.admins.some(admin => admin._id.equals(req.user._id))) {
-      return res.status(403).json({ error: 'You are not authorized to view teams in this league' });
+    const query = { league: leagueId };
+    if (season) {
+      query.season = season;
+    } else {
+      return res.json([]);
     }
 
-    const teams = await Team.find({ league: leagueId, season })
-      .populate('members.user', 'name picture');
+    const teams = await Team.find(query)
+      .populate('members.user', 'name picture')
+      .populate('createdBy', 'name');
     res.json(teams);
   } catch (error) {
     console.error('Get teams error:', error);
-    res.status(500).json({ error: 'Failed to fetch teams' });
+    res.status(400).json({ error: 'Failed to fetch teams' });
   }
 });
 

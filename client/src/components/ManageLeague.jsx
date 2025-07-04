@@ -109,12 +109,13 @@ export default function ManageLeague() {
             </li>
             <li>Stat Types: {league.settings.statTypes.join(', ')}</li>
           </ul>
+          // Add updated Seasons display with isActive status
           <p><strong>Seasons:</strong></p>
           {league.seasons.length > 0 ? (
             <ul className="list-disc list-inside ml-4">
-              {league.seasons.map((season, idx) => (
-                <li key={idx}>
-                  {season.name} (Start: {new Date(season.startDate).toLocaleDateString()}, End: {new Date(season.endDate).toLocaleDateString()})
+              {league.seasons.map((season) => (
+                <li key={season.name}>
+                  {season.name} (Start: {new Date(season.startDate).toLocaleDateString()}, End: {new Date(season.endDate).toLocaleDateString()}) {season.isActive ? '(Active)' : ''}
                 </li>
               ))}
             </ul>

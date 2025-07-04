@@ -4,7 +4,7 @@ const crypto = require('crypto');
 const teamSchema = new mongoose.Schema({
   name: { type: String, required: true },
   league: { type: mongoose.Schema.Types.ObjectId, ref: 'League', required: true },
-  season: { type: String, default: 'season-1' },
+  season: { type: String, required: true },
   secretKey: {
     type: String,
     required: true,

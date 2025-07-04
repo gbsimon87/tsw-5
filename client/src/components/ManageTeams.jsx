@@ -28,9 +28,13 @@ export default function ManageTeams() {
           headers: { Authorization: `Bearer ${user.token}` },
         });
         setLeague(response.data);
-        const activeSeason = response.data.seasons.find(s => s.isActive)?.name || response.data.season;
+        const activeSeason = response.data.seasons.find(s => s.isActive)?.name || '';
         setSelectedSeason(activeSeason);
-        fetchTeams(activeSeason);
+        if (activeSeason) {
+          fetchTeams(activeSeason);
+        } else {
+          setTeams([]);
+        }
       } catch (err) {
         setError(
           err.response?.status === 403
@@ -43,13 +47,18 @@ export default function ManageTeams() {
   }, [leagueId, user.token]);
 
   const fetchTeams = async (season) => {
+    if (!season) {
+      setTeams([]);
+      return;
+    }
     try {
       const response = await axios.get(`/api/teams?leagueId=${leagueId}&season=${season}`, {
         headers: { Authorization: `Bearer ${user.token}` },
       });
       setTeams(response.data);
     } catch (err) {
-      setError('Failed to fetch teams');
+      console.error('Fetch teams error:', err.response || err);
+      setError(err.response?.data?.error || 'Failed to fetch teams');
     }
   };
 
@@ -146,38 +155,45 @@ export default function ManageTeams() {
           <h1 className="text-3xl font-bold ml-4">Manage Teams: {league.name}</h1>
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow-md mb-8">
-          <h2 className="text-2xl font-semibold mb-4">Create New Team</h2>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Team Name:</label>
-              <input
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleInputChange}
-                required
-                className="mt-1 w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Logo URL (optional):</label>
-              <input
-                type="url"
-                name="logo"
-                value={formData.logo}
-                onChange={handleInputChange}
-                className="mt-1 w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <button
-              type="submit"
-              className="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition focus:ring-2 focus:ring-blue-500 focus:outline-none"
-            >
-              Create Team
-            </button>
-          </form>
-        </div>
+        {selectedSeason && (
+          <div className="bg-white p-6 rounded-lg shadow-md mb-8">
+            <h2 className="text-2xl font-semibold mb-4">Create New Team</h2>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Team Name:</label>
+                <input
+                  type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  required
+                  className="mt-1 w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Logo URL (optional):</label>
+                <input
+                  type="url"
+                  name="logo"
+                  value={formData.logo}
+                  onChange={handleInputChange}
+                  className="mt-1 w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <button
+                type="submit"
+                className="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              >
+                Create Team
+              </button>
+            </form>
+          </div>
+        )}
+        {!selectedSeason && (
+          <div className="bg-white p-6 rounded-lg shadow-md mb-8">
+            <p className="text-center text-gray-500">Please select a season to create a team.</p>
+          </div>
+        )}
 
         <div className="bg-white p-6 rounded-lg shadow-md">
           <div className="flex justify-between items-center mb-4">

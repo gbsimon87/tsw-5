@@ -36,11 +36,11 @@ export default function TeamJoin() {
 
   return (
     <div
-      className="flex items-center justify-center min-h-screen bg-cover bg-center bg-no-repeat bg-gray-800"
-      style={{ backgroundImage: "url('/images/sports-bg.jpg')" }}
+      className="h-[var(--page-height)] flex items-center justify-center bg-cover bg-center bg-no-repeat bg-gray-800"
+      style={{ backgroundImage: "url('https://img.freepik.com/free-photo/hands-with-basketball-ball_171337-9220.jpg?t=st=1751592905~exp=1751596505~hmac=bc85776f6b17bf3ea7405e651548b76a64e2d17e0873ea2d6c96cee71ecbf9af&w=996')" }}
     >
-      <div className="backdrop-blur-lg bg-white/10 p-8 rounded-xl shadow-xl w-full max-w-md border border-white/30">
-        <h1 className="text-3xl font-bold mb-6 text-center">Join a Team</h1>
+      <div className="backdrop-blur-lg bg-white/10 p-8 rounded-xl shadow-xl max-w-lg border border-white/30">
+        <h1 className="text-3xl font-bold mb-6 text-center text-white">Join a Team</h1>
         {error && <p className="text-red-400 mb-4 text-center font-medium">{error}</p>}
         {success && <p className="text-green-400 mb-4 text-center font-medium">{success}</p>}
         <form onSubmit={handleJoinSubmit} className="space-y-6">

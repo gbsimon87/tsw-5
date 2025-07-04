@@ -16,7 +16,7 @@ const leagueSchema = new mongoose.Schema({
     enum: ['basketball', 'soccer', 'baseball', 'hockey', 'football'],
     default: 'basketball',
   },
-  season: { type: String, default: 'season-1' }, // Current active season
+  season: { type: String, default: '' }, // Current active season
   visibility: { type: String, enum: ['public', 'private'], default: 'public' },
   logo: { type: String },
   establishedYear: { type: Number },
@@ -82,6 +82,18 @@ const leagueSchema = new mongoose.Schema({
   status: { type: String, enum: ['active', 'inactive'], default: 'active' },
 }, {
   timestamps: true,
+});
+
+// Add validation to ensure only one active season
+leagueSchema.pre('save', async function (next) {
+  if (this.isModified('seasons')) {
+    const activeSeasons = this.seasons.filter(s => s.isActive);
+    if (activeSeasons.length > 1) {
+      return next(new Error('Only one season can be active at a time'));
+    }
+    this.season = activeSeasons.length === 1 ? activeSeasons[0].name : '';
+  }
+  next();
 });
 
 leagueSchema.index({ admins: 1 });

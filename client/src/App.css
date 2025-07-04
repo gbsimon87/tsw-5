@@ -1,3 +1,7 @@
+:root {
+  --page-height: calc(100vh - 4rem);
+}
+
 body {
   margin: 0;
   padding: 0;
