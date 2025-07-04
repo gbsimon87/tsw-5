@@ -14,24 +14,41 @@ import {
 export default function MySporty() {
   const { user } = useAuth();
   const [teams, setTeams] = useState([]);
+  const [playerIds, setPlayerIds] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    axios
-      .get('/api/teams/my-teams', {
-        headers: { Authorization: `Bearer ${user.token}` },
-      })
-      .then((response) => {
-        const data = response.data;
-        setTeams(data);
+    const fetchPlayerIds = async () => {
+      try {
+        const response = await axios.get(`/api/players?userId=${user._id}`, {
+          headers: { Authorization: `Bearer ${user.token}` },
+        });
+        setPlayerIds(response.data.map(player => player._id));
+      } catch (err) {
+        console.error('Fetch player IDs error:', err.response || err);
+        setError('Failed to fetch player data');
         setLoading(false);
-      })
-      .catch((err) => {
-        setError(err.message);
+      }
+    };
+
+    const fetchTeams = async () => {
+      try {
+        const response = await axios.get('/api/teams/my-teams?t=' + Date.now(), {
+          headers: { Authorization: `Bearer ${user.token}` },
+        });
+        console.log('Fetched teams:', response.data);
+        setTeams(response.data);
         setLoading(false);
-      });
-  }, []);
+      } catch (err) {
+        console.error('Fetch teams error:', err.response || err);
+        setError(err.response?.data?.error || 'Failed to fetch teams');
+        setLoading(false);
+      }
+    };
+
+    fetchPlayerIds().then(fetchTeams);
+  }, [user._id, user.token]);
 
   return (
     <div className="h-[var(--page-height)] bg-white p-6">
@@ -51,7 +68,7 @@ export default function MySporty() {
 
         <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 gap-8">
           {teams.map((team) => {
-            const member = team.members.find((m) => m.user._id === user._id);
+            const member = team.members.find((m) => playerIds.includes(m.player._id));
             const memberSince = new Date(team.createdAt).toLocaleDateString('en-US', {
               year: 'numeric',
               month: 'long',
@@ -105,7 +122,7 @@ export default function MySporty() {
                       <UserIcon className="w-6 h-6 text-teal-500" aria-hidden="true" />
                     </dt>
                     <dt className="text-gray-500 font-medium min-w-[110px]">Member Type:</dt>
-                    <dd className="text-gray-800">{member.role.charAt(0).toUpperCase() + member.role.slice(1)}</dd>
+                    <dd className="text-gray-800">{member ? (member.role.charAt(0).toUpperCase() + member.role.slice(1)) : 'Unknown'}</dd>
                   </div>
                   <div className="flex items-center gap-3">
                     <dt>
@@ -132,7 +149,6 @@ export default function MySporty() {
             );
           })}
         </div>
-
       </div>
     </div>
   );

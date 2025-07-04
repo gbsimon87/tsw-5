@@ -18,7 +18,7 @@ Status Code: 200 OK
 
 ----------------------------------------------------------------
 
-[] - MySporty is showing I am not part of any teams even though I am 
+[x] - MySporty is showing I am not part of any teams even though I am 
 I believe it's using the wrong endpoint at /my-teams
 
 Request URL: http://localhost:5000/api/teams/my-teams

@@ -188,11 +188,29 @@ router.post('/join', authMiddleware, async (req, res) => {
 // Get user's teams
 router.get('/my-teams', authMiddleware, async (req, res) => {
   try {
+    // Find Player documents for the user
+    const players = await Player.find({ user: req.user._id });
+    const playerIds = players.map(player => player._id);
+    console.log('User player IDs:', playerIds);
+
+    // Find teams where the user is a member (via Player ID)
     const teams = await Team.find({
-      'members.player': req.user._id
+      'members.player': { $in: playerIds }
     })
       .populate('league', 'name sportType location')
-      .populate('members.player', 'name');
+      .populate({
+        path: 'members.player',
+        populate: {
+          path: 'user',
+          model: 'User',
+          select: 'name'
+        }
+      });
+
+    console.log('Fetched user teams:', JSON.stringify(teams, null, 2));
+
+    // Prevent caching to ensure fresh data
+    res.set('Cache-Control', 'no-store');
     res.json(teams);
   } catch (error) {
     console.error('Get my teams error:', error);
