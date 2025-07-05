@@ -1,11 +1,11 @@
-import React from 'react';
-import { UsersIcon, ChartBarIcon, ArrowsRightLeftIcon } from '@heroicons/react/24/solid';
+import { UsersIcon, ChartBarIcon, ArrowsRightLeftIcon, ListBulletIcon } from '@heroicons/react/24/solid';
 
 export default function ScreenNavigation({ activeScreen, onScreenChange }) {
   const screens = [
     { id: 'rosters', icon: UsersIcon, label: activeScreen === 'substitutions' ? 'Confirm' : 'Rosters' },
     { id: 'boxScore', icon: ChartBarIcon, label: 'Box Score' },
     { id: 'substitutions', icon: ArrowsRightLeftIcon, label: 'Substitutions' },
+    { id: 'playByPlay', icon: ListBulletIcon, label: 'Play By Play' },
   ];
 
   const handleCancel = () => {

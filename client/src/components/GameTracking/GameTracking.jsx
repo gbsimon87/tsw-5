@@ -2,13 +2,15 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import axios from 'axios';
-import { startingNumberOfPlayersBySport } from '../../utils/startingNumberOfPlayersBySport';
 import { toast } from 'react-toastify';
 import ScoreBoard from './ScoreBoard';
 import BoxScore from './BoxScore';
 import PlayerSelection from './PlayerSelection';
 import ScreenNavigation from './ScreenNavigation';
 import ClockControls from './ClockControls';
+import PlayByPlay from './PlayByPlay';
+import { startingNumberOfPlayersBySport } from '../../utils/startingNumberOfPlayersBySport';
+import { statDisplayMap } from '../../utils/statDisplayMap';
 
 export default function GameTracking() {
   const { leagueId, gameId } = useParams();
@@ -155,8 +157,12 @@ export default function GameTracking() {
   };
 
   const handleStatIncrement = (playerId, teamId, statType) => {
+    const player = game?.teams
+      .flatMap(team => team.members)
+      .find(p => p.playerId === playerId);
     const newEntry = {
       player: playerId,
+      playerName: player?.name || 'Unknown', // Added playerName
       team: teamId,
       statType,
       period: clockState.period,
@@ -175,12 +181,30 @@ export default function GameTracking() {
         },
       },
     }));
-    const player = game?.teams
-      .flatMap(team => team.members)
-      .find(p => p.playerId === playerId);
-    toast.success(`${statType} recorded for ${player?.name || 'Unknown'} at ${formatTime(clockState.seconds)} in ${clockState.period}`, {
-      toastId: `stat-${playerId}-${Date.now()}`,
-    });
+    toast.success(
+      `${statDisplayMap[statType]?.label || statType} recorded for ${player?.name || 'Unknown'} at ${formatTime(clockState.seconds)} in ${clockState.period}`,
+      {
+        toastId: `stat-${playerId}-${Date.now()}`,
+      }
+    );
+  };
+
+  const handleDeletePlay = (entry) => {
+    setPlayByPlay(prev => prev.filter(e => e !== entry));
+    setFormData(prev => ({
+      ...prev,
+      playerStats: {
+        ...prev.playerStats,
+        [entry.player]: {
+          ...prev.playerStats[entry.player],
+          [entry.statType]: Math.max(0, (prev.playerStats[entry.player]?.[entry.statType] || 0) - 1),
+        },
+      },
+    }));
+    if (lastChange === entry) {
+      setLastChange(null);
+    }
+    toast.info(`Play deleted: ${entry.statType} for ${entry.playerName}`, { toastId: 'delete-play' });
   };
 
   const handleUndo = () => {
@@ -190,9 +214,9 @@ export default function GameTracking() {
         ...prev,
         playerStats: {
           ...prev.playerStats,
-          [lastChange.playerId]: {
-            ...prev.playerStats[lastChange.playerId],
-            [lastChange.statType]: Math.max(0, (prev.playerStats[lastChange.playerId]?.[lastChange.statType] || 0) - 1),
+          [lastChange.player]: {
+            ...prev.playerStats[lastChange.player],
+            [lastChange.statType]: Math.max(0, (prev.playerStats[lastChange.player]?.[lastChange.statType] || 0) - 1),
           },
         },
       }));
@@ -314,6 +338,14 @@ export default function GameTracking() {
             playByPlay={playByPlay}
           />
         );
+      case 'playByPlay':
+        return (
+          <PlayByPlay
+            playByPlay={playByPlay}
+            teams={game?.teams}
+            handleDeletePlay={handleDeletePlay}
+          />
+        );
       default:
         return null;
     }
@@ -322,7 +354,6 @@ export default function GameTracking() {
   if (loading) return <div>Loading Game Tracking...</div>;
 
   return (
-    // <div className="min-h-screen bg-gray-50">
     <div>
       <ScoreBoard teamScores={game?.teamScores} />
       <div className="bg-white h-[70vh] overflow-y-auto px-2">{renderScreenView()}</div>

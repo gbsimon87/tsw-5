@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { toast } from 'react-toastify';
 import { getFirstCapitalLetter } from '../../utils/getFirstCapitalLetter';
 import { getInitialAndLastName } from '../../utils/getInitialAndLastName';
+import { statDisplayMap } from '../../utils/statDisplayMap';
 
 export default function PlayerSelection({
   teams,
@@ -28,7 +29,6 @@ export default function PlayerSelection({
   const handleSelectPlayer = (teamId, playerId) => {
     const isTeam1 = teamId === teams[0]._id;
     const setSelected = isTeam1 ? setSelectedPlayersTeam1 : setSelectedPlayersTeam2;
-    const currentSelected = isTeam1 ? selectedPlayersTeam1 : selectedPlayersTeam2;
     const teamName = isTeam1 ? teams[0].name : teams[1].name;
 
     setSelected(prev => {
@@ -152,10 +152,11 @@ export default function PlayerSelection({
                   }}
                   className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
                 >
-                  {statType}
+                  {statDisplayMap[statType]?.label || statType}
                 </button>
               ))}
             </div>
+
             <button
               onClick={() => setSelectedPlayer(null)}
               className="mt-4 px-4 py-2 bg-gray-200 text-gray-900 rounded hover:bg-gray-300"

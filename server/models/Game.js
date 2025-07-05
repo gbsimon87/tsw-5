@@ -17,6 +17,7 @@ const gameSchema = new mongoose.Schema({
   }],
   playByPlay: [{
     player: { type: mongoose.Schema.Types.ObjectId, ref: 'Player', required: true },
+    playerName: { type: String, required: true }, // Added playerName
     team: { type: mongoose.Schema.Types.ObjectId, ref: 'Team', required: true },
     statType: { type: String, required: true },
     period: { type: String, required: true },
@@ -76,6 +77,9 @@ gameSchema.pre('save', async function (next) {
       if (!play.period || typeof play.time !== 'number' || play.time < 0) {
         return next(new Error('Play-by-play requires valid period and time'));
       }
+      if (!play.playerName) {
+        return next(new Error('Play-by-play requires playerName'));
+      }
     }
 
     // Aggregate playByPlay into playerStats
@@ -95,7 +99,6 @@ gameSchema.pre('save', async function (next) {
       if (!playerStatsMap[playerId]) {
         playerStatsMap[playerId] = stat;
       } else {
-        // Merge stats, prioritizing playByPlay for consistency
         playerStatsMap[playerId].stats = { ...stat.stats, ...playerStatsMap[playerId].stats };
       }
       if (!validTeamIds.includes(stat.team.toString())) {
