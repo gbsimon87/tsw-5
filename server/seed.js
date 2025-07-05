@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+// const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const { faker } = require('@faker-js/faker');
 const User = require('./models/User');
@@ -6,6 +6,7 @@ const League = require('./models/League');
 const Team = require('./models/Team');
 const Game = require('./models/Game');
 const Player = require('./models/Player');
+const connectDB = require('./config/db');
 require('dotenv').config({ path: '.env' });
 
 console.log(process.env.MONGODB_URI);

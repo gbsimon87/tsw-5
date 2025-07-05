@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
+import { ToastContainer } from 'react-toastify';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -9,17 +10,18 @@ import AdminPanel from './components/AdminPanel';
 import ManageLeague from './components/ManageLeague';
 import ManageLeagueEdit from './components/ManageLeagueEdit';
 import ManageGames from './components/ManageGames';
-import GameTracking from './components/GameTracking';
+import GameTracking from './components/GameTracking/GameTracking';
 import NavBar from './components/NavBar';
 import About from './components/About';
 import Home from './components/Home';
 import UpcomingFeatures from './components/UpcomingFeatures';
 import ManageTeams from './components/ManageTeams';
 import TeamJoin from './components/TeamJoin';
+import NotFound from './components/NotFound';
 import './App.css';
 
 function AppContent() {
-const location = useLocation();
+  const location = useLocation();
   // Define routes where navbar should NOT be shown
   const hideNavbarRoutes = [
     /^\/leagues\/[^/]+\/games\/[^/]+\/tracking$/
@@ -103,7 +105,7 @@ const location = useLocation();
               </ProtectedRoute>
             }
           />
-          <Route path="*" element={<h1>404 - Page Not Found</h1>} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
     </div>
@@ -116,6 +118,17 @@ function App() {
       <AuthProvider>
         <BrowserRouter>
           <AppContent />
+          <ToastContainer
+            position="top-right"
+            autoClose={5000}
+            hideProgressBar={false}
+            newestOnTop
+            closeOnClick
+            rtl={false}
+            pauseOnFocusLoss
+            draggable
+            pauseOnHover
+          />
         </BrowserRouter>
       </AuthProvider>
     </GoogleOAuthProvider>

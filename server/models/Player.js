@@ -4,6 +4,8 @@ const playerSchema = new mongoose.Schema({
   user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   teams: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Team' }],
   stats: { type: mongoose.Schema.Types.Mixed, default: {} }, // Structured by sportType
+  jerseyNumber: { type: Number },
+  position: { type: String },
   gamesPlayed: { type: Number, default: 0 },
   performanceRating: { type: Number, default: 0 },
   position: { type: String },

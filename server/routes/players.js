@@ -1,4 +1,5 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const router = express.Router();
 const Player = require('../models/Player');
 const Team = require('../models/Team');
@@ -47,18 +48,18 @@ router.post('/', authMiddleware, checkAdminOrManager, async (req, res) => {
   }
 });
 
-// Get players (filter by leagueId)
-router.get('/', authMiddleware, async (req, res) => {
-  try {
-    const { leagueId } = req.query;
-    const query = leagueId ? { league: leagueId } : {};
-    const players = await Player.find(query).populate('user', 'name').populate('teams', 'name');
-    res.json(players);
-  } catch (err) {
-    console.error('Get players error:', err);
-    res.status(500).json({ error: 'Failed to fetch players' });
-  }
-});
+// // Get players (filter by leagueId)
+// router.get('/', authMiddleware, async (req, res) => {
+//   try {
+//     const { leagueId } = req.query;
+//     const query = leagueId ? { league: leagueId } : {};
+//     const players = await Player.find(query).populate('user', 'name').populate('teams', 'name');
+//     res.json(players);
+//   } catch (err) {
+//     console.error('Get players error:', err);
+//     res.status(500).json({ error: 'Failed to fetch players' });
+//   }
+// });
 
 // Get players by teamId or leagueId
 router.get('/', authMiddleware, async (req, res) => {

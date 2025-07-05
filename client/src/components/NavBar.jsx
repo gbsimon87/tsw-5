@@ -10,6 +10,7 @@ import {
   InformationCircleIcon,
 } from '@heroicons/react/24/outline';
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline';
+import { getInitials } from '../utils/getInitials';
 
 const navIcons = {
   "My Sporty": <UserCircleIcon className="w-5 h-5 text-gray-400" aria-hidden="true" />,
@@ -28,14 +29,6 @@ function NavBar() {
   const handleLogoutClick = () => {
     logout();
     navigate('/login');
-  };
-
-  const getInitials = (user) => {
-    const name = user.name || user.email.split('@')[0];
-    const nameParts = name.trim().split(' ');
-    return nameParts.length > 1
-      ? `${nameParts[0][0]}${nameParts[nameParts.length - 1][0]}`
-      : nameParts[0].slice(0, 2);
   };
 
   const navigation = [
@@ -169,7 +162,7 @@ function NavBar() {
                   ? 'bg-gray-900 text-white'
                   : 'text-gray-300 hover:bg-gray-700 hover:text-white'
                 ) +
-                ' flex items-center gap-3 block rounded-md px-3 py-2 text-base font-medium'
+                ' flex items-center gap-3 rounded-md px-3 py-2 text-base font-medium'
               }
               aria-label={`${item.name} page`}
             >
@@ -183,7 +176,7 @@ function NavBar() {
           <DisclosureButton
             as="button"
             onClick={handleLogoutClick}
-            className="flex items-center gap-3 w-full text-left text-gray-300 hover:bg-gray-700 hover:text-white block rounded-md px-3 py-2 text-base font-medium"
+            className="flex items-center gap-3 w-full text-left text-gray-300 hover:bg-gray-700 hover:text-white rounded-md px-3 py-2 text-base font-medium"
             aria-label="Log out"
           >
             <ArrowLeftEndOnRectangleIcon className="w-5 h-5 text-gray-400" aria-hidden="true" />

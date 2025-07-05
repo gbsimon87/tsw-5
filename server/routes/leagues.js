@@ -1,4 +1,5 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const router = express.Router();
 const League = require('../models/League');
 const Team = require('../models/Team');
@@ -153,35 +154,78 @@ router.get('/', authMiddleware, async (req, res) => {
 // Get a single league by ID
 router.get('/:leagueId', authMiddleware, async (req, res) => {
   try {
-    const league = await League.findById(req.params.leagueId)
+    const { leagueId } = req.params;
+
+    // Validate leagueId
+    if (!mongoose.Types.ObjectId.isValid(leagueId)) {
+      return res.status(400).json({ error: 'Invalid leagueId' });
+    }
+
+    // Fetch league with necessary population
+    const league = await League.findById(leagueId)
       .populate({
         path: 'teams',
+        select: 'name logo createdBy isActive members',
         populate: {
           path: 'members.player',
           model: 'Player',
+          select: 'name jerseyNumber position user',
           populate: {
             path: 'user',
             model: 'User',
-            select: 'name'
-          }
-        }
+            select: 'name',
+          },
+        },
       })
       .populate('admins', 'name')
       .populate('managers', 'name')
       .lean();
 
-    if (!league) return res.status(404).json({ error: 'League not found' });
+    if (!league) {
+      return res.status(404).json({ error: 'League not found' });
+    }
 
-    // Ensure teams and members are arrays
-    league.teams = Array.isArray(league.teams) ? league.teams : [];
-    league.teams.forEach(team => {
-      team.members = Array.isArray(team.members) ? team.members : [];
-      team.members.forEach(member => {
-        member.player = member.player || { user: { name: 'Unknown' } };
-      });
-    });
+    // Structure the response
+    const populatedLeague = {
+      _id: league._id,
+      name: league.name,
+      sportType: league.sportType,
+      season: league.season,
+      visibility: league.visibility,
+      logo: league.logo,
+      establishedYear: league.establishedYear,
+      isActive: league.isActive,
+      location: league.location,
+      admins: league.admins.map(admin => ({
+        _id: admin._id,
+        name: admin.name || 'Unknown',
+      })),
+      managers: league.managers.map(manager => ({
+        _id: manager._id,
+        name: manager.name || 'Unknown',
+      })),
+      teams: league.teams.map(team => ({
+        _id: team._id,
+        name: team.name,
+        logo: team.logo,
+        createdBy: team.createdBy,
+        isActive: team.isActive,
+        members: team.members.map(member => ({
+          playerId: member.player?._id,
+          name: member.player?.user?.name || 'Unknown',
+          jerseyNumber: member.player?.jerseyNumber || null,
+          position: member.player?.position || null,
+          role: member.role,
+          isActive: member.isActive,
+        })),
+      })),
+      seasons: league.seasons,
+      settings: league.settings,
+      status: league.status,
+    };
 
-    res.json(league);
+    res.set('Cache-Control', 'no-store');
+    res.json(populatedLeague);
   } catch (err) {
     console.error('Get league error:', err);
     res.status(500).json({ error: 'Failed to fetch league' });

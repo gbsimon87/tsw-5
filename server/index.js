@@ -1,6 +1,6 @@
 const express = require('express');
 const path = require('path');
-const connectDB = require('./config/db'); // Import MongoDB connection
+const connectDB = require('./config/db');
 require('dotenv').config({ path: '.env' });
 
 const app = express();

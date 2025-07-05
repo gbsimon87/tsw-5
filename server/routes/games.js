@@ -9,19 +9,45 @@ const checkAdminOrManager = require('../middleware/adminOrManagerMiddleware');
 router.get('/:gameId', authMiddleware, async (req, res) => {
   try {
     const { gameId } = req.params;
+
+    // Validate gameId
     if (!mongoose.Types.ObjectId.isValid(gameId)) {
       return res.status(400).json({ error: 'Invalid gameId' });
     }
 
+    // Fetch game with necessary population
     const game = await Game.findById(gameId)
-      .populate('teams', 'name')
+      .populate({
+        path: 'teams',
+        select: 'name logo members createdBy isActive',
+        populate: {
+          path: 'members.player',
+          model: 'Player',
+          select: 'name jerseyNumber position user',
+          populate: {
+            path: 'user',
+            model: 'User',
+            select: 'name',
+          },
+        },
+      })
       .populate({
         path: 'playerStats.player',
-        populate: { path: 'user', model: 'User', select: 'name' }
+        select: 'name user',
+        populate: {
+          path: 'user',
+          model: 'User',
+          select: 'name',
+        },
       })
       .populate({
         path: 'gameMVP',
-        populate: { path: 'user', model: 'User', select: 'name' }
+        select: 'name user',
+        populate: {
+          path: 'user',
+          model: 'User',
+          select: 'name',
+        },
       })
       .lean();
 
@@ -29,19 +55,67 @@ router.get('/:gameId', authMiddleware, async (req, res) => {
       return res.status(404).json({ error: 'Game not found' });
     }
 
+    // Structure the response
     const populatedGame = {
-      ...game,
-      teams: Array.isArray(game.teams) ? game.teams : [],
-      teamScores: Array.isArray(game.teamScores) ? game.teamScores.map(score => ({
-        team: game.teams.find(t => t._id.toString() === score.team.toString()) || { name: 'Unknown' },
-        score: score.score
-      })) : [],
-      playerStats: Array.isArray(game.playerStats) ? game.playerStats.map(stat => ({
-        ...stat,
-        player: stat.player ? { _id: stat.player._id, name: stat.player.user?.name || 'Unknown' } : null,
-        team: game.teams.find(t => t._id.toString() === stat.team.toString()) || { name: 'Unknown' }
-      })) : [],
-      gameMVP: game.gameMVP ? { _id: game.gameMVP._id, name: game.gameMVP.user?.name || 'Unknown' } : null,
+      // Game information
+      _id: game._id,
+      league: game.league,
+      season: game.season,
+      date: game.date,
+      location: game.location,
+      isCompleted: game.isCompleted,
+      matchType: game.matchType,
+      weatherConditions: game.weatherConditions,
+      referee: game.referee,
+      gameDuration: game.gameDuration,
+      eventType: game.eventType,
+      attendance: game.attendance,
+      venue: game.venue,
+      previousMatchupScore: game.previousMatchupScore,
+      fanRating: game.fanRating,
+      mediaLinks: game.mediaLinks,
+      venueCapacity: game.venueCapacity,
+
+      // Team information
+      teams: game.teams.map(team => ({
+        _id: team._id,
+        name: team.name,
+        logo: team.logo,
+        createdBy: team.createdBy,
+        isActive: team.isActive,
+        members: team.members.map(member => ({
+          playerId: member.player?._id,
+          name: member.player?.user?.name || 'Unknown',
+          jerseyNumber: member.player?.jerseyNumber || null,
+          position: member.player?.position || null,
+          role: member.role,
+          isActive: member.isActive,
+        })),
+      })),
+
+      // Team scores
+      teamScores: game.teamScores.map(score => ({
+        teamId: score.team,
+        teamName: game.teams.find(t => t._id.toString() === score.team.toString())?.name || 'Unknown',
+        score: score.score,
+      })),
+
+      // Player stats
+      playerStats: game.playerStats.map(stat => ({
+        playerId: stat.player?._id,
+        playerName: stat.player?.user?.name || 'Unknown',
+        teamId: stat.team,
+        teamName: game.teams.find(t => t._id.toString() === stat.team.toString())?.name || 'Unknown',
+        stats: stat.stats,
+      })),
+
+      // Game MVP
+      gameMVP: game.gameMVP
+        ? {
+            playerId: game.gameMVP._id,
+            name: game.gameMVP.user?.name || 'Unknown',
+          }
+        : null,
     };
 
     res.set('Cache-Control', 'no-store');
