@@ -236,4 +236,29 @@ async function seedDatabase() {
 }
 
 // Run the seed function
-seedDatabase();
+// seedDatabase();
+
+
+async function markGamesNotCompleted() {
+  try {
+    connectDB();
+
+    const games = await Game.find({});
+    console.log(`Found ${games.length} games.`);
+
+    const updatePromises = games.map(game => {
+      game.isCompleted = false;
+      return game.save();
+    });
+
+    await Promise.all(updatePromises);
+
+    console.log('Jersey numbers assigned!');
+    process.exit(0);
+  } catch (err) {
+    console.error('Error assigning jersey numbers:', err);
+    process.exit(1);
+  }
+}
+
+markGamesNotCompleted();
