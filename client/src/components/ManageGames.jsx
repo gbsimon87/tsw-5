@@ -2,7 +2,24 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
-import { CalendarIcon, PlusIcon, PencilIcon, TrashIcon, StarIcon, UsersIcon, MapPinIcon, ClockIcon, FlagIcon, FilmIcon, DocumentTextIcon, UserIcon, CloudIcon } from '@heroicons/react/24/outline';
+import {
+  CalendarIcon,
+  ChartBarIcon,
+  PlusIcon,
+  PencilIcon,
+  TrashIcon,
+  StarIcon,
+  UsersIcon,
+  MapPinIcon,
+  ClockIcon,
+  FlagIcon,
+  FilmIcon,
+  DocumentTextIcon,
+  UserIcon,
+  CloudIcon,
+  TrophyIcon,
+  UserGroupIcon
+} from '@heroicons/react/24/outline';
 
 export default function ManageGames() {
   const { leagueId } = useParams();
@@ -657,12 +674,30 @@ export default function ManageGames() {
                 if (!isValidGame) {
                   console.warn(`Invalid game data for game ID: ${game?._id}`, game);
                   return (
-                    <div key={game?._id || Math.random()} className="flex items-center justify-between bg-white p-3 rounded-md border border-gray-200">
-                      <div className="flex items-center gap-2">
-                        <CalendarIcon className="w-4 h-4 mr-2.5 text-gray-500" />
-                        <span className="text-gray-600">Invalid game data</span>
+                    <div
+                      key={game?._id || Math.random()}
+                      className="bg-white p-4 rounded-md border border-gray-200"
+                    >
+                      <div className="space-y-2 text-gray-600">
+                        <div className="flex items-center gap-2">
+                          <TrophyIcon className="w-4 h-4 text-gray-500" />
+                          <span>{game?.league?.name || 'Unknown League'}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <UserGroupIcon className="w-4 h-4 text-gray-500" />
+                          <span>{game?.teams?.map(t => t.name).join(' vs ') || 'Teams not set'}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <MapPinIcon className="w-4 h-4 text-gray-500" />
+                          <span>{game?.location || 'No location provided'}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <ClockIcon className="w-4 h-4 text-gray-500" />
+                          <span>{new Date(game?.date).toLocaleDateString() || 'No date'}</span>
+                        </div>
                       </div>
-                      <div className="flex gap-2">
+
+                      <div className="mt-3 flex justify-end">
                         <button
                           onClick={() => handleDeleteGame(game._id)}
                           className="flex items-center gap-2 bg-red-600 text-white px-3 py-1 rounded-md hover:bg-red-700 transition focus:ring-2 focus:ring-red-500 focus:outline-none"
@@ -676,25 +711,53 @@ export default function ManageGames() {
                   );
                 }
                 return (
-                  <div key={game._id} className="flex items-center justify-between bg-white p-3 rounded-md border border-gray-200">
-                    <div className="flex items-center gap-2">
-                      <CalendarIcon className="w-4 h-4 mr-2.5 text-gray-500" />
-                      <span>
-                        {(game.teams[0]?.name || 'TBD')} vs {(game.teams[1]?.name || 'TBD')} -{' '}
-                        {new Date(game.date).toLocaleDateString('en-US', {
-                          year: 'numeric',
-                          month: 'short',
-                          day: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })} - {game.matchType} ({game.eventType})
-                        {game.isCompleted ? ' (Completed)' : ''}
-                        {game.location && ` at ${game.location}`}
-                        {game.score && ` (${game.score.team1} - ${game.score.team2})`}
-                        {game.gameMVP && ` | MVP: ${game.gameMVP.name || 'Unknown'}`}
-                      </span>
+                  <div key={game._id} className="flex gap-2 items-center justify-between bg-white p-3 rounded-md border border-gray-200">
+                    <div className="space-y-1 text-gray-700">
+                      <div className="flex items-center gap-2">
+                        <UserGroupIcon className="w-4 h-4 text-gray-500" />
+                        <span>{(game.teams[0]?.name || 'TBD')} vs {(game.teams[1]?.name || 'TBD')}</span>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <ClockIcon className="w-4 h-4 text-gray-500" />
+                        <span>
+                          {new Date(game.date).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <ChartBarIcon className="w-4 h-4 text-gray-500" />
+                        <span>{game.matchType} ({game.eventType}){game.isCompleted ? ' - Completed' : ''}</span>
+                      </div>
+
+                      {game.location && (
+                        <div className="flex items-center gap-2">
+                          <MapPinIcon className="w-4 h-4 text-gray-500" />
+                          <span>{game.location}</span>
+                        </div>
+                      )}
+
+                      {game.score && (
+                        <div className="flex items-center gap-2">
+                          <ChartBarIcon className="w-4 h-4 text-gray-500" />
+                          <span>Score: {game.score.team1} - {game.score.team2}</span>
+                        </div>
+                      )}
+
+                      {game.gameMVP && (
+                        <div className="flex items-center gap-2">
+                          <StarIcon className="w-4 h-4 text-yellow-500" />
+                          <span>MVP: {game.gameMVP.name || 'Unknown'}</span>
+                        </div>
+                      )}
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex flex-col gap-2">
                       <button
                         onClick={() => handleEditGame(game)}
                         className="flex items-center gap-2 bg-blue-600 text-white px-3 py-1 rounded-md hover:bg-blue-700 transition focus:ring-2 focus:ring-blue-500 focus:outline-none"

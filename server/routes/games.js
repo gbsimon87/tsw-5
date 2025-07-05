@@ -16,12 +16,12 @@ router.get('/:gameId', authMiddleware, async (req, res) => {
     const game = await Game.findById(gameId)
       .populate('teams', 'name')
       .populate({
+        path: 'playerStats.player',
+        populate: { path: 'user', model: 'User', select: 'name' }
+      })
+      .populate({
         path: 'gameMVP',
-        populate: {
-          path: 'user',
-          model: 'User',
-          select: 'name'
-        }
+        populate: { path: 'user', model: 'User', select: 'name' }
       })
       .lean();
 
@@ -32,7 +32,16 @@ router.get('/:gameId', authMiddleware, async (req, res) => {
     const populatedGame = {
       ...game,
       teams: Array.isArray(game.teams) ? game.teams : [],
-      gameMVP: game.gameMVP ? { ...game.gameMVP, name: game.gameMVP.user?.name || 'Unknown' } : null,
+      teamScores: Array.isArray(game.teamScores) ? game.teamScores.map(score => ({
+        team: game.teams.find(t => t._id.toString() === score.team.toString()) || { name: 'Unknown' },
+        score: score.score
+      })) : [],
+      playerStats: Array.isArray(game.playerStats) ? game.playerStats.map(stat => ({
+        ...stat,
+        player: stat.player ? { _id: stat.player._id, name: stat.player.user?.name || 'Unknown' } : null,
+        team: game.teams.find(t => t._id.toString() === stat.team.toString()) || { name: 'Unknown' }
+      })) : [],
+      gameMVP: game.gameMVP ? { _id: game.gameMVP._id, name: game.gameMVP.user?.name || 'Unknown' } : null,
     };
 
     res.set('Cache-Control', 'no-store');
@@ -53,26 +62,34 @@ router.get('/', authMiddleware, async (req, res) => {
       return res.status(400).json({ error: 'Invalid leagueId' });
     }
 
-    // console.log('GET /api/games query:', { leagueId, season });
+    const query = { league: leagueId };
+    if (season) query.season = season;
 
-    const games = await Game.find({ league: leagueId, season })
+    const games = await Game.find(query)
       .populate('teams', 'name')
       .populate({
+        path: 'playerStats.player',
+        populate: { path: 'user', model: 'User', select: 'name' }
+      })
+      .populate({
         path: 'gameMVP',
-        populate: {
-          path: 'user',
-          model: 'User',
-          select: 'name'
-        }
+        populate: { path: 'user', model: 'User', select: 'name' }
       })
       .lean();
-
-    // console.log('Fetched games:', JSON.stringify(games, null, 2));
 
     const populatedGames = games.map(game => ({
       ...game,
       teams: Array.isArray(game.teams) ? game.teams : [],
-      gameMVP: game.gameMVP ? { ...game.gameMVP, name: game.gameMVP.user?.name || 'Unknown' } : null,
+      teamScores: Array.isArray(game.teamScores) ? game.teamScores.map(score => ({
+        team: game.teams.find(t => t._id.toString() === score.team.toString()) || { name: 'Unknown' },
+        score: score.score
+      })) : [],
+      playerStats: Array.isArray(game.playerStats) ? game.playerStats.map(stat => ({
+        ...stat,
+        player: stat.player ? { _id: stat.player._id, name: stat.player.user?.name || 'Unknown' } : null,
+        team: game.teams.find(t => t._id.toString() === stat.team.toString()) || { name: 'Unknown' }
+      })) : [],
+      gameMVP: game.gameMVP ? { _id: game.gameMVP._id, name: game.gameMVP.user?.name || 'Unknown' } : null,
     }));
 
     res.set('Cache-Control', 'no-store');
@@ -86,7 +103,7 @@ router.get('/', authMiddleware, async (req, res) => {
 // Create a game (admin/manager only)
 router.post('/', authMiddleware, checkAdminOrManager, async (req, res) => {
   try {
-    const { league, season, date, teams, location, venue, venueCapacity, score, matchType, eventType, gameDuration, weatherConditions, referee, attendance, previousMatchupScore, fanRating, highlights, matchReport, mediaLinks, gameMVP } = req.body;
+    const { league, season, date, teams, location, venue, venueCapacity, playerStats, matchType, eventType, gameDuration, weatherConditions, referee, attendance, previousMatchupScore, fanRating, highlights, matchReport, mediaLinks, gameMVP } = req.body;
 
     // Validate required fields
     if (!league || !date || !teams || teams.length !== 2 || teams[0] === teams[1]) {
@@ -95,27 +112,53 @@ router.post('/', authMiddleware, checkAdminOrManager, async (req, res) => {
     if (!season || typeof season !== 'string' || season.trim() === '') {
       return res.status(400).json({ error: 'Invalid game data: season is required and must be a non-empty string' });
     }
+    if (!mongoose.Types.ObjectId.isValid(league) || !teams.every(id => mongoose.Types.ObjectId.isValid(id))) {
+      return res.status(400).json({ error: 'Invalid league or team IDs' });
+    }
 
-    // Validate league ID
-    if (!mongoose.Types.ObjectId.isValid(league)) {
-      return res.status(400).json({ error: 'Invalid league ID' });
+    // Validate teams belong to the league
+    const leagueDoc = await League.findById(league);
+    if (!leagueDoc) return res.status(404).json({ error: 'League not found' });
+    const leagueTeamIds = leagueDoc.teams.map(id => id.toString());
+    if (!teams.every(id => leagueTeamIds.includes(id.toString()))) {
+      return res.status(400).json({ error: 'All teams must belong to the specified league' });
+    }
+
+    // Validate playerStats
+    if (playerStats && Array.isArray(playerStats)) {
+      for (const stat of playerStats) {
+        if (!mongoose.Types.ObjectId.isValid(stat.player) || !mongoose.Types.ObjectId.isValid(stat.team)) {
+          return res.status(400).json({ error: 'Invalid player or team ID in playerStats' });
+        }
+        if (!teams.includes(stat.team.toString())) {
+          return res.status(400).json({ error: 'playerStats team must match one of the game teams' });
+        }
+        if (!Object.keys(stat.stats).every(key => leagueDoc.settings.statTypes.includes(key))) {
+          return res.status(400).json({ error: 'Invalid stat types in playerStats' });
+        }
+        // Validate player is a member of the team
+        const team = await Team.findById(stat.team);
+        if (!team.members.some(m => m.player.toString() === stat.player.toString())) {
+          return res.status(400).json({ error: 'Player is not a member of the specified team' });
+        }
+      }
     }
 
     // Filter out invalid mediaLinks
     const validMediaLinks = mediaLinks ? mediaLinks.filter(link => link.url.trim() && link.type.trim()) : [];
 
-    // Only include gameMVP if it's a valid ObjectId
     const gameData = {
       league,
       season,
       date,
       teams,
+      teamScores: teams.map(team => ({ team, score: 0 })), // Initial scores, updated by pre-save hook
       location,
       venue,
       venueCapacity,
-      score,
-      matchType,
-      eventType,
+      playerStats: playerStats || [],
+      matchType: matchType || 'league',
+      eventType: eventType || 'regular',
       gameDuration,
       weatherConditions,
       referee,
@@ -125,32 +168,54 @@ router.post('/', authMiddleware, checkAdminOrManager, async (req, res) => {
       highlights: highlights ? highlights.filter(h => h.trim()) : [],
       matchReport,
       mediaLinks: validMediaLinks,
-      isCompleted: eventType === 'final' || (score && (score.team1 > 0 || score.team2 > 0)),
+      isCompleted: eventType === 'final' || (playerStats && playerStats.length > 0),
     };
 
     if (gameMVP && mongoose.Types.ObjectId.isValid(gameMVP)) {
       gameData.gameMVP = gameMVP;
     }
 
-    // console.log('Creating game with data:', gameData);
-
     const game = await Game.create(gameData);
+
+    // Update Player.stats for career stats
+    if (playerStats && playerStats.length > 0) {
+      for (const stat of playerStats) {
+        const player = await Player.findById(stat.player);
+        if (player) {
+          if (!player.stats[leagueDoc.sportType]) {
+            player.stats[leagueDoc.sportType] = {};
+          }
+          Object.entries(stat.stats).forEach(([key, value]) => {
+            player.stats[leagueDoc.sportType][key] = (player.stats[leagueDoc.sportType][key] || 0) + (value || 0);
+          });
+          player.gamesPlayed = (player.gamesPlayed || 0) + 1;
+          await player.save();
+        }
+      }
+    }
 
     const populatedGame = await Game.findById(game._id)
       .populate('teams', 'name')
       .populate({
+        path: 'playerStats.player',
+        populate: { path: 'user', model: 'User', select: 'name' }
+      })
+      .populate({
         path: 'gameMVP',
-        populate: {
-          path: 'user',
-          model: 'User',
-          select: 'name'
-        }
+        populate: { path: 'user', model: 'User', select: 'name' }
       })
       .lean();
 
-    if (populatedGame.gameMVP) {
-      populatedGame.gameMVP.name = populatedGame.gameMVP.user?.name || 'Unknown';
-    }
+    populatedGame.teamScores = populatedGame.teamScores.map(score => ({
+      team: populatedGame.teams.find(t => t._id.toString() === score.team.toString()) || { name: 'Unknown' },
+      score: score.score
+    }));
+    populatedGame.playerStats = populatedGame.playerStats.map(stat => ({
+      ...stat,
+      player: stat.player ? { _id: stat.player._id, name: stat.player.user?.name || 'Unknown' } : null,
+      team: populatedGame.teams.find(t => t._id.toString() === stat.team.toString()) || { name: 'Unknown' }
+    }));
+    populatedGame.gameMVP = populatedGame.gameMVP ? { _id: populatedGame.gameMVP._id, name: populatedGame.gameMVP.user?.name || 'Unknown' } : null;
 
     res.status(201).json(populatedGame);
   } catch (err) {
@@ -160,13 +225,12 @@ router.post('/', authMiddleware, checkAdminOrManager, async (req, res) => {
 });
 
 // Update a game (admin/manager only)
-// Update a game (admin/manager only)
 router.patch('/:gameId', authMiddleware, checkAdminOrManager, async (req, res) => {
   try {
     const { gameId } = req.params;
-    const { teams, date, location, venue, venueCapacity, score, matchType, eventType, gameDuration, weatherConditions, referee, attendance, previousMatchupScore, fanRating, highlights, matchReport, mediaLinks, gameMVP, season, playerStats } = req.body;
+    const { teams, date, location, venue, venueCapacity, playerStats, matchType, eventType, gameDuration, weatherConditions, referee, attendance, previousMatchupScore, fanRating, highlights, matchReport, mediaLinks, gameMVP, season } = req.body;
 
-    const game = await Game.findById(gameId);
+    const game = await Game.findById(gameId).populate('league');
     if (!game) return res.status(404).json({ error: 'Game not found' });
 
     if (teams && (teams.length !== 2 || teams[0] === teams[1])) {
@@ -174,6 +238,38 @@ router.patch('/:gameId', authMiddleware, checkAdminOrManager, async (req, res) =
     }
     if (season && (typeof season !== 'string' || season.trim() === '')) {
       return res.status(400).json({ error: 'Invalid season: must be a non-empty string' });
+    }
+
+    // Validate teams belong to the league
+    if (teams) {
+      const leagueDoc = await League.findById(game.league);
+      if (!leagueDoc) return res.status(404).json({ error: 'League not found' });
+      const leagueTeamIds = leagueDoc.teams.map(id => id.toString());
+      if (!teams.every(id => leagueTeamIds.includes(id.toString()))) {
+        return res.status(400).json({ error: 'All teams must belong to the specified league' });
+      }
+    }
+
+    // Validate playerStats
+    let newPlayerIds = [];
+    if (playerStats && Array.isArray(playerStats)) {
+      const leagueDoc = await League.findById(game.league);
+      for (const stat of playerStats) {
+        if (!mongoose.Types.ObjectId.isValid(stat.player) || !mongoose.Types.ObjectId.isValid(stat.team)) {
+          return res.status(400).json({ error: 'Invalid player or team ID in playerStats' });
+        }
+        if (!game.teams.includes(stat.team.toString()) && (!teams || !teams.includes(stat.team.toString()))) {
+          return res.status(400).json({ error: 'playerStats team must match one of the game teams' });
+        }
+        if (!Object.keys(stat.stats).every(key => leagueDoc.settings.statTypes.includes(key))) {
+          return res.status(400).json({ error: 'Invalid stat types in playerStats' });
+        }
+        const team = await Team.findById(stat.team);
+        if (!team.members.some(m => m.player.toString() === stat.player.toString())) {
+          return res.status(400).json({ error: 'Player is not a member of the specified team' });
+        }
+        newPlayerIds.push(stat.player.toString());
+      }
     }
 
     const validMediaLinks = mediaLinks ? mediaLinks.filter(link => link.url.trim() && link.type.trim()) : [];
@@ -185,7 +281,7 @@ router.patch('/:gameId', authMiddleware, checkAdminOrManager, async (req, res) =
       location: location !== undefined ? location : game.location,
       venue: venue !== undefined ? venue : game.venue,
       venueCapacity: venueCapacity !== undefined ? venueCapacity : game.venueCapacity,
-      score: score || game.score,
+      playerStats: playerStats || game.playerStats,
       matchType: matchType || game.matchType,
       eventType: eventType || game.eventType,
       gameDuration: gameDuration !== undefined ? gameDuration : game.gameDuration,
@@ -197,7 +293,7 @@ router.patch('/:gameId', authMiddleware, checkAdminOrManager, async (req, res) =
       highlights: highlights ? highlights.filter(h => h.trim()) : game.highlights,
       matchReport: matchReport !== undefined ? matchReport : game.matchReport,
       mediaLinks: validMediaLinks.length > 0 ? validMediaLinks : game.mediaLinks,
-      isCompleted: eventType === 'final' || (score && (score.team1 > 0 || score.team2 > 0)),
+      isCompleted: eventType === 'final' || (playerStats && playerStats.length > 0),
     };
 
     if (gameMVP && mongoose.Types.ObjectId.isValid(gameMVP)) {
@@ -206,12 +302,51 @@ router.patch('/:gameId', authMiddleware, checkAdminOrManager, async (req, res) =
       updateData.gameMVP = null;
     }
 
-    // Handle playerStats if provided
-    if (playerStats && Array.isArray(playerStats)) {
-      updateData.playerStats = playerStats.map(stat => ({
-        player: mongoose.Types.ObjectId.isValid(stat.player) ? stat.player : null,
-        stats: stat.stats || {},
-      })).filter(stat => stat.player); // Remove invalid entries
+    // If teams are updated, reset teamScores
+    if (teams) {
+      updateData.teamScores = teams.map(team => ({ team, score: 0 }));
+    }
+
+    // Update Player.stats for career stats
+    if (playerStats && playerStats.length > 0) {
+      const leagueDoc = await League.findById(game.league);
+      const oldPlayerIds = game.playerStats.map(stat => stat.player.toString());
+
+      // Subtract old stats
+      for (const oldStat of game.playerStats) {
+        const player = await Player.findById(oldStat.player);
+        if (player && player.stats[leagueDoc.sportType]) {
+          Object.entries(oldStat.stats).forEach(([key, value]) => {
+            player.stats[leagueDoc.sportType][key] = Math.max(
+              (player.stats[leagueDoc.sportType][key] || 0) - (value || 0),
+              0
+            ); // Prevent negative stats
+          });
+          // Only decrement gamesPlayed if the player is not in the new playerStats
+          if (!newPlayerIds.includes(oldStat.player.toString())) {
+            player.gamesPlayed = Math.max((player.gamesPlayed || 0) - 1, 0);
+          }
+          await player.save();
+        }
+      }
+
+      // Add new stats
+      for (const stat of playerStats) {
+        const player = await Player.findById(stat.player);
+        if (player) {
+          if (!player.stats[leagueDoc.sportType]) {
+            player.stats[leagueDoc.sportType] = {};
+          }
+          Object.entries(stat.stats).forEach(([key, value]) => {
+            player.stats[leagueDoc.sportType][key] = (player.stats[leagueDoc.sportType][key] || 0) + (value || 0);
+          });
+          // Only increment gamesPlayed if the player wasn't in the old playerStats
+          if (!oldPlayerIds.includes(stat.player.toString())) {
+            player.gamesPlayed = (player.gamesPlayed || 0) + 1;
+          }
+          await player.save();
+        }
+      }
     }
 
     Object.assign(game, updateData);
@@ -220,18 +355,25 @@ router.patch('/:gameId', authMiddleware, checkAdminOrManager, async (req, res) =
     const populatedGame = await Game.findById(gameId)
       .populate('teams', 'name')
       .populate({
+        path: 'playerStats.player',
+        populate: { path: 'user', model: 'User', select: 'name' }
+      })
+      .populate({
         path: 'gameMVP',
-        populate: {
-          path: 'user',
-          model: 'User',
-          select: 'name'
-        }
+        populate: { path: 'user', model: 'User', select: 'name' }
       })
       .lean();
 
-    if (populatedGame.gameMVP) {
-      populatedGame.gameMVP.name = populatedGame.gameMVP.user?.name || 'Unknown';
-    }
+    populatedGame.teamScores = populatedGame.teamScores.map(score => ({
+      team: populatedGame.teams.find(t => t._id.toString() === score.team.toString()) || { name: 'Unknown' },
+      score: score.score
+    }));
+    populatedGame.playerStats = populatedGame.playerStats.map(stat => ({
+      ...stat,
+      player: stat.player ? { _id: stat.player._id, name: stat.player.user?.name || 'Unknown' } : null,
+      team: populatedGame.teams.find(t => t._id.toString() === stat.team.toString()) || { name: 'Unknown' }
+    }));
+    populatedGame.gameMVP = populatedGame.gameMVP ? { _id: populatedGame.gameMVP._id, name: populatedGame.gameMVP.user?.name || 'Unknown' } : null;
 
     res.json(populatedGame);
   } catch (err) {
@@ -244,11 +386,31 @@ router.patch('/:gameId', authMiddleware, checkAdminOrManager, async (req, res) =
 router.delete('/:gameId', authMiddleware, checkAdminOrManager, async (req, res) => {
   try {
     const { gameId } = req.params;
-    const game = await Game.findById(gameId);
+    const game = await Game.findById(gameId).populate('league');
     if (!game) return res.status(404).json({ error: 'Game not found' });
 
+    // Adjust Player.stats and gamesPlayed
+    if (game.playerStats && game.playerStats.length > 0) {
+      const leagueDoc = game.league;
+      for (const stat of game.playerStats) {
+        const player = await Player.findById(stat.player);
+        if (player) {
+          if (player.stats[leagueDoc.sportType]) {
+            Object.entries(stat.stats).forEach(([key, value]) => {
+              player.stats[leagueDoc.sportType][key] = Math.max(
+                (player.stats[leagueDoc.sportType][key] || 0) - (value || 0),
+                0
+              ); // Prevent negative stats
+            });
+            player.gamesPlayed = Math.max((player.gamesPlayed || 0) - 1, 0); // Decrement gamesPlayed
+            await player.save();
+          }
+        }
+      }
+    }
+
     await game.deleteOne();
-    res.json({ message: 'Game deleted' });
+    res.json({ message: 'Game deleted and player stats updated' });
   } catch (err) {
     console.error('Delete game error:', err);
     res.status(500).json({ error: 'Failed to delete game' });

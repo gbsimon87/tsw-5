@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const connectDB = require('./config/db');
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 const { faker } = require('@faker-js/faker');
@@ -6,20 +7,21 @@ const User = require('./models/User');
 const League = require('./models/League');
 const Team = require('./models/Team');
 const Player = require('./models/Player');
+const Game = require('./models/Game');
 require('dotenv').config({ path: '.env' });
 
 async function seedDatabase() {
   try {
     // Connect to MongoDB
-    await mongoose.connect(process.env.MONGODB_URI);
-    // console.log('Connected to MongoDB');
+    connectDB();
 
-    // Clear existing data (excluding Game model as per requirements)
+    // Clear existing data
     await User.deleteMany({});
     await League.deleteMany({});
     await Team.deleteMany({});
     await Player.deleteMany({});
-    // console.log('Cleared existing users, leagues, teams, and players.');
+    await Game.deleteMany({});
+    // console.log('Cleared existing users, leagues, teams, players, and games.');
 
     // Initialize player stats based on league scoring rules
     const initializeStats = (scoringRules) => {
@@ -28,7 +30,6 @@ async function seedDatabase() {
         return stats;
       }, {});
     };
-
     // Create users: 4 admins + 10 specific users + 190 additional users
     // Assumption: 200 total users to ensure enough players for 8 leagues * 5 teams * 10 players/team = 400 player slots
     const users = [];
@@ -96,11 +97,10 @@ async function seedDatabase() {
 
     // Create 8 leagues (2 per admin)
     const leagues = [];
-    const sportTypes = ['basketball', 'soccer', 'baseball', 'hockey', 'football'];
+    const sportTypes = ['basketball', 'football', 'baseball', 'hockey', 'americanFootball'];
     for (let i = 0; i < 4; i++) {
-      // Each admin creates 2 leagues
       for (let j = 0; j < 2; j++) {
-        const sportType = sportTypes[faker.number.int({ min: 0, max: sportTypes.length - 1 })]; // Random sport
+        const sportType = sportTypes[faker.number.int({ min: 0, max: sportTypes.length - 1 })];
         const league = new League({
           name: `${faker.company.name()} ${sportType.charAt(0).toUpperCase() + sportType.slice(1)} League`,
           sportType,
@@ -111,7 +111,8 @@ async function seedDatabase() {
           teams: [],
           establishedYear: faker.number.int({ min: 2000, max: 2025 }),
           isActive: true,
-          logo: faker.image.url({ category: 'sports' }),
+          // logo: faker.image.urlLoremFlickr({ category: 'sports' }),
+          logo: `https://picsum.photos/seed/${faker.string.uuid()}/200/200`,
           seasons: [
             {
               name: 'Season 1',
@@ -131,8 +132,7 @@ async function seedDatabase() {
     // Create players for each member user
     const players = [];
     for (const user of memberUsers) {
-      // Player is initially not tied to a specific league; league field set later if needed
-      const stats = {}; // Will be updated based on team assignments
+      const stats = {};
       const player = new Player({
         user: user._id,
         teams: [],
@@ -159,9 +159,9 @@ async function seedDatabase() {
       // console.log(`Created player for user: ${user.name}`);
     }
 
-    // Create 5 teams per league and assign players
+    // Create 5 teams per league
+    const teams = [];
     for (const league of leagues) {
-      const teams = [];
       for (let i = 0; i < 5; i++) {
         const team = new Team({
           name: `${faker.animal.type()} ${faker.color.human()}s`,
@@ -170,41 +170,36 @@ async function seedDatabase() {
           createdBy: league.admins[0],
           isActive: true,
           members: [],
-          logo: faker.image.url({ category: 'sports' }),
+          logo: '',
+          // logo: faker.image.urlLoremFlickr({ category: 'sports' }),
           secretKey: crypto.randomBytes(16).toString('hex')
         });
         await team.save();
-        teams.push(team._id);
+        teams.push(team);
+        league.teams.push(team._id);
         // console.log(`Created team: ${team.name} for league: ${league.name}`);
       }
-      league.teams = teams;
       await league.save();
-      // console.log(`Updated league ${league.name} with ${teams.length} teams`);
+      // console.log(`Updated league ${league.name} with ${league.teams.length} teams`);
     }
 
     // Assign players to at least 2 teams from different leagues
-    // Assumption: Each team has 10 players, so 8 leagues * 5 teams * 10 players = 400 slots
-    // With 200 players, each joining 2 teams, we fill 400 slots exactly
     const teamAssignments = [];
     for (const player of players) {
-      // Select two different leagues randomly
       const leagueIndices = faker.helpers.shuffle([...Array(leagues.length).keys()]);
       const selectedLeagues = [leagues[leagueIndices[0]], leagues[leagueIndices[1]]];
-
       for (const league of selectedLeagues) {
-        // Select a random team from the league
         const team = league.teams[faker.number.int({ min: 0, max: league.teams.length - 1 })];
         teamAssignments.push({ playerId: player._id, teamId: team, leagueId: league._id });
       }
     }
 
-    // Distribute additional assignments if needed to fill teams (ensure ~10 players per team)
-    const teams = await Team.find({});
+    // Ensure ~10 players per team
     for (const team of teams) {
       const currentMembers = teamAssignments.filter(ta => ta.teamId.toString() === team._id.toString()).length;
       if (currentMembers < 10) {
         const needed = 10 - currentMembers;
-        const availablePlayers = players.filter(p => 
+        const availablePlayers = players.filter(p =>
           teamAssignments.filter(ta => ta.playerId.toString() === p._id.toString()).length < 3 &&
           !teamAssignments.some(ta => ta.playerId.toString() === p._id.toString() && ta.teamId.toString() === team._id.toString())
         );
@@ -221,17 +216,12 @@ async function seedDatabase() {
       const player = players.find(p => p._id.toString() === assignment.playerId.toString());
       const league = leagues.find(l => l._id.toString() === assignment.leagueId.toString());
 
-      // Add player to team members
       team.members.push({
         player: player._id,
         role: 'player',
         isActive: true
       });
-
-      // Add team to player
       player.teams.push(team._id);
-
-      // Initialize stats for the league's scoring rules if not already set
       if (!player.stats[league.sportType]) {
         player.stats[league.sportType] = initializeStats(league.settings.scoringRules);
       }
@@ -241,7 +231,89 @@ async function seedDatabase() {
       // console.log(`Assigned player ${player._id} to team ${team.name} in league ${league.name}`);
     }
 
-    // console.log('Seeding complete');
+    // Seed games for each league
+    // Assumption: Create 2 games per league (8 leagues * 2 games = 16 games) with 5-7 players per team
+    const games = [];
+    for (const league of leagues) {
+      const leagueTeams = teams.filter(t => t.league.toString() === league._id.toString());
+      for (let i = 0; i < 2; i++) {
+        const teamIndices = faker.helpers.shuffle([...Array(leagueTeams.length).keys()]);
+        const team1 = leagueTeams[teamIndices[0]];
+        const team2 = leagueTeams[teamIndices[1]];
+        if (team1._id.toString() === team2._id.toString()) continue;
+
+        // Select 5-7 random players per team
+        const team1Players = faker.helpers.shuffle(team1.members.filter(m => m.isActive)).slice(0, faker.number.int({ min: 5, max: 7 }));
+        const team2Players = faker.helpers.shuffle(team2.members.filter(m => m.isActive)).slice(0, faker.number.int({ min: 5, max: 7 }));
+
+        // Generate player stats based on league.settings.statTypes
+        const playerStats = [];
+        const statTypes = league.settings.statTypes;
+        for (const member of [...team1Players, ...team2Players]) {
+          const stats = {};
+          const scoringKeys = Object.keys(league.settings.scoringRules);
+          scoringKeys.forEach(key => {
+            if (statTypes.includes(key)) {
+              stats[key] = faker.number.int({ min: 0, max: 5 });
+            }
+          });
+          statTypes.filter(key => !scoringKeys.includes(key)).forEach(key => {
+            stats[key] = faker.number.int({ min: 0, max: 3 });
+          });
+          playerStats.push({
+            player: member.player,
+            team: team1.members.includes(member) ? team1._id : team2._id,
+            stats
+          });
+        }
+
+        const game = new Game({
+          league: league._id,
+          season: 'Season 1',
+          teams: [team1._id, team2._id],
+          teamScores: [
+            { team: team1._id, score: 0 },
+            { team: team2._id, score: 0 }
+          ],
+          date: faker.date.between({ from: '2025-07-01', to: '2025-12-31' }),
+          location: faker.location.city(),
+          venue: `${faker.company.name()} Arena`,
+          venueCapacity: faker.number.int({ min: 5000, max: 20000 }),
+          playerStats,
+          matchType: 'league',
+          eventType: 'regular',
+          gameDuration: league.settings.periodDuration * 2,
+          isCompleted: true,
+          highlights: [faker.lorem.sentence(), faker.lorem.sentence()],
+          matchReport: faker.lorem.paragraph(),
+          mediaLinks: [{ url: '', type: '' }],
+          attendance: faker.number.int({ min: 1000, max: 15000 }),
+          referee: faker.person.fullName(),
+          fanRating: faker.number.int({ min: 1, max: 5 })
+        });
+
+        await game.save();
+        games.push(game);
+        // console.log(`Created game ${game._id} for league ${league.name} between ${team1.name} and ${team2.name}`);
+
+        // Update Player.stats and gamesPlayed
+        for (const stat of playerStats) {
+          const player = players.find(p => p._id.toString() === stat.player.toString());
+          if (player) {
+            if (!player.stats[league.sportType]) {
+              player.stats[league.sportType] = initializeStats(league.settings.scoringRules);
+            }
+            Object.entries(stat.stats).forEach(([key, value]) => {
+              player.stats[league.sportType][key] = (player.stats[league.sportType][key] || 0) + (value || 0);
+            });
+            player.gamesPlayed = (player.gamesPlayed || 0) + 1;
+            await player.save();
+          }
+        }
+      }
+    }
+
+    // console.log(`Seeding complete: ${games.length} games created`);
   } catch (error) {
     console.error('Seeding error:', error);
     throw error;
@@ -252,4 +324,6 @@ async function seedDatabase() {
 }
 
 // Run the seed function
-seedDatabase();
+seedDatabase().then(() => {
+  console.log('Closing MongoDB Connection...');
+});

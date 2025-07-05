@@ -17,6 +17,8 @@ export default function GameTracking() {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  console.log({ league })
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -97,6 +99,7 @@ export default function GameTracking() {
 
   // Map statTypes to display names and abbreviations for UI
   const statDisplayMap = {
+    // Basketball
     twoPointFGM: { label: '2PT FG', abbr: '2PT' },
     twoPointFGA: { label: '2PT FG Attempt', abbr: '2PTA' },
     threePointFGM: { label: '3PT FG', abbr: '3PT' },
@@ -113,35 +116,111 @@ export default function GameTracking() {
     teamFoul: { label: 'Team Foul', abbr: 'TF' },
     technicalFoul: { label: 'Tech Foul', abbr: 'TF' },
     flagrantFoul: { label: 'Flag Foul', abbr: 'FF' },
-    goal: { label: 'Goal', abbr: 'G' },
-    single: { label: 'Single', abbr: '1B' },
-    double: { label: 'Double', abbr: '2B' },
-    triple: { label: 'Triple', abbr: '3B' },
-    homeRun: { label: 'Home Run', abbr: 'HR' },
-    touchdown: { label: 'TD', abbr: 'TD' },
-    fieldGoal: { label: 'FG', abbr: 'FG' },
-    extraPoint: { label: 'Extra Pt', abbr: 'XP' },
-    twoPointConversion: { label: '2PT Conv', abbr: '2PC' },
-    safety: { label: 'Safety', abbr: 'S' },
+
+    // American Football
+    passingYards: { label: 'Pass Yards', abbr: 'PY' },
+    passingTDs: { label: 'Pass TDs', abbr: 'PTD' },
+    interceptionsThrown: { label: 'INT Thrown', abbr: 'INT' },
+    rushingYards: { label: 'Rush Yards', abbr: 'RY' },
+    rushingTDs: { label: 'Rush TDs', abbr: 'RTD' },
+    fumblesLost: { label: 'Fumbles Lost', abbr: 'FUM' },
+    receptions: { label: 'Receptions', abbr: 'REC' },
+    receivingYards: { label: 'Recv Yards', abbr: 'RECY' },
+    receivingTDs: { label: 'Recv TDs', abbr: 'RECTD' },
+    tackles: { label: 'Tackles', abbr: 'TCK' },
+    sacks: { label: 'Sacks', abbr: 'SCK' },
+    interceptionsCaught: { label: 'INTs Caught', abbr: 'INTC' },
+    fieldGoalsMade: { label: 'FG Made', abbr: 'FGM' },
+    fieldGoalsMissed: { label: 'FG Missed', abbr: 'FGX' },
+    extraPointsMade: { label: 'XP Made', abbr: 'XPM' },
+    punts: { label: 'Punts', abbr: 'PNT' },
+    puntYards: { label: 'Punt Yards', abbr: 'PTY' },
+    kickReturns: { label: 'Kick Returns', abbr: 'KR' },
+    kickReturnYards: { label: 'KR Yards', abbr: 'KRY' },
+
+    // Soccer (Football)
+    goals: { label: 'Goals', abbr: 'G' },
+    assists: { label: 'Assists', abbr: 'A' },
+    shotsOnTarget: { label: 'Shots on Target', abbr: 'SOT' },
+    shotsOffTarget: { label: 'Shots off Target', abbr: 'SOF' },
+    passesCompleted: { label: 'Passes Completed', abbr: 'PC' },
+    passesAttempted: { label: 'Passes Attempted', abbr: 'PA' },
+    foulsCommitted: { label: 'Fouls', abbr: 'F' },
+    yellowCards: { label: 'Yellow Cards', abbr: 'YC' },
+    redCards: { label: 'Red Cards', abbr: 'RC' },
+    saves: { label: 'Saves', abbr: 'SV' },
+    offsides: { label: 'Offsides', abbr: 'OFF' },
+    corners: { label: 'Corners', abbr: 'CK' },
+    clearances: { label: 'Clearances', abbr: 'CLR' },
+
+    // Hockey
+    shots: { label: 'Shots', abbr: 'S' },
+    hits: { label: 'Hits', abbr: 'H' },
+    blockedShots: { label: 'Blocked Shots', abbr: 'BS' },
+    faceoffsWon: { label: 'Faceoffs Won', abbr: 'FOW' },
+    faceoffsLost: { label: 'Faceoffs Lost', abbr: 'FOL' },
+    penaltyMinutes: { label: 'Penalty Minutes', abbr: 'PIM' },
+    plusMinus: { label: '+/-', abbr: '+/-' },
+    takeaways: { label: 'Takeaways', abbr: 'TK' },
+    giveaways: { label: 'Giveaways', abbr: 'GV' },
+    powerPlayGoals: { label: 'PP Goals', abbr: 'PPG' },
+    shortHandedGoals: { label: 'SH Goals', abbr: 'SHG' },
+    gameWinningGoals: { label: 'GW Goals', abbr: 'GWG' },
+    goalsAgainst: { label: 'Goals Against', abbr: 'GA' },
+    savePercentage: { label: 'Save %', abbr: 'SV%' },
+
+    // Baseball
+    atBats: { label: 'At Bats', abbr: 'AB' },
+    runs: { label: 'Runs', abbr: 'R' },
+    RBIs: { label: 'RBIs', abbr: 'RBI' },
+    homeRuns: { label: 'HRs', abbr: 'HR' },
+    doubles: { label: 'Doubles', abbr: '2B' },
+    triples: { label: 'Triples', abbr: '3B' },
+    walks: { label: 'Walks', abbr: 'BB' },
+    strikeouts: { label: 'Strikeouts', abbr: 'K' },
+    stolenBases: { label: 'Stolen Bases', abbr: 'SB' },
+    caughtStealing: { label: 'Caught Stealing', abbr: 'CS' },
+    inningsPitched: { label: 'Innings Pitched', abbr: 'IP' },
+    earnedRuns: { label: 'Earned Runs', abbr: 'ER' },
+    pitchesThrown: { label: 'Pitches Thrown', abbr: 'PIT' },
+    strikesThrown: { label: 'Strikes Thrown', abbr: 'STR' },
+    battersFaced: { label: 'Batters Faced', abbr: 'BF' },
+    fieldingErrors: { label: 'Fielding Errors', abbr: 'E' },
   };
 
   if (loading) return <div>Loading...</div>;
   if (error) return <div>{error}</div>;
 
-  // console.log(game.teams)
-  console.log({players});
+  // Define number of starting players per sport
+  const startingPlayersBySport = {
+    basketball: 5,
+    football: 11,
+    americanFootball: 11,
+    baseball: 9,
+    hockey: 6,
+  };
 
-  const team1Players = players.filter(player =>
-    player.teams?.some(team => team._id === game?.teams?.[0]?._id)
-  );
-  const team2Players = players.filter(player =>
-    player.teams?.some(team => team._id === game?.teams?.[1]?._id)
-  );
+  // Get the number of starters based on the sport
+  const startersCount = startingPlayersBySport[league?.sportType] || 5; // fallback to 5 if unknown
 
-  console.log({ team1Players, team2Players });
+  console.log(startersCount);
 
-    console.log(game?.teams?.[0])
+  const uniquePlayersByTeam = (teamId) => {
+    const seen = new Set();
+    const filtered = players.filter(player => {
+      const isOnTeam = player.teams?.some(team => team._id === teamId);
+      const isUnique = !seen.has(player._id);
+      if (isOnTeam && isUnique) {
+        seen.add(player._id);
+        return true;
+      }
+      return false;
+    });
+    return filtered.slice(0, startersCount);
+  };
 
+  const team1Players = uniquePlayersByTeam(game?.teams?.[0]?._id);
+  const team2Players = uniquePlayersByTeam(game?.teams?.[1]?._id);
 
   return (
     <div className="min-h-screen bg-gray-50 p-2">
@@ -151,47 +230,48 @@ export default function GameTracking() {
           <ArrowLeftIcon className="w-6 h-6 text-blue-600" />
         </button>
       </header>
-      <div className="mb-2">
-        <div className="flex overflow-x-auto space-x-2 pb-2 mb-2" style={{ WebkitOverflowScrolling: 'touch' }}>
+      <div className="flex justify-between mb-2 gap-2">
+        <div className="flex-1 flex flex-col space-y-2 pb-2 mb-2">
           {team1Players.map(player => (
             <button
               key={player._id}
               onClick={() => setActivePlayerId(player._id)}
-              className={`flex items-center p-2 bg-white border rounded ${activePlayerId === player._id ? 'border-blue-600' : 'border-gray-200'}`}
+              className={`flex items-center p-2 bg-white border rounded w-full ${activePlayerId === player._id ? 'border-blue-600' : 'border-gray-200'
+                }`}
             >
               <div className="w-6 h-6 mr-1">
                 {player.user?.picture ? (
                   <img src={player.user.picture} alt={player.user.name} className="w-6 h-6 rounded-full" />
                 ) : (
-                  <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center">
-                  </div>
+                  <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center" />
                 )}
               </div>
-              <span className="text-xs">{player.user?.name}</span>
+              <span className="text-left text-xs">{player.user?.name}</span>
             </button>
           ))}
         </div>
-        <div className="flex overflow-x-auto space-x-2 pb-2" style={{ WebkitOverflowScrolling: 'touch' }}>
+        <div className="flex-1 flex flex-col space-y-2 pb-2 mb-2">
           {team2Players.map(player => (
             <button
               key={player._id}
               onClick={() => setActivePlayerId(player._id)}
-              className={`flex items-center p-2 bg-white border rounded ${activePlayerId === player._id ? 'border-blue-600' : 'border-gray-200'}`}
+              className={`flex items-center p-2 bg-white border rounded w-full ${activePlayerId === player._id ? 'border-blue-600' : 'border-gray-200'
+                }`}
             >
               <div className="w-6 h-6 mr-1">
                 {player.user?.picture ? (
                   <img src={player.user.picture} alt={player.user.name} className="w-6 h-6 rounded-full" />
                 ) : (
-                  <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center">
-                  </div>
+                  <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center" />
                 )}
               </div>
-              <span className="text-xs">{player.user?.name}</span>
+              <span className="text-left text-xs">{player.user?.name}</span>
             </button>
           ))}
         </div>
       </div>
-      <div className="bg-white p-2 grid grid-cols-3 md:grid-cols-4 gap-1 mb-2">
+
+      <div className="bg-white p-2 grid grid-cols-2 md:grid-cols-4 gap-3 mb-2">
         {league?.settings?.statTypes?.map(statType => {
           const display = statDisplayMap[statType] || { label: `+1 ${statType}`, abbr: statType };
           return (

@@ -23,9 +23,9 @@ import { useAuth } from '../context/AuthContext';
 const scoringRulesMap = {
   basketball: { twoPointFGM: 2, threePointFGM: 3, freeThrowM: 1 },
   hockey: { goal: 1 },
-  soccer: { goal: 1 },
+  football: { goal: 1 },
   baseball: { single: 1, double: 2, triple: 3, homeRun: 4 },
-  football: { touchdown: 6, fieldGoal: 3, extraPoint: 1, twoPointConversion: 2, safety: 2 },
+  americanFootball: { touchdown: 6, fieldGoal: 3, extraPoint: 1, twoPointConversion: 2, safety: 2 },
 };
 
 const semanticScoringRulesMap = {
@@ -37,7 +37,7 @@ const semanticScoringRulesMap = {
   hockey: {
     goal: 'Goal',
   },
-  soccer: {
+  football: {
     goal: 'Goal',
   },
   baseball: {
@@ -46,7 +46,7 @@ const semanticScoringRulesMap = {
     triple: 'Triple',
     homeRun: 'Home Run',
   },
-  football: {
+  americanFootball: {
     touchdown: 'Touchdown',
     fieldGoal: 'Field Goal',
     extraPoint: 'Extra Point',
@@ -345,10 +345,10 @@ export default function ManageLeagueEdit() {
                   className="mt-1 w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 >
                   <option value="basketball">Basketball</option>
-                  <option value="soccer">Soccer</option>
+                  <option value="football">Football</option>
                   <option value="baseball">Baseball</option>
                   <option value="hockey">Hockey</option>
-                  <option value="football">Football</option>
+                  <option value="americanFootball">Ame. Football</option>
                 </select>
               </div>
               <div className="flex flex-col">

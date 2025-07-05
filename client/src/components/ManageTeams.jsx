@@ -148,7 +148,7 @@ export default function ManageTeams() {
   if (!league) return <div className="text-center mt-8">Loading...</div>;
 
   return (
-    <div className="min-h-screen bg-gray-100 p-8">
+    <div className="bg-gray-100 p-6">
       <div className="max-w-4xl mx-auto">
         <div className="flex items-center mb-8">
           <button

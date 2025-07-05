@@ -3,9 +3,9 @@ const mongoose = require('mongoose');
 const scoringRulesMap = {
   basketball: { twoPointFGM: 2, threePointFGM: 3, freeThrowM: 1 },
   hockey: { goal: 1 },
-  soccer: { goal: 1 },
+  football: { goal: 1 },
   baseball: { single: 1, double: 2, triple: 3, homeRun: 4 },
-  football: { touchdown: 6, fieldGoal: 3, extraPoint: 1, twoPointConversion: 2, safety: 2 }
+  americanFootball: { touchdown: 6, fieldGoal: 3, extraPoint: 1, twoPointConversion: 2, safety: 2 }
 };
 
 const leagueSchema = new mongoose.Schema({
@@ -13,7 +13,7 @@ const leagueSchema = new mongoose.Schema({
   sportType: {
     type: String,
     required: true,
-    enum: ['basketball', 'soccer', 'baseball', 'hockey', 'football'],
+    enum: ['basketball', 'football', 'baseball', 'hockey', 'americanFootball'],
     default: 'basketball',
   },
   season: { type: String, default: '' }, // Current active season
@@ -54,7 +54,7 @@ const leagueSchema = new mongoose.Schema({
     overtimeDuration: {
       type: Number,
       default: function () {
-        if (this.sportType === 'soccer') return 15;
+        if (this.sportType === 'football') return 15;
         return 5;
       },
       required: true,
@@ -68,15 +68,50 @@ const leagueSchema = new mongoose.Schema({
     statTypes: {
       type: [String],
       default: function () {
-        return this.sportType === 'basketball'
-          ? [
+        switch (this.sportType) {
+          case 'basketball':
+            return [
               'twoPointFGM', 'twoPointFGA', 'threePointFGM', 'threePointFGA',
               'freeThrowM', 'freeThrowA', 'offensiveRebound', 'defensiveRebound',
               'assist', 'steal', 'turnover', 'block', 'personalFoul',
-              'teamFoul', 'technicalFoul', 'flagrantFoul',
-            ]
-          : [];
-      },
+              'teamFoul', 'technicalFoul', 'flagrantFoul'
+            ];
+          case 'americanFootball':
+            return [
+              'passingYards', 'passingTDs', 'interceptionsThrown',
+              'rushingYards', 'rushingTDs', 'fumblesLost',
+              'receptions', 'receivingYards', 'receivingTDs',
+              'tackles', 'sacks', 'interceptionsCaught',
+              'fieldGoalsMade', 'fieldGoalsMissed', 'extraPointsMade',
+              'punts', 'puntYards', 'kickReturns', 'kickReturnYards'
+            ];
+          case 'football':
+            return [
+              'goals', 'assists', 'shotsOnTarget', 'shotsOffTarget',
+              'passesCompleted', 'passesAttempted', 'tackles',
+              'interceptions', 'foulsCommitted', 'yellowCards',
+              'redCards', 'saves', 'offsides', 'corners', 'clearances'
+            ];
+          case 'hockey':
+            return [
+              'goals', 'assists', 'shots', 'hits', 'blockedShots',
+              'faceoffsWon', 'faceoffsLost', 'penaltyMinutes',
+              'plusMinus', 'takeaways', 'giveaways', 'powerPlayGoals',
+              'shortHandedGoals', 'gameWinningGoals', 'saves',
+              'goalsAgainst', 'savePercentage'
+            ];
+          case 'baseball':
+            return [
+              'atBats', 'hits', 'runs', 'RBIs', 'homeRuns',
+              'doubles', 'triples', 'walks', 'strikeouts',
+              'stolenBases', 'caughtStealing', 'inningsPitched',
+              'earnedRuns', 'pitchesThrown', 'strikesThrown',
+              'battersFaced', 'fieldingErrors'
+            ];
+          default:
+            return [];
+        }
+      }
     },
   },
   status: { type: String, enum: ['active', 'inactive'], default: 'active' },

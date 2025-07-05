@@ -38,7 +38,7 @@ async function seedDatabase() {
           'teamFoul', 'technicalFoul', 'flagrantFoul'
         ]
       },
-      soccer: {
+      football: {
         periodType: 'halves',
         periodDuration: 45,
         overtimeDuration: 15,
@@ -58,6 +58,13 @@ async function seedDatabase() {
         overtimeDuration: 5,
         scoringRules: { goal: 1 },
         statTypes: ['goal', 'assist', 'penalty']
+      },
+      americanFootball: {
+        periodType: 'quarters',
+        periodDuration: 12,
+        overtimeDuration: 5,
+        scoringRules: { goal: 1 },
+        statTypes: ['touchdown', 'fieldGoal', 'extraPoint', 'twoPointConversion']
       }
     };
 
@@ -119,7 +126,7 @@ async function seedDatabase() {
 
     // Create 4 leagues
     const leagues = [];
-    const sportTypes = ['basketball', 'soccer', 'baseball', 'hockey'];
+    const sportTypes = ['basketball', 'football', 'baseball', 'hockey', 'americanFootball'];
     for (let i = 0; i < 4; i++) {
       const sportType = sportTypes[i];
       const league = new League({

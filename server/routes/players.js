@@ -10,21 +10,19 @@ const { initializeStats } = require('../middleware/statsUtils');
 // Create a player (admin/manager only)
 router.post('/', authMiddleware, checkAdminOrManager, async (req, res) => {
   try {
-    const { userId, leagueId, position, bio, dateOfBirth, nationality } = req.body;
-    if (!userId || !leagueId) {
-      return res.status(400).json({ error: 'userId and leagueId are required' });
+    const { userId, position, bio, dateOfBirth, nationality } = req.body;
+    if (!userId) {
+      return res.status(400).json({ error: 'userId is required' });
     }
 
-    const existingPlayer = await Player.findOne({ user: userId, league: leagueId });
+    const existingPlayer = await Player.findOne({ user: userId });
     if (existingPlayer) {
-      return res.status(400).json({ error: 'Player already exists for this user and league' });
+      return res.status(400).json({ error: 'Player already exists for this user' });
     }
 
-    const stats = await initializeStats(leagueId);
     const player = await Player.create({
       user: userId,
-      league: leagueId,
-      stats,
+      stats: {}, // Initialized as empty; populated when joining teams or games
       position,
       bio,
       dateOfBirth,
@@ -37,6 +35,9 @@ router.post('/', authMiddleware, checkAdminOrManager, async (req, res) => {
       careerRebounds: 0,
       careerSteals: 0,
       playerRank: 0,
+      injuries: [],
+      playerHistory: [],
+      recentInjuries: []
     });
 
     res.status(201).json(player);
@@ -91,20 +92,24 @@ router.patch('/:playerId', authMiddleware, async (req, res) => {
     const { playerId } = req.params;
     const { position, bio, dateOfBirth, nationality, injuries, playerHistory, recentInjuries } = req.body;
 
-    const player = await Player.findById(playerId).populate('user');
+    const player = await Player.findById(playerId).populate('user').populate('teams');
     if (!player) return res.status(404).json({ error: 'Player not found' });
 
-    const isAdmin = await League.findById(player.league)
-      .then(league => league?.admins.some(admin => admin._id.toString() === req.user._id.toString()));
-    const isManager = await League.findById(player.league)
-      .then(league => league?.managers.some(manager => manager._id.toString() === req.user._id.toString()));
+    // Check if user is admin or manager of any league the player’s teams belong to
+    const isAdminOrManager = await League.find({
+      $or: [
+        { admins: req.user._id },
+        { managers: req.user._id }
+      ],
+      teams: { $in: player.teams }
+    });
     const isOwnProfile = player.user._id.toString() === req.user._id.toString();
 
-    if (!isAdmin && !isManager && !isOwnProfile) {
+    if (!isAdminOrManager.length && !isOwnProfile) {
       return res.status(403).json({ error: 'Unauthorized: Admin, manager, or own profile access required' });
     }
 
-    const updateFields = isAdmin || isManager ? req.body : { position, bio, dateOfBirth, nationality, injuries, playerHistory, recentInjuries };
+    const updateFields = isAdminOrManager.length ? req.body : { position, bio, dateOfBirth, nationality, injuries, playerHistory, recentInjuries };
     Object.assign(player, updateFields);
     await player.save();
 

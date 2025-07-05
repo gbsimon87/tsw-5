@@ -152,10 +152,10 @@ export default function AdminPanel() {
                   className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="basketball">Basketball</option>
-                  <option value="soccer">Soccer</option>
+                  <option value="football">Football</option>
                   <option value="baseball">Baseball</option>
                   <option value="hockey">Hockey</option>
-                  <option value="football">Football</option>
+                  <option value="americanFootball">Ame. Football</option>
                 </select>
               </div>
               <div>

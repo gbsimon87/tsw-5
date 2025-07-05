@@ -74,7 +74,7 @@ export default function MySporty() {
   }
 
   return (
-    <div className="h-[var(--page-height)] bg-white p-6">
+    <div className="bg-white p-6">
       <div className="max-w-7xl mx-auto">
         <div className="block mb-8">
           <h1 className="text-3xl font-bold text-gray-800 mb-4">MySporty</h1>

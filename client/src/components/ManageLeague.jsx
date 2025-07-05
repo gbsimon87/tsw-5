@@ -26,7 +26,7 @@ const semanticScoringRulesMap = {
   hockey: {
     goal: 'Goal',
   },
-  soccer: {
+  football: {
     goal: 'Goal',
   },
   baseball: {
@@ -35,7 +35,7 @@ const semanticScoringRulesMap = {
     triple: 'Triple',
     homeRun: 'Home Run',
   },
-  football: {
+  americanFootball: {
     touchdown: 'Touchdown',
     fieldGoal: 'Field Goal',
     extraPoint: 'Extra Point',

@@ -3,8 +3,7 @@ const mongoose = require('mongoose');
 const playerSchema = new mongoose.Schema({
   user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   teams: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Team' }],
-  league: { type: mongoose.Schema.Types.ObjectId, ref: 'League' },
-  stats: mongoose.Schema.Types.Mixed,
+  stats: { type: mongoose.Schema.Types.Mixed, default: {} }, // Structured by sportType
   gamesPlayed: { type: Number, default: 0 },
   performanceRating: { type: Number, default: 0 },
   position: { type: String },
@@ -24,5 +23,4 @@ const playerSchema = new mongoose.Schema({
   recentInjuries: [{ injuryDate: Date, injuryType: String, recoveryStatus: String }],
 }, { timestamps: true });
 
-const Player = mongoose.model('Player', playerSchema);
-module.exports = Player;
+module.exports = mongoose.model('Player', playerSchema);
