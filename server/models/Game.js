@@ -15,6 +15,14 @@ const gameSchema = new mongoose.Schema({
     team: { type: mongoose.Schema.Types.ObjectId, ref: 'Team', required: true },
     stats: { type: mongoose.Schema.Types.Mixed, required: true }
   }],
+  playByPlay: [{
+    player: { type: mongoose.Schema.Types.ObjectId, ref: 'Player', required: true },
+    team: { type: mongoose.Schema.Types.ObjectId, ref: 'Team', required: true },
+    statType: { type: String, required: true },
+    period: { type: String, required: true },
+    time: { type: Number, required: true },
+    timestamp: { type: Date, default: Date.now }
+  }],
   highlights: [{ type: String }],
   matchReport: { type: String },
   isCompleted: { type: Boolean, default: false },
@@ -53,20 +61,54 @@ gameSchema.pre('save', async function (next) {
       return next(new Error('All teams must belong to the specified league'));
     }
 
-    // Ensure playerStats.team references one of the game’s teams
+    // Validate playerStats and playByPlay
     const validTeamIds = this.teams.map(id => id.toString());
+    const validStatTypes = league.settings.statTypes;
+
+    // Validate playByPlay entries
+    for (const play of this.playByPlay) {
+      if (!validTeamIds.includes(play.team.toString())) {
+        return next(new Error('Play-by-play team must match one of the game teams'));
+      }
+      if (!validStatTypes.includes(play.statType)) {
+        return next(new Error('Play-by-play contains invalid stat type'));
+      }
+      if (!play.period || typeof play.time !== 'number' || play.time < 0) {
+        return next(new Error('Play-by-play requires valid period and time'));
+      }
+    }
+
+    // Aggregate playByPlay into playerStats
+    const playerStatsMap = {};
+    for (const play of this.playByPlay) {
+      const playerId = play.player.toString();
+      const teamId = play.team.toString();
+      if (!playerStatsMap[playerId]) {
+        playerStatsMap[playerId] = { player: play.player, team: play.team, stats: {} };
+      }
+      playerStatsMap[playerId].stats[play.statType] = (playerStatsMap[playerId].stats[play.statType] || 0) + 1;
+    }
+
+    // Merge with existing playerStats (if any)
     for (const stat of this.playerStats) {
+      const playerId = stat.player.toString();
+      if (!playerStatsMap[playerId]) {
+        playerStatsMap[playerId] = stat;
+      } else {
+        // Merge stats, prioritizing playByPlay for consistency
+        playerStatsMap[playerId].stats = { ...stat.stats, ...playerStatsMap[playerId].stats };
+      }
       if (!validTeamIds.includes(stat.team.toString())) {
         return next(new Error('Player stats team must match one of the game teams'));
       }
-      // Validate stats keys against league.settings.statTypes
-      const validStatTypes = league.settings.statTypes;
       if (!Object.keys(stat.stats).every(key => validStatTypes.includes(key))) {
         return next(new Error('Player stats contain invalid stat types'));
       }
     }
 
-    // Calculate team scores from player stats
+    this.playerStats = Object.values(playerStatsMap);
+
+    // Calculate team scores
     const scoringRules = league.settings.scoringRules;
     this.teamScores = this.teams.map(teamId => {
       const teamStats = this.playerStats.filter(stat => stat.team.toString() === teamId.toString());

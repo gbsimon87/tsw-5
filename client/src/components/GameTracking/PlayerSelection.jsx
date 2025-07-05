@@ -1,15 +1,18 @@
-import React from 'react';
+import { useState } from 'react';
 import { toast } from 'react-toastify';
+import { getFirstCapitalLetter } from '../../utils/getFirstCapitalLetter';
+import { getInitialAndLastName } from '../../utils/getInitialAndLastName';
 
 export default function PlayerSelection({
   teams,
+  game,
+  league,
   activePlayersTeam1,
   activePlayersTeam2,
   selectedPlayersTeam1,
   selectedPlayersTeam2,
   startersCount,
   handlePlayerClick,
-  handleKeyDown,
   hasGameStarted,
   remainingSeconds,
   isSubstitutionMode,
@@ -19,6 +22,8 @@ export default function PlayerSelection({
   if (!teams || !Array.isArray(teams) || teams.length !== 2) {
     throw new Error('[PlayerSelection]: Valid teams data is required (expected array of two teams)');
   }
+
+  const [selectedPlayer, setSelectedPlayer] = useState(null);
 
   const handleSelectPlayer = (teamId, playerId) => {
     const isTeam1 = teamId === teams[0]._id;
@@ -42,55 +47,62 @@ export default function PlayerSelection({
     });
   };
 
+  const getPlayerStats = (playerId) => {
+    const playerStat = game?.playerStats?.find(stat => stat.playerId === playerId);
+    const stats = playerStat?.stats || {};
+    const points = ((stats.twoPointFGM || 0) * 2) + ((stats.threePointFGM || 0) * 3) + (stats.freeThrowM || 0);
+    return {
+      personalFoul: stats.personalFoul || 0,
+      points: points || 0,
+      assist: stats.assist || 0,
+    };
+  };
+
   const renderPlayerCard = (player, teamId) => {
     const isTeam1 = teamId === teams[0]._id;
     const isChecked = (isTeam1 ? selectedPlayersTeam1 : selectedPlayersTeam2).includes(player.playerId);
+    const { personalFoul, points, assist } = getPlayerStats(player.playerId);
 
     return (
       <div
         key={player.playerId}
-        className={`w-full bg-white border border-gray-200 shadow-md p-3 flex flex-col items-center gap-2 transition
-        ${!hasGameStarted || remainingSeconds <= 0 ? 'opacity-50 cursor-not-allowed' : ''}
-      `}
+        className={`w-full bg-white border border-gray-200 shadow-md p-1 flex flex-col gap-2 transition
+          ${!hasGameStarted || remainingSeconds <= 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+        onClick={() => !isSubstitutionMode && hasGameStarted && remainingSeconds > 0 && setSelectedPlayer(player)}
       >
-        {isSubstitutionMode ? (
-          <input
-            type="checkbox"
-            checked={isChecked}
-            onChange={() => handleSelectPlayer(teamId, player.playerId)}
-            className="mt-1"
-            aria-label={`Toggle active status for ${player.name || 'Unknown'}`}
-            disabled={!hasGameStarted || remainingSeconds <= 0}
-          />
-        ) : (
-          <div className="flex items-center gap-1 flex-shrink-0">
+        {/* Top Container: Avatar, Name, Position/Jersey */}
+        <div className="flex flex-row items-center gap-3 w-full">
+          {isSubstitutionMode ? (
+            <input
+              type="checkbox"
+              checked={isChecked}
+              onChange={() => handleSelectPlayer(teamId, player.playerId)}
+              className="mt-1"
+              aria-label={`Toggle active status for ${player.name || 'Unknown'}`}
+              disabled={!hasGameStarted || remainingSeconds <= 0}
+            />
+          ) : (
             <img
               src="https://placehold.co/40x40?text=👤"
               alt={`${player.name || 'Unknown'} profile`}
-              className="w-10 h-10 rounded-full object-cover bg-gray-200"
+              className="w-10 h-10 rounded-full object-cover bg-gray-200 flex-shrink-0"
             />
-            <span className="bg-blue-600 text-white rounded-full px-2 py-0.5 text-xs">
+          )}
+          <div className="flex flex-col flex-1 min-w-0">
+            <span className="font-semibold text-base break-words whitespace-normal block">
+              {getInitialAndLastName(player.name) || 'Unknown'}
+            </span>
+            <span className="text-xs text-gray-700 mt-1">
+              {getFirstCapitalLetter(player.position) || 'N/A'}
+              <span className="text-gray-400">|</span>
               #{player.jerseyNumber || 'N/A'}
             </span>
           </div>
-        )}
-        <button
-          className="flex-1 flex flex-col items-center min-w-0 w-full"
-          onClick={() => handlePlayerClick(player)}
-          onKeyDown={(e) => handleKeyDown(e, () => handlePlayerClick(player))}
-          tabIndex={0}
-          aria-label={`Select ${player.name || 'Unknown'} jersey ${player.jerseyNumber || 'N/A'}`}
-          disabled={!hasGameStarted || remainingSeconds <= 0 || isSubstitutionMode}
-        >
-          <div className="mb-1 w-full">
-            <span className="font-semibold text-base break-words whitespace-normal block text-center">
-              {player.name || 'Unknown'}
-            </span>
-          </div>
-          <div className="flex gap-2 text-xs text-gray-700 justify-center w-full">
-            <span>Pos: {player.position || 'N/A'}</span>
-          </div>
-        </button>
+        </div>
+        {/* Bottom Container: Stats preview */}
+        <div className="w-full text-xs text-blue-700 text-center py-1 border-t border-gray-100">
+          <span>PF: {personalFoul}</span> | <span>PTS: {points}</span> | <span>AST: {assist}</span>
+        </div>
       </div>
     );
   };
@@ -124,6 +136,35 @@ export default function PlayerSelection({
           <div className="text-center text-gray-500">No active players</div>
         )}
       </div>
+      {selectedPlayer && !isSubstitutionMode && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-4 rounded shadow-lg max-w-md w-full">
+            <h3 className="text-lg font-bold mb-2">
+              Select Stat for {getInitialAndLastName(selectedPlayer.name) || 'Unknown'}
+            </h3>
+            <div className="grid grid-cols-2 gap-2">
+              {league?.settings?.statTypes.map(statType => (
+                <button
+                  key={statType}
+                  onClick={() => {
+                    handlePlayerClick(selectedPlayer, statType);
+                    setSelectedPlayer(null);
+                  }}
+                  className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                >
+                  {statType}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => setSelectedPlayer(null)}
+              className="mt-4 px-4 py-2 bg-gray-200 text-gray-900 rounded hover:bg-gray-300"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

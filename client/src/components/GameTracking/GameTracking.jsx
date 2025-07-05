@@ -8,6 +8,7 @@ import ScoreBoard from './ScoreBoard';
 import BoxScore from './BoxScore';
 import PlayerSelection from './PlayerSelection';
 import ScreenNavigation from './ScreenNavigation';
+import ClockControls from './ClockControls';
 
 export default function GameTracking() {
   const { leagueId, gameId } = useParams();
@@ -26,6 +27,8 @@ export default function GameTracking() {
   const [activePlayersTeam2, setActivePlayersTeam2] = useState([]);
   const [selectedPlayersTeam1, setSelectedPlayersTeam1] = useState([]);
   const [selectedPlayersTeam2, setSelectedPlayersTeam2] = useState([]);
+  const [clockState, setClockState] = useState({ running: false, seconds: 0, period: 'H1' });
+  const [playByPlay, setPlayByPlay] = useState([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -77,6 +80,36 @@ export default function GameTracking() {
           ) || {},
         });
 
+        setPlayByPlay(gameData.playByPlay || []);
+
+        // Initialize clockState based on playByPlay or league settings
+        const periodType = leagueData?.settings?.periodType || 'halves';
+        const periodOptions = periodType === 'halves' ? ['H1', 'H2'] :
+          periodType === 'quarters' ? ['Q1', 'Q2', 'Q3', 'Q4'] :
+            ['P1', 'P2', 'P3'];
+        const defaultPeriod = periodOptions[0] || 'H1';
+        const duration = (leagueData?.settings?.periodDuration || 24) * 60;
+
+        if (gameData.playByPlay?.length > 0) {
+          const latestEntry = gameData.playByPlay.reduce((latest, entry) => {
+            return new Date(entry.timestamp) > new Date(latest.timestamp) ? entry : latest;
+          }, gameData.playByPlay[0]);
+          setClockState({
+            running: false,
+            seconds: latestEntry.time,
+            period: latestEntry.period,
+          });
+          toast.info(`Clock initialized to ${latestEntry.period} at ${formatTime(latestEntry.time)}`, {
+            toastId: 'clock-init',
+          });
+        } else {
+          setClockState({
+            running: false,
+            seconds: duration,
+            period: defaultPeriod,
+          });
+        }
+
         setLoading(false);
       } catch (err) {
         console.error('Fetch data error:', err);
@@ -87,42 +120,72 @@ export default function GameTracking() {
     fetchData();
   }, [gameId, leagueId, user.token]);
 
-  const boxScoreTabLabels = [
-    game?.teams[0]?.name || 'Team 1',
-    'All',
-    game?.teams[1]?.name || 'Team 2',
-  ];
-
-  const filteredPlayers = useCallback(() => {
-    let players = [];
-    if (boxScoreTab === 0) {
-      players = game?.playerStats?.filter(p => p.teamId === game?.teams[0]?._id) || [];
-    } else if (boxScoreTab === 2) {
-      players = game?.playerStats?.filter(p => p.teamId === game?.teams[1]?._id) || [];
-    } else {
-      players = game?.playerStats || [];
+  useEffect(() => {
+    let interval = null;
+    if (clockState.running && clockState.seconds > 0) {
+      interval = setInterval(() => {
+        setClockState(prev => ({ ...prev, seconds: prev.seconds - 1 }));
+      }, 1000);
     }
-    return players.slice().sort((a, b) => a.playerName.localeCompare(b.playerName));
-  }, [game, boxScoreTab]);
+    return () => clearInterval(interval);
+  }, [clockState.running, clockState.seconds]);
 
-  const handleStatIncrement = (statType) => {
-    if (!activePlayerId) return;
-    const change = { playerId: activePlayerId, statType, value: 1 };
-    setLastChange(change);
+  const handleClockToggle = () => {
+    setClockState(prev => ({ ...prev, running: !prev.running }));
+    toast.info(clockState.running ? 'Clock paused' : 'Clock started', { toastId: 'clock-toggle' });
+  };
+
+  const handlePeriodChange = (newPeriod) => {
+    const periodDuration = (league?.settings?.periodDuration || 24) * 60;
+    const overtimeDuration = (league?.settings?.overtimeDuration || 5) * 60;
+    setClockState(prev => ({
+      ...prev,
+      period: newPeriod,
+      seconds: newPeriod.includes('OT') ? overtimeDuration : periodDuration,
+      running: false,
+    }));
+  };
+
+  const handleTimeChange = (newSeconds) => {
+    setClockState(prev => ({
+      ...prev,
+      seconds: newSeconds,
+      running: false,
+    }));
+  };
+
+  const handleStatIncrement = (playerId, teamId, statType) => {
+    const newEntry = {
+      player: playerId,
+      team: teamId,
+      statType,
+      period: clockState.period,
+      time: clockState.seconds,
+      timestamp: new Date(),
+    };
+    setLastChange(newEntry);
+    setPlayByPlay(prev => [...prev, newEntry]);
     setFormData(prev => ({
       ...prev,
       playerStats: {
         ...prev.playerStats,
-        [activePlayerId]: {
-          ...prev.playerStats[activePlayerId],
-          [statType]: (prev.playerStats[activePlayerId]?.[statType] || 0) + 1,
+        [playerId]: {
+          ...prev.playerStats[playerId],
+          [statType]: (prev.playerStats[playerId]?.[statType] || 0) + 1,
         },
       },
     }));
+    const player = game?.teams
+      .flatMap(team => team.members)
+      .find(p => p.playerId === playerId);
+    toast.success(`${statType} recorded for ${player?.name || 'Unknown'} at ${formatTime(clockState.seconds)} in ${clockState.period}`, {
+      toastId: `stat-${playerId}-${Date.now()}`,
+    });
   };
 
   const handleUndo = () => {
     if (lastChange) {
+      setPlayByPlay(prev => prev.filter(entry => entry !== lastChange));
       setFormData(prev => ({
         ...prev,
         playerStats: {
@@ -134,6 +197,7 @@ export default function GameTracking() {
         },
       }));
       setLastChange(null);
+      toast.info('Stat entry undone', { toastId: 'undo-stat' });
     }
   };
 
@@ -145,6 +209,7 @@ export default function GameTracking() {
           score: formData.score,
           gameMVP: formData.gameMVP || null,
           playerStats: Object.entries(formData.playerStats).map(([playerId, stats]) => ({ playerId, stats })),
+          playByPlay,
         },
         { headers: { Authorization: `Bearer ${user.token}` } }
       );
@@ -179,6 +244,30 @@ export default function GameTracking() {
     }
   }, [screen, selectedPlayersTeam1, selectedPlayersTeam2, league, game]);
 
+  const formatTime = (seconds) => {
+    const minutes = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${minutes}:${secs < 10 ? '0' : ''}${secs}`;
+  };
+
+  const boxScoreTabLabels = [
+    game?.teams[0]?.name || 'Team 1',
+    'All',
+    game?.teams[1]?.name || 'Team 2',
+  ];
+
+  const filteredPlayers = useCallback(() => {
+    let players = [];
+    if (boxScoreTab === 0) {
+      players = game?.playerStats?.filter(p => p.teamId === game?.teams[0]?._id) || [];
+    } else if (boxScoreTab === 2) {
+      players = game?.playerStats?.filter(p => p.teamId === game?.teams[1]?._id) || [];
+    } else {
+      players = game?.playerStats || [];
+    }
+    return players.slice().sort((a, b) => a.playerName.localeCompare(b.playerName));
+  }, [game, boxScoreTab]);
+
   const startersCount = startingNumberOfPlayersBySport[league?.sportType] || 5;
 
   const renderScreenView = useCallback(() => {
@@ -188,12 +277,21 @@ export default function GameTracking() {
         return (
           <PlayerSelection
             teams={game?.teams}
+            game={game}
+            league={league}
             activePlayersTeam1={activePlayersTeam1}
             activePlayersTeam2={activePlayersTeam2}
             selectedPlayersTeam1={selectedPlayersTeam1}
             selectedPlayersTeam2={selectedPlayersTeam2}
             startersCount={startersCount}
-            handlePlayerClick={player => setActivePlayerId(player.playerId)}
+            handlePlayerClick={(player, statType) => {
+              if (statType) {
+                const teamId = game?.teams.find(team => team.members.some(m => m.playerId === player.playerId))?._id;
+                handleStatIncrement(player.playerId, teamId, statType);
+              } else {
+                setActivePlayerId(player.playerId);
+              }
+            }}
             handleKeyDown={(e, callback) => {
               if (e.key === 'Enter' || e.key === ' ') callback();
             }}
@@ -213,19 +311,30 @@ export default function GameTracking() {
             setTab={setBoxScoreTab}
             boxScoreTabLabels={boxScoreTabLabels}
             filteredPlayers={filteredPlayers()}
+            playByPlay={playByPlay}
           />
         );
       default:
         return null;
     }
-  }, [screen, game, league, boxScoreTab, filteredPlayers, startersCount, activePlayersTeam1, activePlayersTeam2, selectedPlayersTeam1, selectedPlayersTeam2]);
+  }, [screen, game, league, boxScoreTab, filteredPlayers, startersCount, activePlayersTeam1, activePlayersTeam2, selectedPlayersTeam1, selectedPlayersTeam2, playByPlay]);
 
   if (loading) return <div>Loading Game Tracking...</div>;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    // <div className="min-h-screen bg-gray-50">
+    <div>
       <ScoreBoard teamScores={game?.teamScores} />
-      <div className="bg-white h-[75vh] overflow-y-auto px-2">{renderScreenView()}</div>
+      <div className="bg-white h-[70vh] overflow-y-auto px-2">{renderScreenView()}</div>
+      <ClockControls
+        clockState={clockState}
+        handleClockToggle={handleClockToggle}
+        handlePeriodChange={handlePeriodChange}
+        handleTimeChange={handleTimeChange}
+        periodDuration={(league?.settings?.periodDuration || 24) * 60}
+        overtimeDuration={(league?.settings?.overtimeDuration || 5) * 60}
+        game={game}
+      />
       <ScreenNavigation
         activeScreen={screen}
         onScreenChange={handleScreenChange}
