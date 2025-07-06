@@ -288,7 +288,7 @@ export default function ManageLeagueEdit() {
       <div className="max-w-4xl mx-auto">
         {/* Header with actions */}
         <header className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 gap-4">
-          <h1 className="text-3xl font-bold text-gray-800">{formData.name}</h1>
+          <h1 className="text-2xl font-bold text-gray-800">{formData.name}</h1>
           <div className="flex gap-3">
             <button
               type="submit"
