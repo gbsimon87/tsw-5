@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import {
@@ -87,13 +88,20 @@ export default function ManageTeams() {
       setTeams([...teams, response.data]);
       setFormData({ name: '', logo: '' });
       setError(null);
+      toast.success(`Team "${response.data.name}" created successfully!`, {
+        position: "top-right",
+        autoClose: 3000,
+      });
       setActiveTab('view');
     } catch (err) {
-      setError(
-        err.response?.status === 403
-          ? 'You are not authorized to create teams'
-          : err.response?.data?.error || 'Failed to create team'
-      );
+      const errorMessage = err.response?.status === 403
+        ? 'You are not authorized to create teams'
+        : err.response?.data?.error || 'Failed to create team';
+      setError(errorMessage);
+      toast.error(errorMessage, {
+        position: "top-right",
+        autoClose: 3000,
+      });
     }
   };
 
@@ -170,10 +178,7 @@ export default function ManageTeams() {
               className="flex items-center gap-2 bg-white text-blue-700 border border-blue-600 px-4 py-1.5 rounded-lg font-semibold shadow hover:bg-blue-50 transition focus:ring-2 focus:ring-blue-500 focus:outline-none"
               aria-label="Back to League"
             >
-              {/* Heroicons ArrowLeftIcon */}
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
-              </svg>
+              <ArrowLeftIcon className="w-5 h-5" />
               Back to League
             </button>
             <div>
