@@ -3,8 +3,8 @@ import { UsersIcon, ChartBarIcon, ArrowsRightLeftIcon, ListBulletIcon } from '@h
 export default function ScreenNavigation({ activeScreen, onScreenChange }) {
   const screens = [
     { id: 'rosters', icon: UsersIcon, label: activeScreen === 'substitutions' ? 'Confirm' : 'Rosters' },
-    { id: 'boxScore', icon: ChartBarIcon, label: 'Box Score' },
     { id: 'substitutions', icon: ArrowsRightLeftIcon, label: 'Substitutions' },
+    { id: 'boxScore', icon: ChartBarIcon, label: 'Box Score' },
     { id: 'playByPlay', icon: ListBulletIcon, label: 'Play By Play' },
   ];
 
@@ -14,12 +14,12 @@ export default function ScreenNavigation({ activeScreen, onScreenChange }) {
   };
 
   return (
-    <div className="flex justify-around mt-2">
+    <div className="flex justify-between mt-2 gap-2 p-4">
       {screens.map(({ id, icon: Icon, label }) => (
         <button
           key={id}
           onClick={() => onScreenChange(id)}
-          className={`flex flex-col items-center justify-center p-2 rounded-xl transition-colors duration-200 ${
+          className={`flex flex-1 flex-col gap-2 items-center justify-center p-2 rounded-xl transition-colors duration-200 ${
             activeScreen === id
               ? 'bg-blue-800 text-white shadow-lg scale-105'
               : 'bg-gray-200 text-gray-900 hover:bg-gray-300'

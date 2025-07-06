@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { toast } from 'react-toastify';
+import Modal from 'react-modal';
 import { getFirstCapitalLetter } from '../../utils/getFirstCapitalLetter';
 import { getInitialAndLastName } from '../../utils/getInitialAndLastName';
 import { statDisplayMap } from '../../utils/statDisplayMap';
@@ -137,34 +138,40 @@ export default function PlayerSelection({
         )}
       </div>
       {selectedPlayer && !isSubstitutionMode && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-4 rounded shadow-lg max-w-md w-full">
-            <h3 className="text-lg font-bold mb-2">
-              Select Stat for {getInitialAndLastName(selectedPlayer.name) || 'Unknown'}
-            </h3>
-            <div className="grid grid-cols-2 gap-2">
-              {league?.settings?.statTypes.map(statType => (
-                <button
-                  key={statType}
-                  onClick={() => {
-                    handlePlayerClick(selectedPlayer, statType);
-                    setSelectedPlayer(null);
-                  }}
-                  className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                >
-                  {statDisplayMap[statType]?.label || statType}
-                </button>
-              ))}
-            </div>
-
-            <button
-              onClick={() => setSelectedPlayer(null)}
-              className="mt-4 px-4 py-2 bg-gray-200 text-gray-900 rounded hover:bg-gray-300"
-            >
-              Cancel
-            </button>
+        <Modal
+          isOpen={selectedPlayer && !isSubstitutionMode}
+          onRequestClose={() => setSelectedPlayer(null)}
+          className="bg-white p-4 rounded shadow-lg max-w-md w-full mx-auto my-8"
+          overlayClassName="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+          aria={{
+            labelledby: "stat-modal-title",
+            describedby: "stat-modal-description",
+          }}
+        >
+          <h3 id="stat-modal-title" className="text-lg font-bold mb-2">
+            Select Stat for {getInitialAndLastName(selectedPlayer?.name) || 'Unknown'}
+          </h3>
+          <div id="stat-modal-description" className="grid grid-cols-2 gap-2">
+            {league?.settings?.statTypes.map(statType => (
+              <button
+                key={statType}
+                onClick={() => {
+                  handlePlayerClick(selectedPlayer, statType);
+                  setSelectedPlayer(null);
+                }}
+                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+              >
+                {statDisplayMap[statType]?.label || statType}
+              </button>
+            ))}
           </div>
-        </div>
+          <button
+            onClick={() => setSelectedPlayer(null)}
+            className="mt-4 px-4 py-2 bg-gray-200 text-gray-900 rounded hover:bg-gray-300 w-full"
+          >
+            Cancel
+          </button>
+        </Modal>
       )}
     </div>
   );
