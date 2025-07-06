@@ -13,10 +13,12 @@ export const statDisplayMap = {
     steal: { label: 'Steal', abbr: 'STL' },
     turnover: { label: 'Turnover', abbr: 'TO' },
     block: { label: 'Block', abbr: 'BLK' },
+    blockedShotAttempt: { label: 'Blocked Shot Attempt', abbr: 'BLKA' },
     personalFoul: { label: 'Foul', abbr: 'PF' },
     teamFoul: { label: 'Team Foul', abbr: 'TF' },
     technicalFoul: { label: 'Tech Foul', abbr: 'TF' },
     flagrantFoul: { label: 'Flag Foul', abbr: 'FF' },
+    drawnFoul: { label: 'Drawn Foul', abbr: 'DF' },
 
     // American Football
     passingYards: { label: 'Pass Yards', abbr: 'PY' },

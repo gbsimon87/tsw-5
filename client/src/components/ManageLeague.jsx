@@ -16,6 +16,7 @@ import {
   PencilSquareIcon,
   Cog6ToothIcon,
 } from '@heroicons/react/24/outline';
+import { statDisplayMap } from '../utils/statDisplayMap';
 
 const semanticScoringRulesMap = {
   basketball: {
@@ -124,7 +125,7 @@ export default function ManageLeague() {
 
 
         {/* Main details card */}
-        <div className="bg-white shadow-xl rounded-2xl p-8 border border-gray-200">
+        <div className="bg-white shadow-xl rounded-2xl p-4 border border-gray-200">
           {/* League Details Header */}
           <section className="mb-8">
             <header className="flex items-center gap-3 mb-4">
@@ -211,12 +212,26 @@ export default function ManageLeague() {
               </div>
               <div className="space-y-2 ml-6">
                 {league.settings.statTypes && league.settings.statTypes.length > 0 ? (
-                  league.settings.statTypes.map((stat, index) => (
-                    <div key={index} className="flex items-center bg-white p-3 rounded-md border border-gray-200">
-                      <ListBulletIcon className="w-4 h-4 mr-2.5 text-gray-500" />
-                      <span>{stat}</span>
-                    </div>
-                  ))
+                  league.settings.statTypes.map((stat, index) => {
+                    const statInfo = statDisplayMap[stat];
+                    return (
+                      <div key={index} className="flex items-center bg-white p-3 rounded-md border border-gray-200">
+                        <ListBulletIcon className="w-4 h-4 mr-2.5 text-gray-500" />
+                        <span>
+                          {statInfo
+                            ? (
+                              <>
+                                {statInfo.label}
+                                <span className="ml-2 text-xs text-gray-400 font-mono">
+                                  ({statInfo.abbr})
+                                </span>
+                              </>
+                            )
+                            : stat}
+                        </span>
+                      </div>
+                    );
+                  })
                 ) : (
                   <div className="flex items-center bg-white p-3 rounded-md border border-gray-200">
                     <ListBulletIcon className="w-4 h-4 mr-2.5 text-gray-500" />
