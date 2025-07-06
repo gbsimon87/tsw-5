@@ -48,7 +48,7 @@ export default function BoxScore({ game, league, tab, setTab, boxScoreTabLabels,
         ))}
       </div>
 
-      <div className="overflow-x-auto max-h-[400px] overflow-y-auto">
+      <div className="overflow-x-auto max-h-[500px] overflow-y-auto">
         <table className="min-w-full border border-gray-200">
           <thead className="bg-white">
             <tr>

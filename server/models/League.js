@@ -73,8 +73,8 @@ const leagueSchema = new mongoose.Schema({
             return [
               'twoPointFGM', 'twoPointFGA', 'threePointFGM', 'threePointFGA',
               'freeThrowM', 'freeThrowA', 'offensiveRebound', 'defensiveRebound',
-              'assist', 'steal', 'turnover', 'block', 'personalFoul',
-              'teamFoul', 'technicalFoul', 'flagrantFoul'
+              'assist', 'steal', 'turnover', 'block', 'blockedShotAttempt', 'personalFoul',
+              'teamFoul', 'technicalFoul', 'flagrantFoul', 'drawnFoul'
             ];
           case 'americanFootball':
             return [
@@ -83,14 +83,16 @@ const leagueSchema = new mongoose.Schema({
               'receptions', 'receivingYards', 'receivingTDs',
               'tackles', 'sacks', 'interceptionsCaught',
               'fieldGoalsMade', 'fieldGoalsMissed', 'extraPointsMade',
-              'punts', 'puntYards', 'kickReturns', 'kickReturnYards'
+              'punts', 'puntYards', 'kickReturns', 'kickReturnYards',
+              'penalty', 'ejections'
             ];
           case 'football':
             return [
               'goals', 'assists', 'shotsOnTarget', 'shotsOffTarget',
               'passesCompleted', 'passesAttempted', 'tackles',
               'interceptions', 'foulsCommitted', 'yellowCards',
-              'redCards', 'saves', 'offsides', 'corners', 'clearances'
+              'redCards', 'saves', 'offsides', 'corners', 'clearances',
+              'ejections', 'penalty'
             ];
           case 'hockey':
             return [
@@ -98,7 +100,8 @@ const leagueSchema = new mongoose.Schema({
               'faceoffsWon', 'faceoffsLost', 'penaltyMinutes',
               'plusMinus', 'takeaways', 'giveaways', 'powerPlayGoals',
               'shortHandedGoals', 'gameWinningGoals', 'saves',
-              'goalsAgainst', 'savePercentage'
+              'goalsAgainst', 'savePercentage', 'penalty', 'ejections',
+              'penaltyShots'
             ];
           case 'baseball':
             return [
@@ -106,7 +109,7 @@ const leagueSchema = new mongoose.Schema({
               'doubles', 'triples', 'walks', 'strikeouts',
               'stolenBases', 'caughtStealing', 'inningsPitched',
               'earnedRuns', 'pitchesThrown', 'strikesThrown',
-              'battersFaced', 'fieldingErrors'
+              'battersFaced', 'fieldingErrors', 'ejections'
             ];
           default:
             return [];

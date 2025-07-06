@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import axios from 'axios';
+import { startingNumberOfPlayersBySport } from '../../utils/startingNumberOfPlayersBySport';
+import { statDisplayMap } from '../../utils/statDisplayMap';
 import { toast } from 'react-toastify';
 import ScoreBoard from './ScoreBoard';
 import BoxScore from './BoxScore';
@@ -9,8 +11,6 @@ import PlayerSelection from './PlayerSelection';
 import ScreenNavigation from './ScreenNavigation';
 import ClockControls from './ClockControls';
 import PlayByPlay from './PlayByPlay';
-import { startingNumberOfPlayersBySport } from '../../utils/startingNumberOfPlayersBySport';
-import { statDisplayMap } from '../../utils/statDisplayMap';
 
 export default function GameTracking() {
   const { leagueId, gameId } = useParams();
@@ -20,7 +20,6 @@ export default function GameTracking() {
   const [screen, setScreen] = useState('rosters');
   const [step, setStep] = useState('rosters');
   const [league, setLeague] = useState(null);
-  const [activePlayerId, setActivePlayerId] = useState(null);
   const [formData, setFormData] = useState({ score: { team1: 0, team2: 0 }, gameMVP: '', playerStats: {} });
   const [lastChange, setLastChange] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -84,7 +83,6 @@ export default function GameTracking() {
 
         setPlayByPlay(gameData.playByPlay || []);
 
-        // Initialize clockState based on playByPlay or league settings
         const periodType = leagueData?.settings?.periodType || 'halves';
         const periodOptions = periodType === 'halves' ? ['H1', 'H2'] :
           periodType === 'quarters' ? ['Q1', 'Q2', 'Q3', 'Q4'] :
@@ -156,37 +154,39 @@ export default function GameTracking() {
     }));
   };
 
-  const handleStatIncrement = (playerId, teamId, statType) => {
-    const player = game?.teams
-      .flatMap(team => team.members)
-      .find(p => p.playerId === playerId);
-    const newEntry = {
-      player: playerId,
-      playerName: player?.name || 'Unknown', // Added playerName
-      team: teamId,
-      statType,
-      period: clockState.period,
-      time: clockState.seconds,
-      timestamp: new Date(),
-    };
-    setLastChange(newEntry);
-    setPlayByPlay(prev => [...prev, newEntry]);
-    setFormData(prev => ({
-      ...prev,
-      playerStats: {
-        ...prev.playerStats,
-        [playerId]: {
-          ...prev.playerStats[playerId],
-          [statType]: (prev.playerStats[playerId]?.[statType] || 0) + 1,
-        },
-      },
-    }));
-    toast.success(
-      `${statDisplayMap[statType]?.label || statType} recorded for ${player?.name || 'Unknown'} at ${formatTime(clockState.seconds)} in ${clockState.period}`,
-      {
-        toastId: `stat-${playerId}-${Date.now()}`,
-      }
-    );
+  const handleStatIncrement = (stats) => {
+    const newEntries = stats.map(({ player, statType, time, period }) => {
+      const teamId = game?.teams.find(team => team.members.some(m => m.playerId === player.playerId))?._id;
+      return {
+        player: player.playerId,
+        playerName: player.name || 'Unknown',
+        team: teamId,
+        statType,
+        period: period || clockState.period,
+        time: time != null ? time : clockState.seconds,
+        timestamp: new Date(),
+      };
+    });
+
+    setLastChange(newEntries[newEntries.length - 1]);
+    setPlayByPlay(prev => [...prev, ...newEntries]);
+    setFormData(prev => {
+      const updatedStats = { ...prev.playerStats };
+      newEntries.forEach(({ player, statType }) => {
+        updatedStats[player] = {
+          ...updatedStats[player],
+          [statType]: (updatedStats[player]?.[statType] || 0) + 1,
+        };
+      });
+      return { ...prev, playerStats: updatedStats };
+    });
+
+    const toastMessage = newEntries
+      .map(entry => `${statDisplayMap[entry.statType]?.label || entry.statType} for ${entry.playerName}`)
+      .join(' and ');
+    toast.success(`${toastMessage} at ${formatTime(newEntries[0].time)} in ${newEntries[0].period}`, {
+      toastId: `stat-${newEntries[0].player}-${Date.now()}`,
+    });
   };
 
   const handleDeletePlay = (entry) => {
@@ -204,7 +204,9 @@ export default function GameTracking() {
     if (lastChange === entry) {
       setLastChange(null);
     }
-    toast.info(`Play deleted: ${entry.statType} for ${entry.playerName}`, { toastId: 'delete-play' });
+    toast.info(`Play deleted: ${statDisplayMap[entry.statType]?.label || entry.statType} for ${entry.playerName}`, {
+      toastId: 'delete-play',
+    });
   };
 
   const handleUndo = () => {
@@ -308,17 +310,7 @@ export default function GameTracking() {
             selectedPlayersTeam1={selectedPlayersTeam1}
             selectedPlayersTeam2={selectedPlayersTeam2}
             startersCount={startersCount}
-            handlePlayerClick={(player, statType) => {
-              if (statType) {
-                const teamId = game?.teams.find(team => team.members.some(m => m.playerId === player.playerId))?._id;
-                handleStatIncrement(player.playerId, teamId, statType);
-              } else {
-                setActivePlayerId(player.playerId);
-              }
-            }}
-            handleKeyDown={(e, callback) => {
-              if (e.key === 'Enter' || e.key === ' ') callback();
-            }}
+            handlePlayerClick={handleStatIncrement}
             hasGameStarted={game?.isCompleted !== true}
             remainingSeconds={game?.gameDuration || 0}
             isSubstitutionMode={screen === 'substitutions'}
