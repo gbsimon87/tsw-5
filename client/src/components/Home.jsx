@@ -163,7 +163,7 @@ function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h1 className="text-4xl sm:text-5xl font-bold mb-4 flex items-center justify-center drop-shadow-lg">
             <SparklesIcon className="w-10 h-10 mr-2 text-blue-300" />
-            Welcome to The Sporty Way
+            The Sporty Way
           </h1>
           <p className="text-xl mb-8 text-blue-100 drop-shadow">
             Connect, manage, and track your sports leagues with ease.
