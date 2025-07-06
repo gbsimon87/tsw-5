@@ -66,7 +66,7 @@ router.get('/', authMiddleware, async (req, res) => {
       const leagueIds = playerTeams.map(t => t.league);
       const seasons = [...new Set(playerTeams.map(t => t.season))]; // Unique seasons
 
-      // Aggregate total points and stats per season
+      // Aggregate total points, season stats, and game-by-game stats
       const statsAggregation = await Game.aggregate([
         {
           $match: {
@@ -92,10 +92,14 @@ router.get('/', authMiddleware, async (req, res) => {
         { $unwind: '$league' },
         {
           $project: {
+            date: 1,
             season: 1,
             stats: '$playerStats.stats',
             leagueSettings: '$league.settings',
           },
+        },
+        {
+          $sort: { date: 1 }, // Sort by date for chronological order
         },
         {
           $group: {
@@ -104,6 +108,7 @@ router.get('/', authMiddleware, async (req, res) => {
             gameCount: { $sum: 1 },
             games: {
               $push: {
+                date: '$date',
                 stats: '$stats',
                 leagueSettings: '$leagueSettings',
               },
@@ -144,11 +149,12 @@ router.get('/', authMiddleware, async (req, res) => {
                 },
               },
             },
-            games: {
+            gameStats: {
               $map: {
                 input: '$games',
                 as: 'game',
                 in: {
+                  date: '$$game.date',
                   points: {
                     $sum: {
                       $map: {
@@ -168,6 +174,8 @@ router.get('/', authMiddleware, async (req, res) => {
                       },
                     },
                   },
+                  rebounds: { $ifNull: ['$$game.stats.defensiveRebound', 0] }, // Adjust based on statTypes
+                  steals: { $ifNull: ['$$game.stats.steal', 0] },
                 },
               },
             },
@@ -178,19 +186,95 @@ router.get('/', authMiddleware, async (req, res) => {
         },
       ]);
 
+      // Calculate hot streak (last 5 games)
+      const recentGames = await Game.aggregate([
+        {
+          $match: {
+            league: { $in: leagueIds },
+            'playerStats.player': player._id,
+            isCompleted: true,
+          },
+        },
+        { $unwind: '$playerStats' },
+        {
+          $match: {
+            'playerStats.player': player._id,
+          },
+        },
+        {
+          $lookup: {
+            from: 'leagues',
+            localField: 'league',
+            foreignField: '_id',
+            as: 'league',
+          },
+        },
+        { $unwind: '$league' },
+        {
+          $project: {
+            stats: '$playerStats.stats',
+            leagueSettings: '$league.settings',
+          },
+        },
+        {
+          $sort: { date: -1 }, // Most recent first
+        },
+        { $limit: 5 }, // Last 5 games
+        {
+          $group: {
+            _id: null,
+            totalPoints: {
+              $sum: {
+                $sum: {
+                  $map: {
+                    input: { $objectToArray: '$stats' },
+                    as: 'stat',
+                    in: {
+                      $multiply: [
+                        '$$stat.v',
+                        {
+                          $let: {
+                            vars: { scoringRules: '$leagueSettings.scoringRules' },
+                            in: { $ifNull: [{ $toInt: { $getField: { field: '$$stat.k', input: '$$scoringRules' } } }, 0] },
+                          },
+                        },
+                      ],
+                    },
+                  },
+                },
+              },
+            },
+            gameCount: { $sum: 1 },
+          },
+        },
+        {
+          $project: {
+            avgPoints: { $divide: ['$totalPoints', { $max: ['$gameCount', 1] }] },
+          },
+        },
+      ]);
+
       // Combine stats into player object
       player.stats = {
         totalPoints: statsAggregation.reduce((sum, s) => sum + (s.totalPoints || 0), 0),
         seasonStats: statsAggregation.map(s => ({
           season: s.season,
           avgPoints: s.avgStats.find(stat => stat.k === 'points')?.v || 0,
-          avgRebounds: s.avgStats.find(stat => stat.k === 'rebounds')?.v || 0,
-          avgSteals: s.avgStats.find(stat => stat.k === 'steals')?.v || 0,
+          avgRebounds: s.avgStats.find(stat => stat.k === 'defensiveRebound')?.v || 0,
+          avgSteals: s.avgStats.find(stat => stat.k === 'steal')?.v || 0,
         })),
-        gamePoints: statsAggregation.flatMap(s => s.games.map(g => ({ season: s.season, points: g.points || 0 }))),
+        gameStats: statsAggregation.flatMap(s => s.gameStats.map(g => ({
+          season: s.season,
+          date: g.date,
+          points: g.points || 0,
+          rebounds: g.rebounds || 0,
+          steals: g.steals || 0,
+        }))),
+        hotStreak: recentGames.length > 0 && player.careerAvgPoints > 0
+          ? recentGames[0].avgPoints > player.careerAvgPoints
+          : false,
       };
     }
-
     res.json(players);
   } catch (error) {
     console.error('Get players error:', error);

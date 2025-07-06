@@ -13,6 +13,7 @@ import {
   ChartBarIcon,
   StarIcon,
   SunIcon,
+  FireIcon,
 } from '@heroicons/react/24/outline';
 import { useAuth } from '../context/AuthContext';
 import TeamJoin from './TeamJoin';
@@ -27,6 +28,10 @@ export default function MySporty() {
   const [error, setError] = useState(null);
   const chartRef = useRef(null);
   const canvasRef = useRef(null);
+  const trendChartRef = useRef(null);
+  const trendCanvasRef = useRef(null);
+  const [selectedSeason, setSelectedSeason] = useState('all');
+  const [selectedStat, setSelectedStat] = useState('points');
 
   useEffect(() => {
     const fetchPlayerData = async () => {
@@ -73,6 +78,7 @@ export default function MySporty() {
     Promise.all([fetchPlayerData(), fetchTeams(), fetchNextGame()]);
   }, [user._id, user.token]);
 
+  // Performance stats chart
   useEffect(() => {
     if (player?.stats?.gamePoints && canvasRef.current) {
       if (chartRef.current) {
@@ -117,6 +123,55 @@ export default function MySporty() {
     };
   }, [player]);
 
+  // Performance trend chart
+  useEffect(() => {
+    if (player?.stats?.gameStats && trendCanvasRef.current) {
+      if (trendChartRef.current) {
+        trendChartRef.current.destroy();
+      }
+
+      const ctx = trendCanvasRef.current.getContext('2d');
+      const seasons = [...new Set(player.stats.gameStats.map(gs => gs.season))];
+      const filteredStats = selectedSeason === 'all'
+        ? player.stats.gameStats
+        : player.stats.gameStats.filter(gs => gs.season === selectedSeason);
+
+      const datasets = [{
+        label: `${selectedStat.charAt(0).toUpperCase() + selectedStat.slice(1)}`,
+        data: filteredStats.map(gs => gs[selectedStat] || 0),
+        borderColor: '#3B82F6',
+        backgroundColor: '#3B82F6',
+        fill: false,
+        tension: 0.3,
+      }];
+
+      trendChartRef.current = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: filteredStats.map((_, i) => `Game ${i + 1}`),
+          datasets,
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { position: 'top' },
+            title: { display: true, text: `${selectedStat.charAt(0).toUpperCase() + selectedStat.slice(1)} Trend` },
+          },
+          scales: {
+            y: { beginAtZero: true, title: { display: true, text: selectedStat.charAt(0).toUpperCase() + selectedStat.slice(1) } },
+            x: { title: { display: true, text: 'Game' } },
+          },
+        },
+      });
+    }
+
+    return () => {
+      if (trendChartRef.current) {
+        trendChartRef.current.destroy();
+      }
+    };
+  }, [player, selectedSeason, selectedStat]);
+
   // Countdown timer for next game
   const [countdown, setCountdown] = useState('');
   useEffect(() => {
@@ -135,7 +190,7 @@ export default function MySporty() {
         setCountdown(`${days}d ${hours}h ${minutes}m`);
       };
       updateCountdown();
-      const interval = setInterval(updateCountdown, 60000); // Update every minute
+      const interval = setInterval(updateCountdown, 60000);
       return () => clearInterval(interval);
     }
   }, [nextGame]);
@@ -269,7 +324,7 @@ export default function MySporty() {
                   <dt>
                     <ChartBarIcon className="w-6 h-6 text-gray-500" aria-hidden="true" />
                   </dt>
-                  <dt className="text-gray-500 font-medium min-w-[120px]">Last Matchup:</dt>
+                  <dt className="text-gray-500 font-medium min-w-[120px]">Previous Matchup:</dt>
                   <dd className="text-gray-800 font-semibold">{nextGame.previousMatchupScore}</dd>
                 </div>
                 <div className="flex items-center gap-3">
@@ -287,6 +342,42 @@ export default function MySporty() {
                   <dd className="text-gray-800 font-semibold">{countdown}</dd>
                 </div>
               </dl>
+            </div>
+          </section>
+        )}
+
+        {player && (
+          <section className="mb-12">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Performance Trend</h2>
+            <div className="bg-white shadow-md rounded-2xl p-6 border border-gray-200">
+              <div className="flex items-center gap-4 mb-4">
+                <select
+                  value={selectedSeason}
+                  onChange={(e) => setSelectedSeason(e.target.value)}
+                  className="border border-gray-300 rounded-md p-2 text-gray-800"
+                >
+                  <option value="all">All Seasons</option>
+                  {player.stats?.seasonStats.map(s => (
+                    <option key={s.season} value={s.season}>Season {s.season}</option>
+                  ))}
+                </select>
+                <select
+                  value={selectedStat}
+                  onChange={(e) => setSelectedStat(e.target.value)}
+                  className="border border-gray-300 rounded-md p-2 text-gray-800"
+                >
+                  <option value="points">Points</option>
+                  <option value="rebounds">Rebounds</option>
+                  <option value="steals">Steals</option>
+                </select>
+                {player.stats?.hotStreak && (
+                  <div className="flex items-center gap-2 text-green-600 font-semibold">
+                    <FireIcon className="w-6 h-6" aria-hidden="true" />
+                    <span>Hot Streak!</span>
+                  </div>
+                )}
+              </div>
+              <canvas ref={trendCanvasRef} className="max-w-full" />
             </div>
           </section>
         )}
