@@ -10,21 +10,21 @@ import {
   ArrowRightEndOnRectangleIcon
 } from '@heroicons/react/24/outline';
 
-// Define feature data
+// Admin and Player features (no "(Coming Soon)" in titles)
 const adminFeatures = [
   {
     title: "Admin Panel",
     description: "View, manage, and launch new leagues in seconds, all from one powerful dashboard!",
-    icon: <Cog6ToothIcon className="w-8 h-8 text-blue-500 mb-2" />,
+    icon: Cog6ToothIcon,
     link: "/admin",
     linkLabel: "Admin Panel",
     comingSoon: false,
     bg: "from-blue-50 to-blue-100"
   },
   {
-    title: "Standings & Rankings (Coming Soon)",
+    title: "Standings & Rankings",
     description: "View team standings and player leaderboards.",
-    icon: <TrophyIcon className="w-8 h-8 text-blue-500 mb-2" />,
+    icon: TrophyIcon,
     comingSoon: true,
     bg: "from-gray-50 to-gray-100"
   }
@@ -34,16 +34,16 @@ const playerFeatures = [
   {
     title: "Sporty Leagues",
     description: "Discover Sporty leagues, view teams, and join the action.",
-    icon: <SparklesIcon className="w-8 h-8 text-blue-400 mb-2" />,
+    icon: SparklesIcon,
     link: "/public-leagues",
     linkLabel: "Explore Now",
     comingSoon: false,
     bg: "from-blue-50 to-blue-100"
   },
   {
-    title: "Player Stats (Coming Soon)",
+    title: "Player Stats",
     description: "Track player performance, efficiency, and game stats.",
-    icon: <UsersIcon className="w-8 h-8 text-blue-400 mb-2" />,
+    icon: UsersIcon,
     comingSoon: true,
     bg: "from-gray-50 to-gray-100"
   }
@@ -93,6 +93,40 @@ const whyChooseSporty = [
     semantic: "privacy"
   }
 ];
+
+// Helper to render feature cards
+function renderFeatures(features, isAuthenticated) {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      {features.map((feature) => {
+        const Icon = feature.icon;
+        return (
+          <article
+            key={feature.title}
+            className={`bg-gradient-to-br ${feature.bg} glass rounded-xl shadow p-5 border border-white/20 flex flex-col items-start transition-all hover:shadow-xl ${feature.comingSoon ? 'opacity-75' : ''}`}
+          >
+            <div className="flex justify-center items-center w-full mb-3">
+              <Icon className="w-14 h-14 text-blue-500" />
+            </div>
+            <h3 className="text-lg font-bold text-gray-900 mb-1">{feature.title}</h3>
+            <p className="text-gray-600 mb-2">{feature.description}</p>
+            {feature.comingSoon ? (
+              <span className="text-blue-400 font-semibold mt-auto">Stay Tuned!</span>
+            ) : (
+              <Link
+                to={isAuthenticated ? feature.link : '/login'}
+                className="text-blue-600 font-medium hover:underline mt-auto"
+                aria-label={isAuthenticated ? feature.linkLabel : 'Login to Start'}
+              >
+                {isAuthenticated ? feature.linkLabel : 'Login to Start'}
+              </Link>
+            )}
+          </article>
+        );
+      })}
+    </div>
+  );
+}
 
 /**
  * Homepage landing page highlighting features and user value
@@ -165,76 +199,28 @@ function Home() {
       </section>
 
       {/* Admin Features Section */}
-      <section className="py-16 bg-gradient-to-br from-blue-50 to-blue-100">
+      <section className="py-12 bg-gradient-to-br from-blue-50 to-blue-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-gray-800 text-center mb-12 flex items-center justify-center">
-            <Cog6ToothIcon className="w-8 h-8 mr-2 text-blue-600" />
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 text-center mb-10 flex items-center justify-center">
+            <Cog6ToothIcon className="w-7 h-7 mr-2 text-blue-600" />
             Admin Features
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {adminFeatures.map((feature) => (
-              <article
-                key={feature.title}
-                className={`bg-gradient-to-br ${feature.bg} bg-opacity-30 glass rounded-xl shadow-lg p-6 border border-white/20 ${feature.comingSoon ? 'opacity-75' : 'hover:scale-105 transition-transform duration-200'}`}
-              >
-                <div className="h-32 flex items-center justify-center rounded-lg mb-4" aria-hidden="true">
-                  {feature.icon}
-                </div>
-                <h3 className="text-xl font-semibold text-gray-800 mb-2">{feature.title}</h3>
-                <p className="text-gray-600">{feature.description}</p>
-                {feature.comingSoon ? (
-                  <span className="text-gray-500 mt-4 inline-block">Stay Tuned!</span>
-                ) : (
-                  <Link
-                    to={isAuthenticated ? feature.link : '/login'}
-                    className="text-blue-600 hover:text-blue-800 mt-4 inline-block focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                    aria-label={isAuthenticated ? feature.linkLabel : 'Login to Start'}
-                  >
-                    {isAuthenticated ? feature.linkLabel : 'Login to Start'}
-                  </Link>
-                )}
-              </article>
-            ))}
-          </div>
+          {renderFeatures(adminFeatures, isAuthenticated)}
         </div>
       </section>
 
       {/* Player Features Section */}
-      <section className="py-16 bg-gradient-to-br from-gray-50 to-gray-100">
+      <section className="py-12 bg-gradient-to-br from-gray-50 to-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-gray-800 text-center mb-12 flex items-center justify-center">
-            <UsersIcon className="w-8 h-8 mr-2 text-blue-600" />
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 text-center mb-10 flex items-center justify-center">
+            <UsersIcon className="w-7 h-7 mr-2 text-blue-600" />
             Player Features
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {playerFeatures.map((feature) => (
-              <article
-                key={feature.title}
-                className={`bg-gradient-to-br ${feature.bg} bg-opacity-30 glass rounded-xl shadow-lg p-6 border border-white/20 ${feature.comingSoon ? 'opacity-75' : 'hover:scale-105 transition-transform duration-200'}`}
-              >
-                <div className="h-32 flex items-center justify-center rounded-lg mb-4" aria-hidden="true">
-                  {feature.icon}
-                </div>
-                <h3 className="text-xl font-semibold text-gray-800 mb-2">{feature.title}</h3>
-                <p className="text-gray-600">{feature.description}</p>
-                {feature.comingSoon ? (
-                  <span className="text-gray-500 mt-4 inline-block">Stay Tuned!</span>
-                ) : (
-                  <Link
-                    to={feature.link}
-                    className="text-blue-600 hover:text-blue-800 mt-4 inline-block focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                    aria-label={feature.linkLabel}
-                  >
-                    {feature.linkLabel}
-                  </Link>
-                )}
-              </article>
-            ))}
-          </div>
+          {renderFeatures(playerFeatures, isAuthenticated)}
         </div>
       </section>
 
-      {/* Why Choose Section */}
+      {/* Why Choose Section (Marquee) */}
       <section className="bg-white py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-3xl font-bold text-gray-800 text-center mb-12 flex items-center justify-center">
@@ -243,7 +229,7 @@ function Home() {
           </h2>
           <div className="overflow-hidden relative w-full">
             <div
-              className="flex w-max animate-marquee"
+              className="flex w-max"
               style={{
                 animation: "marquee-left 45s linear infinite"
               }}
@@ -251,22 +237,21 @@ function Home() {
               {[...whyChooseSporty, ...whyChooseSporty].map((reason, idx) => (
                 <article
                   key={idx}
-                  className="min-w-[320px] max-w-xs mx-4 text-center bg-gradient-to-br from-blue-50 to-blue-100 bg-opacity-30 glass rounded-xl shadow-lg p-6 border border-white/20 flex-shrink-0"
+                  className="min-w-[220px] max-w-xs mx-3 text-center bg-gradient-to-br from-blue-50 to-blue-100 bg-opacity-30 glass rounded-xl shadow p-4 border border-white/20 flex-shrink-0"
                   aria-label={reason.semantic}
                 >
                   <div
-                    className={`h-24 w-24 bg-gradient-to-br ${reason.iconBg} rounded-full mx-auto mb-4`}
+                    className={`h-16 w-16 bg-gradient-to-br ${reason.iconBg} rounded-full mx-auto mb-3`}
                     aria-hidden="true"
                   />
-                  <h3 className="text-xl font-semibold text-gray-800 mb-2">{reason.title}</h3>
-                  <p className="text-gray-600">{reason.description}</p>
+                  <h3 className="text-base font-semibold text-gray-800 mb-1">{reason.title}</h3>
+                  <p className="text-gray-600 text-sm">{reason.description}</p>
                 </article>
               ))}
             </div>
           </div>
         </div>
       </section>
-
 
       {/* Testimonials Section */}
       <section className="bg-gradient-to-br from-gray-50 to-gray-100 py-16">
@@ -276,13 +261,13 @@ function Home() {
             What Users Say
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <article className="bg-gradient-to-br from-blue-50 to-blue-100 bg-opacity-30 glass rounded-xl shadow-lg p-6 border border-white/20">
+            <article className="bg-gradient-to-br from-blue-50 to-blue-100 bg-opacity-30 glass rounded-xl shadow p-6 border border-white/20">
               <p className="text-gray-600 italic">
                 “The Sporty Way makes it so easy to follow my son’s games!”
               </p>
               <p className="mt-4 font-semibold text-gray-800">— Jane, Parent</p>
             </article>
-            <article className="bg-gradient-to-br from-blue-50 to-blue-100 bg-opacity-30 glass rounded-xl shadow-lg p-6 border border-white/20">
+            <article className="bg-gradient-to-br from-blue-50 to-blue-100 bg-opacity-30 glass rounded-xl shadow p-6 border border-white/20">
               <p className="text-gray-600 italic">
                 “Managing my league has never been simpler. Love the tools!”
               </p>
