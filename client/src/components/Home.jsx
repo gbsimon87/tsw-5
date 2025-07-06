@@ -49,6 +49,51 @@ const playerFeatures = [
   }
 ];
 
+const whyChooseSporty = [
+  {
+    title: "For Parents & Friends",
+    description: "Stay updated on your kids’ games, track their team’s progress, and never miss a moment.",
+    iconBg: "from-blue-200 to-blue-300",
+    semantic: "audience"
+  },
+  {
+    title: "For League Managers",
+    description: "Simplify league management with tools to organize teams and monitor stats.",
+    iconBg: "from-blue-200 to-blue-300",
+    semantic: "management"
+  },
+  {
+    title: "For Players",
+    description: "Monitor your stats, track your development, and shine on the leaderboard.",
+    iconBg: "from-blue-200 to-blue-300",
+    semantic: "players"
+  },
+  {
+    title: "Accessible for All",
+    description: "Designed with accessibility in mind, so everyone can participate and enjoy.",
+    iconBg: "from-green-200 to-green-300",
+    semantic: "accessibility"
+  },
+  {
+    title: "Mobile Friendly",
+    description: "Enjoy a seamless experience on any device, wherever you are.",
+    iconBg: "from-yellow-200 to-yellow-300",
+    semantic: "mobile"
+  },
+  {
+    title: "Community Driven",
+    description: "Built for and by sports lovers—your feedback shapes our future.",
+    iconBg: "from-pink-200 to-pink-300",
+    semantic: "community"
+  },
+  {
+    title: "Privacy First",
+    description: "Your data is secure and never shared without your consent.",
+    iconBg: "from-gray-200 to-gray-300",
+    semantic: "privacy"
+  }
+];
+
 /**
  * Homepage landing page highlighting features and user value
  * @component
@@ -193,36 +238,20 @@ function Home() {
             Why Choose The Sporty Way?
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <article className="text-center bg-gradient-to-br from-blue-50 to-blue-100 bg-opacity-30 glass rounded-xl shadow-lg p-6 border border-white/20">
-              <div
-                className="h-24 w-24 bg-gradient-to-br from-blue-200 to-blue-300 rounded-full mx-auto mb-4"
-                aria-hidden="true"
-              />
-              <h3 className="text-xl font-semibold text-gray-800 mb-2">For Parents & Friends</h3>
-              <p className="text-gray-600">
-                Stay updated on your kids’ games, track their team’s progress, and never miss a moment.
-              </p>
-            </article>
-            <article className="text-center bg-gradient-to-br from-blue-50 to-blue-100 bg-opacity-30 glass rounded-xl shadow-lg p-6 border border-white/20">
-              <div
-                className="h-24 w-24 bg-gradient-to-br from-blue-200 to-blue-300 rounded-full mx-auto mb-4"
-                aria-hidden="true"
-              />
-              <h3 className="text-xl font-semibold text-gray-800 mb-2">For League Managers</h3>
-              <p className="text-gray-600">
-                Simplify league management with tools to organize teams and monitor stats.
-              </p>
-            </article>
-            <article className="text-center bg-gradient-to-br from-blue-50 to-blue-100 bg-opacity-30 glass rounded-xl shadow-lg p-6 border border-white/20">
-              <div
-                className="h-24 w-24 bg-gradient-to-br from-blue-200 to-blue-300 rounded-full mx-auto mb-4"
-                aria-hidden="true"
-              />
-              <h3 className="text-xl font-semibold text-gray-800 mb-2">For Players</h3>
-              <p className="text-gray-600">
-                Monitor your stats, track your development, and shine on the leaderboard.
-              </p>
-            </article>
+            {whyChooseSporty.map((reason, idx) => (
+              <article
+                key={reason.title}
+                className="text-center bg-gradient-to-br from-blue-50 to-blue-100 bg-opacity-30 glass rounded-xl shadow-lg p-6 border border-white/20"
+                aria-label={reason.semantic}
+              >
+                <div
+                  className={`h-24 w-24 bg-gradient-to-br ${reason.iconBg} rounded-full mx-auto mb-4`}
+                  aria-hidden="true"
+                />
+                <h3 className="text-xl font-semibold text-gray-800 mb-2">{reason.title}</h3>
+                <p className="text-gray-600">{reason.description}</p>
+              </article>
+            ))}
           </div>
         </div>
       </section>
