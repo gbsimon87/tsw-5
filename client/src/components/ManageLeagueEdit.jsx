@@ -2,9 +2,10 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   FlagIcon,
+  ArrowLeftIcon,
   PlusIcon,
   TrashIcon,
-  PencilIcon,
+  CheckCircleIcon,
   TrophyIcon,
   EyeIcon,
   MapPinIcon,
@@ -15,6 +16,7 @@ import {
   KeyIcon,
   ClipboardDocumentIcon,
   UsersIcon,
+  XMarkIcon,
   ListBulletIcon
 } from '@heroicons/react/24/outline';
 import axios from 'axios';
@@ -284,30 +286,45 @@ export default function ManageLeagueEdit() {
   }
 
   return (
-    <div className="min-h-[var(--page-height)] bg-gray-50 py-10 px-4">
+    <div className="min-h-[var(--page-height)] bg-gray-50 py-4 px-4">
       <div className="max-w-4xl mx-auto">
         {/* Header with actions */}
         <header className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 gap-4">
-          <h1 className="text-3xl font-bold text-gray-800">{formData.name}</h1>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => navigate(`/leagues/${leagueId}`)}
+              className="flex items-center gap-2 bg-white text-blue-700 border border-blue-600 px-4 py-1.5 rounded-lg font-semibold shadow hover:bg-blue-50 transition focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              aria-label="Back to League"
+            >
+              <ArrowLeftIcon className="w-5 h-5" />
+              Back to League
+            </button>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-800">Edit League</h1>
+              <div className="text-sm text-gray-500 font-normal">{formData.name}</div>
+            </div>
+          </div>
           <div className="flex gap-3">
             <button
               type="submit"
               form="leagueForm"
               className="flex items-center gap-2 bg-blue-600 text-white px-5 py-2 rounded-lg font-semibold shadow hover:bg-blue-700 transition focus:ring-2 focus:ring-blue-500 focus:outline-none"
             >
-              <PencilIcon className="w-5 h-5" />
+              <CheckCircleIcon className="w-5 h-5" />
               Save Changes
             </button>
             <button
               type="button"
               onClick={() => navigate(`/leagues/${leagueId}`)}
-              className="flex items-center gap-2 bg-white text-blue-700 border border-blue-600 px-5 py-2 rounded-lg font-semibold shadow hover:bg-blue-50 transition focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              className="flex items-center gap-2 bg-white text-blue-700 border border-blue-600 px-3 py-1.5 text-sm rounded-lg font-semibold shadow hover:bg-blue-50 transition focus:ring-2 focus:ring-blue-500 focus:outline-none sm:px-5 sm:py-2 sm:text-base"
             >
-              <UsersIcon className="w-5 h-5" />
+              <XMarkIcon className="w-5 h-5" />
               Cancel
             </button>
           </div>
         </header>
+
 
         {/* League Details */}
         <section className="bg-white shadow-xl rounded-2xl p-8 border border-gray-200 mb-8">
