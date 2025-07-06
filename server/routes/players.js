@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const router = express.Router();
 const Player = require('../models/Player');
 const Team = require('../models/Team');
+const Game = require('../models/Game');
 const League = require('../models/League');
 const authMiddleware = require('../middleware/authMiddleware');
 const checkAdminOrManager = require('../middleware/adminOrManagerMiddleware');
@@ -53,11 +54,147 @@ router.get('/', authMiddleware, async (req, res) => {
   try {
     const { leagueId, userId } = req.query;
     const query = leagueId ? { league: leagueId } : { user: userId } || {};
-    const players = await Player.find(query).populate('user', 'name').populate('teams', 'name');
+    // Find Player documents for the user
+    const players = await Player.find({ user: userId })
+      .select('_id careerAvgPoints careerRebounds careerSteals performanceRating')
+      .lean();
+
+    // Aggregate stats for each player
+    for (let player of players) {
+      // Get all games for the player in their teams' leagues
+      const playerTeams = await Team.find({ 'members.player': player._id }).select('league season').lean();
+      const leagueIds = playerTeams.map(t => t.league);
+      const seasons = [...new Set(playerTeams.map(t => t.season))]; // Unique seasons
+
+      // Aggregate total points and stats per season
+      const statsAggregation = await Game.aggregate([
+        {
+          $match: {
+            league: { $in: leagueIds },
+            'playerStats.player': player._id,
+            isCompleted: true,
+          },
+        },
+        { $unwind: '$playerStats' },
+        {
+          $match: {
+            'playerStats.player': player._id,
+          },
+        },
+        {
+          $lookup: {
+            from: 'leagues',
+            localField: 'league',
+            foreignField: '_id',
+            as: 'league',
+          },
+        },
+        { $unwind: '$league' },
+        {
+          $project: {
+            season: 1,
+            stats: '$playerStats.stats',
+            leagueSettings: '$league.settings',
+          },
+        },
+        {
+          $group: {
+            _id: '$season',
+            totalStats: { $mergeObjects: '$stats' },
+            gameCount: { $sum: 1 },
+            games: {
+              $push: {
+                stats: '$stats',
+                leagueSettings: '$leagueSettings',
+              },
+            },
+          },
+        },
+        {
+          $project: {
+            season: '$_id',
+            totalPoints: {
+              $sum: {
+                $map: {
+                  input: { $objectToArray: '$totalStats' },
+                  as: 'stat',
+                  in: {
+                    $multiply: [
+                      '$$stat.v',
+                      {
+                        $let: {
+                          vars: {
+                            scoringRules: { $arrayElemAt: ['$games.leagueSettings.scoringRules', 0] },
+                          },
+                          in: { $ifNull: [{ $toInt: { $getField: { field: '$$stat.k', input: '$$scoringRules' } } }, 0] },
+                        },
+                      },
+                    ],
+                  },
+                },
+              },
+            },
+            avgStats: {
+              $map: {
+                input: { $objectToArray: '$totalStats' },
+                as: 'stat',
+                in: {
+                  k: '$$stat.k',
+                  v: { $divide: ['$$stat.v', '$gameCount'] },
+                },
+              },
+            },
+            games: {
+              $map: {
+                input: '$games',
+                as: 'game',
+                in: {
+                  points: {
+                    $sum: {
+                      $map: {
+                        input: { $objectToArray: '$$game.stats' },
+                        as: 'stat',
+                        in: {
+                          $multiply: [
+                            '$$stat.v',
+                            {
+                              $let: {
+                                vars: { scoringRules: '$$game.leagueSettings.scoringRules' },
+                                in: { $ifNull: [{ $toInt: { $getField: { field: '$$stat.k', input: '$$scoringRules' } } }, 0] },
+                              },
+                            },
+                          ],
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        {
+          $sort: { season: 1 },
+        },
+      ]);
+
+      // Combine stats into player object
+      player.stats = {
+        totalPoints: statsAggregation.reduce((sum, s) => sum + (s.totalPoints || 0), 0),
+        seasonStats: statsAggregation.map(s => ({
+          season: s.season,
+          avgPoints: s.avgStats.find(stat => stat.k === 'points')?.v || 0,
+          avgRebounds: s.avgStats.find(stat => stat.k === 'rebounds')?.v || 0,
+          avgSteals: s.avgStats.find(stat => stat.k === 'steals')?.v || 0,
+        })),
+        gamePoints: statsAggregation.flatMap(s => s.games.map(g => ({ season: s.season, points: g.points || 0 }))),
+      };
+    }
+
     res.json(players);
-  } catch (err) {
-    console.error('Get players error:', err);
-    res.status(500).json({ error: 'Failed to fetch players' });
+  } catch (error) {
+    console.error('Get players error:', error);
+    res.status(400).json({ error: 'Failed to fetch player data' });
   }
 });
 

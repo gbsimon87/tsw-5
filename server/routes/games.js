@@ -2,8 +2,65 @@ const express = require('express');
 const mongoose = require('mongoose');
 const router = express.Router();
 const Game = require('../models/Game');
+const League = require('../models/League');
+const Player = require('../models/Player');
+const Team = require('../models/Team');
 const authMiddleware = require('../middleware/authMiddleware');
 const checkAdminOrManager = require('../middleware/adminOrManagerMiddleware');
+
+router.get('/next-game', authMiddleware, async (req, res) => {
+  try {
+    // Find Player documents for the user
+    const players = await Player.find({ user: req.user._id }).select('_id').lean();
+    const playerIds = players.map(player => player._id);
+
+    // Find active teams where the user is a member
+    const teams = await Team.find({
+      'members.player': { $in: playerIds },
+      isActive: true,
+    }).select('_id name').lean();
+    const teamIds = teams.map(team => team._id);
+
+    // Find the earliest uncompleted game for any of the user's teams
+    const nextGame = await Game.findOne({
+      teams: { $in: teamIds },
+      isCompleted: false,
+    })
+      .sort({ date: 1 }) // Earliest date first
+      .populate('teams', 'name logo')
+      .populate('league', 'name')
+      .lean();
+
+    if (!nextGame) {
+      return res.json(null); // No upcoming game
+    }
+
+    // Determine the user's team and opponent
+    const userTeamId = teamIds.find(id => nextGame.teams.some(t => t._id.toString() === id.toString()));
+    const userTeam = nextGame.teams.find(t => t._id.toString() === userTeamId.toString());
+    const opponentTeam = nextGame.teams.find(t => t._id.toString() !== userTeamId.toString());
+
+    // Format the response
+    const gameDetails = {
+      date: nextGame.date,
+      time: new Date(nextGame.date).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
+      location: nextGame.location || 'N/A',
+      venue: nextGame.venue || 'N/A',
+      league: nextGame.league.name,
+      userTeam: userTeam ? { name: userTeam.name, logo: userTeam.logo } : null,
+      opponentTeam: opponentTeam ? { name: opponentTeam.name, logo: opponentTeam.logo } : null,
+      matchType: nextGame.matchType,
+      eventType: nextGame.eventType,
+      previousMatchupScore: nextGame.previousMatchupScore || 'N/A',
+      weatherConditions: nextGame.weatherConditions || 'N/A',
+    };
+
+    res.json(gameDetails);
+  } catch (error) {
+    console.error('Get next game error:', error);
+    res.status(400).json({ error: 'Failed to fetch next game' });
+  }
+});
 
 // Get a single game by ID
 router.get('/:gameId', authMiddleware, async (req, res) => {
