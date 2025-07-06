@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import {
   TrophyIcon,
-  CalendarIcon,
+  CalendarDaysIcon,
   EyeIcon,
   MapPinIcon,
   ClockIcon,
@@ -13,7 +13,7 @@ import {
   UsersIcon,
   FlagIcon,
   ListBulletIcon,
-  PencilIcon,
+  PencilSquareIcon,
   Cog6ToothIcon,
 } from '@heroicons/react/24/outline';
 
@@ -86,23 +86,25 @@ export default function ManageLeague() {
   }
 
   return (
-    <div className="min-h-[var(--page-height)] bg-gray-50 py-10 px-4">
+    <div className="min-h-[var(--page-height)] bg-gray-50 py-4 px-4">
       <div className="max-w-4xl mx-auto">
         {/* Header with actions */}
-        <header className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 gap-4">
-          <h1 className="text-3xl font-bold text-gray-800">{league.name}</h1>
-          <div className="flex gap-3">
+        <header className="flex flex-col mb-8 gap-4">
+          <h1 className="text-2xl font-bold text-gray-800">
+            {league.name}
+          </h1>
+          <div className="flex flex-wrap gap-3">
             <Link
               to={`/leagues/${leagueId}/edit`}
-              className="flex items-center gap-2 bg-white text-blue-700 border border-blue-600 px-5 py-2 rounded-lg font-semibold shadow hover:bg-blue-50 transition focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              className="flex items-center gap-2 bg-white text-blue-700 border border-blue-600 px-3 py-1.5 text-sm rounded-lg font-semibold shadow hover:bg-blue-50 transition focus:ring-2 focus:ring-blue-500 focus:outline-none sm:px-5 sm:py-2 sm:text-base"
               aria-label="Edit League"
             >
-              <PencilIcon className="w-5 h-5" />
+              <PencilSquareIcon className="w-5 h-5" />
               Edit League
             </Link>
             <Link
               to={`/leagues/${leagueId}/teams`}
-              className="flex items-center gap-2 bg-white text-blue-700 border border-blue-600 px-5 py-2 rounded-lg font-semibold shadow hover:bg-blue-50 transition focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              className="flex items-center gap-2 bg-white text-blue-700 border border-blue-600 px-3 py-1.5 text-sm rounded-lg font-semibold shadow hover:bg-blue-50 transition focus:ring-2 focus:ring-blue-500 focus:outline-none sm:px-5 sm:py-2 sm:text-base"
               aria-label="Manage Teams"
             >
               <UsersIcon className="w-5 h-5" />
@@ -110,14 +112,16 @@ export default function ManageLeague() {
             </Link>
             <Link
               to={`/leagues/${leagueId}/games`}
-              className="flex items-center gap-2 bg-white text-blue-700 border border-blue-600 px-5 py-2 rounded-lg font-semibold shadow hover:bg-blue-50 transition focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              className="flex items-center gap-2 bg-white text-blue-700 border border-blue-600 px-3 py-1.5 text-sm rounded-lg font-semibold shadow hover:bg-blue-50 transition focus:ring-2 focus:ring-blue-500 focus:outline-none sm:px-5 sm:py-2 sm:text-base"
               aria-label="Manage Games"
             >
-              <CalendarIcon className="w-5 h-5" />
+              <CalendarDaysIcon className="w-5 h-5" />
               Manage Games
             </Link>
           </div>
         </header>
+
+
 
         {/* Main details card */}
         <div className="bg-white shadow-xl rounded-2xl p-8 border border-gray-200">
@@ -134,7 +138,7 @@ export default function ManageLeague() {
                 <dd className="ml-2 text-gray-800">{league.sportType}</dd>
               </div>
               <div className="flex items-center">
-                <CalendarIcon className="w-5 h-5 mr-3 text-gray-500" />
+                <CalendarDaysIcon className="w-5 h-5 mr-3 text-gray-500" />
                 <dt className="font-medium text-gray-600">Season:</dt>
                 <dd className="ml-2 text-gray-800">{league.season || 'Not set'}</dd>
               </div>
@@ -226,14 +230,14 @@ export default function ManageLeague() {
           {/* Seasons */}
           <section className="mb-8">
             <div className="flex items-center mb-2">
-              <CalendarIcon className="w-5 h-5 mr-3 text-purple-500" />
+              <CalendarDaysIcon className="w-5 h-5 mr-3 text-purple-500" />
               <h3 className="font-semibold text-gray-800">Seasons</h3>
             </div>
             {league.seasons && league.seasons.length > 0 ? (
               <div className="space-y-2 ml-6">
                 {league.seasons.map((season) => (
                   <div key={season.name} className="flex items-center bg-white p-3 rounded-md border border-gray-200">
-                    <CalendarIcon className="w-4 h-4 mr-2.5 text-gray-500" />
+                    <CalendarDaysIcon className="w-4 h-4 mr-2.5 text-gray-500" />
                     <span>
                       {season.name} (Start: {new Date(season.startDate).toLocaleDateString('en-US', {
                         year: 'numeric',

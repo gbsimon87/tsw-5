@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import {
+  ArrowLeftIcon,
   CalendarIcon,
   ChartBarIcon,
   PlusIcon,
@@ -32,7 +33,7 @@ export default function ManageGames() {
   const [games, setGames] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('create'); // New state for tab switching
+  const [activeTab, setActiveTab] = useState('create');
   const [formData, setFormData] = useState({
     date: '',
     time: '',
@@ -73,7 +74,9 @@ export default function ManageGames() {
           return;
         }
 
-        const teamsResponse = await axios.get(`/api/teams?leagueId=${leagueId}&season=${leagueData.season || 'Season 1'}`, {
+        const activeSeason = leagueData.seasons.find(s => s.isActive)?.name || 'Season 1';
+
+        const teamsResponse = await axios.get(`/api/teams?leagueId=${leagueId}&season=${activeSeason}`, {
           headers: { Authorization: `Bearer ${user.token}` },
         });
         setTeams(teamsResponse.data || []);
@@ -83,7 +86,7 @@ export default function ManageGames() {
         });
         setPlayers(playersResponse.data || []);
 
-        const gamesResponse = await axios.get(`/api/games?leagueId=${leagueId}&season=${leagueData.season || 'Season 1'}&t=${Date.now()}`, {
+        const gamesResponse = await axios.get(`/api/games?leagueId=${leagueId}&season=${activeSeason}&t=${Date.now()}`, {
           headers: {
             Authorization: `Bearer ${user.token}`,
             'Cache-Control': 'no-cache',
@@ -161,7 +164,7 @@ export default function ManageGames() {
         ...formData,
         date: dateTime,
         league: leagueId,
-        season: league?.season || 'Season 1',
+        season: league?.seasons.find(s => s.isActive)?.name || 'Season 1',
         teams: formData.teams.filter(id => id),
         gameDuration: parseInt(formData.gameDuration) || 0,
         venueCapacity: parseInt(formData.venueCapacity) || 0,
@@ -186,7 +189,8 @@ export default function ManageGames() {
         });
       }
 
-      const gamesResponse = await axios.get(`/api/games?leagueId=${leagueId}&season=${league?.season || 'Season 1'}&t=${Date.now()}`, {
+      const activeSeason = league?.seasons.find(s => s.isActive)?.name || 'Season 1';
+      const gamesResponse = await axios.get(`/api/games?leagueId=${leagueId}&season=${activeSeason}&t=${Date.now()}`, {
         headers: {
           Authorization: `Bearer ${user.token}`,
           'Cache-Control': 'no-cache',
@@ -218,7 +222,7 @@ export default function ManageGames() {
       });
       setEditingGameId(null);
       setError(null);
-      setActiveTab('view'); // Switch to view tab after successful submission
+      setActiveTab('view');
     } catch (err) {
       console.error('Save game error:', err.response?.data || err.message);
       setError(err.response?.data?.error || 'Failed to save game');
@@ -262,42 +266,49 @@ export default function ManageGames() {
   return (
     <div className="min-h-[var(--page-height)] bg-gray-50 py-4 px-4">
       <div className="max-w-4xl mx-auto">
-        <header className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 gap-4">
-          <div className="flex gap-3">
+        <header className="flex flex-col mb-4 gap-4">
+          <div className="flex items-center gap-3">
             <button
               onClick={() => navigate(`/leagues/${leagueId}`)}
-              className="flex items-center gap-2 bg-white text-blue-700 border border-blue-600 px-5 py-2 rounded-lg font-semibold shadow hover:bg-blue-50 transition focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              className="flex items-center gap-2 bg-white text-blue-700 border border-blue-600 px-4 py-1.5 rounded-lg font-semibold shadow hover:bg-blue-50 transition focus:ring-2 focus:ring-blue-500 focus:outline-none"
               aria-label="Back to League"
             >
               <ArrowLeftIcon className="w-5 h-5" />
               Back to League
             </button>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-800">Manage Games</h1>
+              <div className="text-sm text-gray-500 font-normal">
+                {league.name}
+              </div>
+            </div>
           </div>
           <h1 className="text-2xl font-bold text-gray-800">Manage Games for:<br /> {league?.name || 'League'}</h1>
         </header>
 
+
         {/* Tab Buttons */}
-        <div className="flex gap-2 mb-6">
-          <button
-            onClick={() => setActiveTab('create')}
-            className={`flex-1 py-2 px-4 rounded-lg font-semibold transition focus:ring-2 focus:ring-blue-500 focus:outline-none ${
-              activeTab === 'create'
+        <div className="flex flex-col mb-8 gap-4">
+          <div className="flex gap-2">
+            <button
+              onClick={() => setActiveTab('create')}
+              className={`flex-1 py-2 px-4 rounded-lg font-semibold transition focus:ring-2 focus:ring-blue-500 focus:outline-none ${activeTab === 'create'
                 ? 'bg-blue-600 text-white'
                 : 'bg-white text-blue-700 border border-blue-600 hover:bg-blue-50'
-            }`}
-          >
-            Create Game
-          </button>
-          <button
-            onClick={() => setActiveTab('view')}
-            className={`flex-1 py-2 px-4 rounded-lg font-semibold transition focus:ring-2 focus:ring-blue-500 focus:outline-none ${
-              activeTab === 'view'
+                }`}
+            >
+              Create New Game
+            </button>
+            <button
+              onClick={() => setActiveTab('view')}
+              className={`flex-1 py-2 px-4 rounded-lg font-semibold transition focus:ring-2 focus:ring-blue-500 focus:outline-none ${activeTab === 'view'
                 ? 'bg-blue-600 text-white'
                 : 'bg-white text-blue-700 border border-blue-600 hover:bg-blue-50'
-            }`}
-          >
-            View Games
-          </button>
+                }`}
+            >
+              Current Season Games
+            </button>
+          </div>
         </div>
 
         {/* Create Game Form */}
@@ -378,7 +389,7 @@ export default function ManageGames() {
                 </div>
                 <div className="flex flex-col">
                   <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                   P
+                    <MapPinIcon className="w-5 h-5 text-gray-500" />
                     Location (optional):
                   </label>
                   <input
@@ -689,12 +700,12 @@ export default function ManageGames() {
           </section>
         )}
 
-        {/* View Games List */}
+        {/* Current Season Games List */}
         {activeTab === 'view' && (
           <section className="bg-white shadow-xl rounded-2xl p-8 border border-gray-200">
             <div className="flex items-center gap-3 mb-4">
               <StarIcon className="w-6 h-6 text-yellow-400" />
-              <h2 className="text-2xl font-semibold text-gray-800">Games</h2>
+              <h2 className="text-2xl font-semibold text-gray-800">Current Season Games</h2>
             </div>
             {games.length > 0 ? (
               <div className="space-y-2">
@@ -803,7 +814,7 @@ export default function ManageGames() {
                 })}
               </div>
             ) : (
-              <p className="text-gray-600">No games defined</p>
+              <p className="text-gray-600">No games defined for the current season.</p>
             )}
           </section>
         )}
