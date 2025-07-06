@@ -210,14 +210,16 @@ router.get('/:leagueId', authMiddleware, async (req, res) => {
         logo: team.logo,
         createdBy: team.createdBy,
         isActive: team.isActive,
-        members: team.members.map(member => ({
-          playerId: member.player?._id,
-          name: member.player?.user?.name || 'Unknown',
-          jerseyNumber: member.player?.jerseyNumber || null,
-          position: member.player?.position || null,
-          role: member.role,
-          isActive: member.isActive,
-        })),
+        members: team.members
+          .filter(member => member.player) // Filter out members with no player reference
+          .map(member => ({
+            playerId: member.player?._id || null,
+            name: member.player?.user?.name || member.player?.name || 'Unknown', // Fallback to player.name or 'Unknown'
+            jerseyNumber: member.player?.jerseyNumber || null,
+            position: member.player?.position || null,
+            role: member.role,
+            isActive: member.isActive,
+          })),
       })),
       seasons: league.seasons,
       settings: league.settings,
