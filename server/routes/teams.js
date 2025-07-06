@@ -3,6 +3,7 @@ const router = express.Router();
 const Team = require('../models/Team');
 const Player = require('../models/Player');
 const League = require('../models/League');
+const Game = require('../models/Game');
 const authMiddleware = require('../middleware/authMiddleware');
 const checkAdminOrManager = require('../middleware/adminOrManagerMiddleware');
 const { initializeStats } = require('../middleware/statsUtils');
@@ -189,25 +190,109 @@ router.post('/join', authMiddleware, async (req, res) => {
 router.get('/my-teams', authMiddleware, async (req, res) => {
   try {
     // Find Player documents for the user
-    const players = await Player.find({ user: req.user._id });
+    const players = await Player.find({ user: req.user._id }).select('_id');
     const playerIds = players.map(player => player._id);
-    // console.log('User player IDs:', playerIds);
 
-    // Find teams where the user is a member (via Player ID)
+    // Find active teams where the user is a member (via Player ID)
     const teams = await Team.find({
-      'members.player': { $in: playerIds }
+      'members.player': { $in: playerIds },
+      isActive: true,
     })
-      .populate('league', 'name sportType location')
+      .populate('league', 'name sportType location teams')
       .populate({
         path: 'members.player',
         populate: {
           path: 'user',
           model: 'User',
-          select: 'name'
-        }
-      });
+          select: 'name',
+        },
+      })
+      .lean();
 
-    // console.log('Fetched user teams:', JSON.stringify(teams, null, 2));
+    // Calculate team record and ranking for each team
+    for (let team of teams) {
+      // Calculate team record (wins/losses) for the current season
+      const teamRecord = await Game.aggregate([
+        {
+          $match: {
+            teams: team._id,
+            isCompleted: true,
+            season: team.season,
+          },
+        },
+        {
+          $project: {
+            teamScores: 1,
+            winner: {
+              $cond: {
+                if: {
+                  $gt: [
+                    // Team's score
+                    { $arrayElemAt: ["$teamScores.score", { $indexOfArray: ["$teamScores.team", team._id] }] },
+                    // Opposing team's score
+                    {
+                      $arrayElemAt: [
+                        "$teamScores.score",
+                        {
+                          $indexOfArray: [
+                            "$teamScores.team",
+                            {
+                              $arrayElemAt: [
+                                "$teams",
+                                {
+                                  $indexOfArray: [
+                                    "$teams",
+                                    { $not: { $eq: [team._id, "$teams"] } },
+                                  ],
+                                },
+                              ],
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+                then: 1,
+                else: 0,
+              },
+            },
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            wins: { $sum: "$winner" },
+            losses: { $sum: { $cond: [{ $eq: ["$winner", 0] }, 1, 0] } },
+          },
+        },
+      ]);
+
+      team.record = teamRecord.length ? { wins: teamRecord[0].wins, losses: teamRecord[0].losses } : { wins: 0, losses: 0 };
+
+      // Calculate team ranking in the league for the current season
+      const teamScores = await Game.aggregate([
+        {
+          $match: {
+            league: team.league._id,
+            season: team.season,
+            isCompleted: true,
+          },
+        },
+        { $unwind: "$teamScores" },
+        {
+          $group: {
+            _id: "$teamScores.team",
+            totalScore: { $sum: "$teamScores.score" },
+          },
+        },
+        { $sort: { totalScore: -1 } },
+      ]);
+
+      const rank = teamScores.findIndex(t => t._id.toString() === team._id.toString()) + 1;
+      const totalTeams = team.league.teams.length;
+      team.ranking = rank > 0 ? { rank, totalTeams } : { rank: null, totalTeams };
+    }
 
     // Prevent caching to ensure fresh data
     res.set('Cache-Control', 'no-store');

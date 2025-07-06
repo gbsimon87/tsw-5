@@ -49,43 +49,43 @@ router.post('/', authMiddleware, checkAdminOrManager, async (req, res) => {
 });
 
 // // Get players (filter by leagueId)
-// router.get('/', authMiddleware, async (req, res) => {
-//   try {
-//     const { leagueId } = req.query;
-//     const query = leagueId ? { league: leagueId } : {};
-//     const players = await Player.find(query).populate('user', 'name').populate('teams', 'name');
-//     res.json(players);
-//   } catch (err) {
-//     console.error('Get players error:', err);
-//     res.status(500).json({ error: 'Failed to fetch players' });
-//   }
-// });
-
-// Get players by teamId or leagueId
 router.get('/', authMiddleware, async (req, res) => {
   try {
-    const { teamId, leagueId } = req.query;
-
-    const query = {};
-    if (teamId && mongoose.Types.ObjectId.isValid(teamId)) {
-      query.teams = teamId; // Use 'teams' field since Player schema has teams array
-    } else if (leagueId && mongoose.Types.ObjectId.isValid(leagueId)) {
-      query.league = leagueId;
-    } else {
-      return res.status(400).json({ error: 'teamId or leagueId is required' });
-    }
-
-    const players = await Player.find(query)
-      .populate('user', 'name picture')
-      .select('user teams league')
-      .lean();
-
+    const { leagueId, userId } = req.query;
+    const query = leagueId ? { league: leagueId } : { user: userId } || {};
+    const players = await Player.find(query).populate('user', 'name').populate('teams', 'name');
     res.json(players);
   } catch (err) {
     console.error('Get players error:', err);
     res.status(500).json({ error: 'Failed to fetch players' });
   }
 });
+
+// Get players by teamId or leagueId
+// router.get('/', authMiddleware, async (req, res) => {
+//   try {
+//     const { teamId, leagueId } = req.query;
+
+//     const query = {};
+//     if (teamId && mongoose.Types.ObjectId.isValid(teamId)) {
+//       query.teams = teamId; // Use 'teams' field since Player schema has teams array
+//     } else if (leagueId && mongoose.Types.ObjectId.isValid(leagueId)) {
+//       query.league = leagueId;
+//     } else {
+//       return res.status(400).json({ error: 'teamId or leagueId is required' });
+//     }
+
+//     const players = await Player.find(query)
+//       .populate('user', 'name picture')
+//       .select('user teams league')
+//       .lean();
+
+//     res.json(players);
+//   } catch (err) {
+//     console.error('Get players error:', err);
+//     res.status(500).json({ error: 'Failed to fetch players' });
+//   }
+// });
 
 // Update a player (admin/manager or own profile)
 router.patch('/:playerId', authMiddleware, async (req, res) => {
