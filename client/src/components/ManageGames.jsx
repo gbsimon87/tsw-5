@@ -9,7 +9,6 @@ import {
   PlusIcon,
   PencilIcon,
   TrashIcon,
-  ArrowLeftIcon,
   StarIcon,
   UsersIcon,
   MapPinIcon,
@@ -283,7 +282,6 @@ export default function ManageGames() {
               </div>
             </div>
           </div>
-          <h1 className="text-2xl font-bold text-gray-800">Manage Games for:<br /> {league?.name || 'League'}</h1>
         </header>
 
 
