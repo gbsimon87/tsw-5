@@ -82,7 +82,7 @@ const whyChooseSporty = [
   },
   {
     title: "Community Driven",
-    description: "Built for and by sports lovers—your feedback shapes our future.",
+    description: "Built for and by sports lovers - your feedback shapes our future.",
     iconBg: "from-pink-200 to-pink-300",
     semantic: "community"
   },
@@ -110,6 +110,10 @@ function Home() {
           .glass {
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
+          }
+          @keyframes marquee-left {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
           }
         `}
       </style>
@@ -237,24 +241,32 @@ function Home() {
             <UsersIcon className="w-8 h-8 mr-2 text-blue-600" />
             Why Choose The Sporty Way?
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {whyChooseSporty.map((reason, idx) => (
-              <article
-                key={reason.title}
-                className="text-center bg-gradient-to-br from-blue-50 to-blue-100 bg-opacity-30 glass rounded-xl shadow-lg p-6 border border-white/20"
-                aria-label={reason.semantic}
-              >
-                <div
-                  className={`h-24 w-24 bg-gradient-to-br ${reason.iconBg} rounded-full mx-auto mb-4`}
-                  aria-hidden="true"
-                />
-                <h3 className="text-xl font-semibold text-gray-800 mb-2">{reason.title}</h3>
-                <p className="text-gray-600">{reason.description}</p>
-              </article>
-            ))}
+          <div className="overflow-hidden relative w-full">
+            <div
+              className="flex w-max animate-marquee"
+              style={{
+                animation: "marquee-left 45s linear infinite"
+              }}
+            >
+              {[...whyChooseSporty, ...whyChooseSporty].map((reason, idx) => (
+                <article
+                  key={idx}
+                  className="min-w-[320px] max-w-xs mx-4 text-center bg-gradient-to-br from-blue-50 to-blue-100 bg-opacity-30 glass rounded-xl shadow-lg p-6 border border-white/20 flex-shrink-0"
+                  aria-label={reason.semantic}
+                >
+                  <div
+                    className={`h-24 w-24 bg-gradient-to-br ${reason.iconBg} rounded-full mx-auto mb-4`}
+                    aria-hidden="true"
+                  />
+                  <h3 className="text-xl font-semibold text-gray-800 mb-2">{reason.title}</h3>
+                  <p className="text-gray-600">{reason.description}</p>
+                </article>
+              ))}
+            </div>
           </div>
         </div>
       </section>
+
 
       {/* Testimonials Section */}
       <section className="bg-gradient-to-br from-gray-50 to-gray-100 py-16">
