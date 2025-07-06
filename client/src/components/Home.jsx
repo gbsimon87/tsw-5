@@ -10,6 +10,45 @@ import {
   ArrowRightEndOnRectangleIcon
 } from '@heroicons/react/24/outline';
 
+// Define feature data
+const adminFeatures = [
+  {
+    title: "Admin Panel",
+    description: "View, manage, and launch new leagues in seconds, all from one powerful dashboard!",
+    icon: <Cog6ToothIcon className="w-8 h-8 text-blue-500 mb-2" />,
+    link: "/admin",
+    linkLabel: "Admin Panel",
+    comingSoon: false,
+    bg: "from-blue-50 to-blue-100"
+  },
+  {
+    title: "Standings & Rankings (Coming Soon)",
+    description: "View team standings and player leaderboards.",
+    icon: <TrophyIcon className="w-8 h-8 text-blue-500 mb-2" />,
+    comingSoon: true,
+    bg: "from-gray-50 to-gray-100"
+  }
+];
+
+const playerFeatures = [
+  {
+    title: "Sporty Leagues",
+    description: "Discover Sporty leagues, view teams, and join the action.",
+    icon: <SparklesIcon className="w-8 h-8 text-blue-400 mb-2" />,
+    link: "/public-leagues",
+    linkLabel: "Explore Now",
+    comingSoon: false,
+    bg: "from-blue-50 to-blue-100"
+  },
+  {
+    title: "Player Stats (Coming Soon)",
+    description: "Track player performance, efficiency, and game stats.",
+    icon: <UsersIcon className="w-8 h-8 text-blue-400 mb-2" />,
+    comingSoon: true,
+    bg: "from-gray-50 to-gray-100"
+  }
+];
+
 /**
  * Homepage landing page highlighting features and user value
  * @component
@@ -76,70 +115,72 @@ function Home() {
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="py-16">
+      {/* Admin Features Section */}
+      <section className="py-16 bg-gradient-to-br from-blue-50 to-blue-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-3xl font-bold text-gray-800 text-center mb-12 flex items-center justify-center">
-            <TrophyIcon className="w-8 h-8 mr-2 text-blue-600" />
-            Features
+            <Cog6ToothIcon className="w-8 h-8 mr-2 text-blue-600" />
+            Admin Features
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            <article className="bg-gradient-to-br from-blue-50 to-blue-100 bg-opacity-30 glass rounded-xl shadow-lg p-6 border border-white/20 hover:scale-105 transition-transform duration-200">
-              <div
-                className="h-32 bg-gradient-to-br from-blue-200 to-blue-300 rounded-lg mb-4"
-                aria-hidden="true"
-              />
-              <h3 className="text-xl font-semibold text-gray-800 mb-2">Sporty Leagues</h3>
-              <p className="text-gray-600">
-                Discover Sporty leagues, view teams, and join the action.
-              </p>
-              <Link
-                to="/public-leagues"
-                className="text-blue-600 hover:text-blue-800 mt-4 inline-block focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                aria-label="View Sporty Leagues"
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            {adminFeatures.map((feature) => (
+              <article
+                key={feature.title}
+                className={`bg-gradient-to-br ${feature.bg} bg-opacity-30 glass rounded-xl shadow-lg p-6 border border-white/20 ${feature.comingSoon ? 'opacity-75' : 'hover:scale-105 transition-transform duration-200'}`}
               >
-                Explore Now
-              </Link>
-            </article>
-            <article className="bg-gradient-to-br from-blue-50 to-blue-100 bg-opacity-30 glass rounded-xl shadow-lg p-6 border border-white/20 hover:scale-105 transition-transform duration-200">
-              <div
-                className="h-32 bg-gradient-to-br from-blue-200 to-blue-300 rounded-lg mb-4"
-                aria-hidden="true"
-              />
-              <h3 className="text-xl font-semibold text-gray-800 mb-2">Admin Zone</h3>
-              <p className="text-gray-600">
-                Create and organize leagues, manage teams effortlessly.
-              </p>
-              <Link
-                to={isAuthenticated ? '/admin' : '/login'}
-                className="text-blue-600 hover:text-blue-800 mt-4 inline-block focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                aria-label={isAuthenticated ? 'Create a League' : 'Login to Create a League'}
+                <div className="h-32 flex items-center justify-center rounded-lg mb-4" aria-hidden="true">
+                  {feature.icon}
+                </div>
+                <h3 className="text-xl font-semibold text-gray-800 mb-2">{feature.title}</h3>
+                <p className="text-gray-600">{feature.description}</p>
+                {feature.comingSoon ? (
+                  <span className="text-gray-500 mt-4 inline-block">Stay Tuned!</span>
+                ) : (
+                  <Link
+                    to={isAuthenticated ? feature.link : '/login'}
+                    className="text-blue-600 hover:text-blue-800 mt-4 inline-block focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    aria-label={isAuthenticated ? feature.linkLabel : 'Login to Start'}
+                  >
+                    {isAuthenticated ? feature.linkLabel : 'Login to Start'}
+                  </Link>
+                )}
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Player Features Section */}
+      <section className="py-16 bg-gradient-to-br from-gray-50 to-gray-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-3xl font-bold text-gray-800 text-center mb-12 flex items-center justify-center">
+            <UsersIcon className="w-8 h-8 mr-2 text-blue-600" />
+            Player Features
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            {playerFeatures.map((feature) => (
+              <article
+                key={feature.title}
+                className={`bg-gradient-to-br ${feature.bg} bg-opacity-30 glass rounded-xl shadow-lg p-6 border border-white/20 ${feature.comingSoon ? 'opacity-75' : 'hover:scale-105 transition-transform duration-200'}`}
               >
-                {isAuthenticated ? 'Create League' : 'Login to Start'}
-              </Link>
-            </article>
-            <article className="bg-gradient-to-br from-gray-50 to-gray-100 bg-opacity-30 glass rounded-xl shadow-lg p-6 border border-white/20 opacity-75">
-              <div
-                className="h-32 bg-gradient-to-br from-gray-200 to-gray-300 rounded-lg mb-4"
-                aria-hidden="true"
-              />
-              <h3 className="text-xl font-semibold text-gray-800 mb-2">Player Stats (Coming Soon)</h3>
-              <p className="text-gray-600">
-                Track player performance, efficiency, and game stats.
-              </p>
-              <span className="text-gray-500 mt-4 inline-block">Stay Tuned!</span>
-            </article>
-            <article className="bg-gradient-to-br from-gray-50 to-gray-100 bg-opacity-30 glass rounded-xl shadow-lg p-6 border border-white/20 opacity-75">
-              <div
-                className="h-32 bg-gradient-to-br from-gray-200 to-gray-300 rounded-lg mb-4"
-                aria-hidden="true"
-              />
-              <h3 className="text-xl font-semibold text-gray-800 mb-2">Standings & Rankings (Coming Soon)</h3>
-              <p className="text-gray-600">
-                View team standings and player leaderboards.
-              </p>
-              <span className="text-gray-500 mt-4 inline-block">Stay Tuned!</span>
-            </article>
+                <div className="h-32 flex items-center justify-center rounded-lg mb-4" aria-hidden="true">
+                  {feature.icon}
+                </div>
+                <h3 className="text-xl font-semibold text-gray-800 mb-2">{feature.title}</h3>
+                <p className="text-gray-600">{feature.description}</p>
+                {feature.comingSoon ? (
+                  <span className="text-gray-500 mt-4 inline-block">Stay Tuned!</span>
+                ) : (
+                  <Link
+                    to={feature.link}
+                    className="text-blue-600 hover:text-blue-800 mt-4 inline-block focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    aria-label={feature.linkLabel}
+                  >
+                    {feature.linkLabel}
+                  </Link>
+                )}
+              </article>
+            ))}
           </div>
         </div>
       </section>
@@ -152,7 +193,7 @@ function Home() {
             Why Choose The Sporty Way?
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <article className="text-center bg-gradient-to-br from-blue-50 to-blue-100 bg-opacity-30 glass rounded-xl shadow-lg p-6 border border-white/20 hover:scale-105 transition-transform duration-200">
+            <article className="text-center bg-gradient-to-br from-blue-50 to-blue-100 bg-opacity-30 glass rounded-xl shadow-lg p-6 border border-white/20">
               <div
                 className="h-24 w-24 bg-gradient-to-br from-blue-200 to-blue-300 rounded-full mx-auto mb-4"
                 aria-hidden="true"
@@ -162,7 +203,7 @@ function Home() {
                 Stay updated on your kids’ games, track their team’s progress, and never miss a moment.
               </p>
             </article>
-            <article className="text-center bg-gradient-to-br from-blue-50 to-blue-100 bg-opacity-30 glass rounded-xl shadow-lg p-6 border border-white/20 hover:scale-105 transition-transform duration-200">
+            <article className="text-center bg-gradient-to-br from-blue-50 to-blue-100 bg-opacity-30 glass rounded-xl shadow-lg p-6 border border-white/20">
               <div
                 className="h-24 w-24 bg-gradient-to-br from-blue-200 to-blue-300 rounded-full mx-auto mb-4"
                 aria-hidden="true"
@@ -172,7 +213,7 @@ function Home() {
                 Simplify league management with tools to organize teams and monitor stats.
               </p>
             </article>
-            <article className="text-center bg-gradient-to-br from-blue-50 to-blue-100 bg-opacity-30 glass rounded-xl shadow-lg p-6 border border-white/20 hover:scale-105 transition-transform duration-200">
+            <article className="text-center bg-gradient-to-br from-blue-50 to-blue-100 bg-opacity-30 glass rounded-xl shadow-lg p-6 border border-white/20">
               <div
                 className="h-24 w-24 bg-gradient-to-br from-blue-200 to-blue-300 rounded-full mx-auto mb-4"
                 aria-hidden="true"
@@ -194,13 +235,13 @@ function Home() {
             What Users Say
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <article className="bg-gradient-to-br from-blue-50 to-blue-100 bg-opacity-30 glass rounded-xl shadow-lg p-6 border border-white/20 hover:scale-105 transition-transform duration-200">
+            <article className="bg-gradient-to-br from-blue-50 to-blue-100 bg-opacity-30 glass rounded-xl shadow-lg p-6 border border-white/20">
               <p className="text-gray-600 italic">
                 “The Sporty Way makes it so easy to follow my son’s games!”
               </p>
               <p className="mt-4 font-semibold text-gray-800">— Jane, Parent</p>
             </article>
-            <article className="bg-gradient-to-br from-blue-50 to-blue-100 bg-opacity-30 glass rounded-xl shadow-lg p-6 border border-white/20 hover:scale-105 transition-transform duration-200">
+            <article className="bg-gradient-to-br from-blue-50 to-blue-100 bg-opacity-30 glass rounded-xl shadow-lg p-6 border border-white/20">
               <p className="text-gray-600 italic">
                 “Managing my league has never been simpler. Love the tools!”
               </p>
