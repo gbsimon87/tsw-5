@@ -10,6 +10,10 @@ const gameSchema = new mongoose.Schema({
   }],
   date: { type: Date, required: true },
   location: { type: String },
+  periodType: { type: String },         // e.g., 'halves', 'quarters'
+  periodDuration: { type: Number },     // e.g., 45
+  overtimeDuration: { type: Number },   // e.g., 5
+  scoringRules: { type: mongoose.Schema.Types.Mixed }, // overrideable per game
   playerStats: [{
     player: { type: mongoose.Schema.Types.ObjectId, ref: 'Player', required: true },
     team: { type: mongoose.Schema.Types.ObjectId, ref: 'Team', required: true },
@@ -30,7 +34,7 @@ const gameSchema = new mongoose.Schema({
   matchType: { type: String, enum: ['friendly', 'tournament', 'league'], default: 'league' },
   weatherConditions: { type: String },
   referee: { type: String },
-  gameDuration: { type: Number, required: true },
+  // gameDuration: { type: Number, required: true },
   eventType: { type: String, enum: ['regular', 'playoff', 'final'], default: 'regular' },
   attendance: { type: Number },
   venue: { type: String },

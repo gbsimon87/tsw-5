@@ -10,7 +10,7 @@ const Player = require('./models/Player');
 const Game = require('./models/Game');
 require('dotenv').config({ path: '.env' });
 
-const SMALL_MODE = true;
+const SMALL_MODE = false;
 const CLEAR_DATABASE = true;
 
 // Configuration for seeding

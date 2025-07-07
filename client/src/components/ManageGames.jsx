@@ -43,16 +43,11 @@ export default function ManageGames() {
     score: { team1: 0, team2: 0 },
     matchType: 'league',
     eventType: 'regular',
-    gameDuration: '',
-    weatherConditions: '',
-    referee: '',
     attendance: '',
-    previousMatchupScore: '',
-    fanRating: 0,
-    highlights: [''],
-    matchReport: '',
-    mediaLinks: [{ url: '', type: '' }],
-    gameMVP: '',
+    periodType: '',
+    periodDuration: '',
+    overtimeDuration: '',
+    scoringRules: {}
   });
   const [editingGameId, setEditingGameId] = useState(null);
 
@@ -77,6 +72,13 @@ export default function ManageGames() {
         });
         const leagueData = leagueResponse.data;
         setLeague(leagueData);
+        setFormData(prev => ({
+          ...prev,
+          periodType: leagueData?.settings?.periodType || '',
+          periodDuration: leagueData?.settings?.periodDuration || '',
+          overtimeDuration: leagueData?.settings?.overtimeDuration || '',
+          scoringRules: leagueData?.settings?.scoringRules || {}
+        }));
 
         const isAdmin = leagueData.admins?.some(admin => admin._id === user._id) || false;
         const isManager = leagueData.managers?.some(manager => manager._id === user._id) || false;
@@ -123,45 +125,29 @@ export default function ManageGames() {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+
     if (name.includes('score.')) {
       const field = name.split('.')[1];
-      setFormData({ ...formData, score: { ...formData.score, [field]: parseInt(value) || 0 } });
-    } else if (name.includes('highlights[')) {
-      const index = parseInt(name.match(/\[(\d+)\]/)[1]);
-      const newHighlights = [...formData.highlights];
-      newHighlights[index] = value;
-      setFormData({ ...formData, highlights: newHighlights });
-    } else if (name.includes('mediaLinks[')) {
-      const index = parseInt(name.match(/\[(\d+)\]/)[1]);
-      const field = name.split('.')[2];
-      const newMediaLinks = [...formData.mediaLinks];
-      newMediaLinks[index] = { ...newMediaLinks[index], [field]: value };
-      setFormData({ ...formData, mediaLinks: newMediaLinks });
+      setFormData(prev => ({ ...prev, score: { ...prev.score, [field]: parseInt(value) || 0 } }));
     } else if (name.includes('teams[')) {
       const index = parseInt(name.match(/\[(\d+)\]/)[1]);
       const newTeams = [...formData.teams];
       newTeams[index] = value;
-      setFormData({ ...formData, teams: newTeams });
+      setFormData(prev => ({ ...prev, teams: newTeams }));
+    } else if (name.startsWith('scoringRules.')) {
+      const rule = name.split('.')[1];
+      setFormData(prev => ({
+        ...prev,
+        scoringRules: {
+          ...prev.scoringRules,
+          [rule]: parseInt(value) || 0,
+        }
+      }));
     } else {
-      setFormData({ ...formData, [name]: value });
+      setFormData(prev => ({ ...prev, [name]: value }));
     }
   };
 
-  const addHighlight = () => {
-    setFormData({ ...formData, highlights: [...formData.highlights, ''] });
-  };
-
-  const removeHighlight = (index) => {
-    setFormData({ ...formData, highlights: formData.highlights.filter((_, i) => i !== index) });
-  };
-
-  const addMediaLink = () => {
-    setFormData({ ...formData, mediaLinks: [...formData.mediaLinks, { url: '', type: '' }] });
-  };
-
-  const removeMediaLink = (index) => {
-    setFormData({ ...formData, mediaLinks: formData.mediaLinks.filter((_, i) => i !== index) });
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -178,18 +164,14 @@ export default function ManageGames() {
         league: leagueId,
         season: league?.seasons.find(s => s.isActive)?.name || 'Season 1',
         teams: formData.teams.filter(id => id),
-        gameDuration: parseInt(formData.gameDuration) || 0,
         venueCapacity: parseInt(formData.venueCapacity) || 0,
         attendance: parseInt(formData.attendance) || 0,
-        fanRating: parseInt(formData.fanRating) || 0,
-        highlights: formData.highlights.filter(h => h.trim() !== ''),
-        mediaLinks: formData.mediaLinks.filter(link => link.url.trim() && link.type.trim()),
         isCompleted: formData.eventType === 'final' || formData.score.team1 > 0 || formData.score.team2 > 0,
+        periodType: formData.periodType,
+        periodDuration: parseInt(formData.periodDuration),
+        overtimeDuration: parseInt(formData.overtimeDuration),
+        scoringRules: formData.scoringRules,
       };
-
-      if (!editingGameId) {
-        delete payload.gameMVP;
-      }
 
       if (editingGameId) {
         await axios.patch(`/api/games/${editingGameId}`, payload, {
@@ -221,16 +203,7 @@ export default function ManageGames() {
         score: { team1: 0, team2: 0 },
         matchType: 'league',
         eventType: 'regular',
-        gameDuration: '',
-        weatherConditions: '',
-        referee: '',
         attendance: '',
-        previousMatchupScore: '',
-        fanRating: 0,
-        highlights: [''],
-        matchReport: '',
-        mediaLinks: [{ url: '', type: '' }],
-        gameMVP: '',
       });
       setEditingGameId(null);
       setError(null);
@@ -408,7 +381,7 @@ export default function ManageGames() {
                 <div className="flex flex-col">
                   <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
                     <FlagIcon className="w-5 h-5 text-gray-500" />
-                    Match Type:
+                    Match Type (optional):
                   </label>
                   <select
                     name="matchType"
@@ -425,7 +398,7 @@ export default function ManageGames() {
                 <div className="flex flex-col">
                   <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
                     <FlagIcon className="w-5 h-5 text-gray-500" />
-                    Event Type:
+                    Event Type (optional):
                   </label>
                   <select
                     name="eventType"
@@ -440,196 +413,43 @@ export default function ManageGames() {
                   </select>
                 </div>
                 <div className="flex flex-col">
-                  <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                    <ClockIcon className="w-5 h-5 text-gray-500" />
-                    Game Duration (minutes):
-                  </label>
+                  <label className="text-sm font-medium text-gray-700">Period Type</label>
+                  <select
+                    name="periodType"
+                    value={formData.periodType}
+                    onChange={handleInputChange}
+                    className="mt-1 w-full p-3 border rounded-md"
+                  >
+                    <option value="halves">Halves</option>
+                    <option value="quarters">Quarters</option>
+                    <option value="periods">Periods</option>
+                  </select>
+                </div>
+                <div className="flex flex-col">
+                  <label className="text-sm font-medium text-gray-700">Period Duration (minutes)</label>
                   <input
                     type="number"
-                    name="gameDuration"
-                    value={formData.gameDuration}
+                    name="periodDuration"
+                    value={formData.periodDuration}
                     onChange={handleInputChange}
-                    required
-                    min="1"
-                    className="mt-1 w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="mt-1 w-full p-3 border rounded-md"
                   />
                 </div>
-                <div className="flex flex-col">
-                  <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                    <CloudIcon className="w-5 h-5 text-gray-500" />
-                    Weather Conditions (optional):
-                  </label>
-                  <input
-                    type="text"
-                    name="weatherConditions"
-                    value={formData.weatherConditions}
-                    onChange={handleInputChange}
-                    className="mt-1 w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                  />
-                </div>
-                <div className="flex flex-col">
-                  <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                    <UserIcon className="w-5 h-5 text-gray-500" />
-                    Referee (optional):
-                  </label>
-                  <input
-                    type="text"
-                    name="referee"
-                    value={formData.referee}
-                    onChange={handleInputChange}
-                    className="mt-1 w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                  />
-                </div>
-                <div className="flex flex-col">
-                  <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                    <UsersIcon className="w-5 h-5 text-gray-500" />
-                    Attendance (optional):
-                  </label>
-                  <input
-                    type="number"
-                    name="attendance"
-                    value={formData.attendance}
-                    onChange={handleInputChange}
-                    min="0"
-                    className="mt-1 w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                  />
-                </div>
-                <div className="flex flex-col">
-                  <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                    <DocumentTextIcon className="w-5 h-5 text-gray-500" />
-                    Previous Matchup Score (optional):
-                  </label>
-                  <input
-                    type="text"
-                    name="previousMatchupScore"
-                    value={formData.previousMatchupScore}
-                    onChange={handleInputChange}
-                    className="mt-1 w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                  />
-                </div>
-                <div className="flex flex-col">
-                  <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                    <StarIcon className="w-5 h-5 text-gray-500" />
-                    Fan Rating (optional):
-                  </label>
-                  <input
-                    type="number"
-                    name="fanRating"
-                    value={formData.fanRating}
-                    onChange={handleInputChange}
-                    min="0"
-                    max="10"
-                    className="mt-1 w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                  />
-                </div>
-                {editingGameId && (
-                  <div className="flex flex-col">
-                    <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                      <UserIcon className="w-5 h-5 text-gray-500" />
-                      Game MVP (optional):
+                {Object.entries(formData.scoringRules || {}).map(([key, value]) => (
+                  <div key={key} className="flex flex-col">
+                    <label className="text-sm font-medium text-gray-700 capitalize">
+                      {key.replace(/([A-Z])/g, ' $1')} Points
                     </label>
-                    <select
-                      name="gameMVP"
-                      value={formData.gameMVP}
-                      onChange={handleInputChange}
-                      className="mt-1 w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                    >
-                      <option value="">Select MVP</option>
-                      {players.map(player => (
-                        <option key={player._id} value={player._id}>{player.name}</option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-              </div>
-              <div className="mt-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <FilmIcon className="w-5 h-5 text-gray-500" />
-                  <h3 className="font-semibold text-gray-800">Highlights</h3>
-                </div>
-                {formData.highlights.map((highlight, index) => (
-                  <div key={index} className="flex items-center gap-2 mb-2">
                     <input
-                      type="text"
-                      name={`highlights[${index}]`}
-                      value={highlight}
+                      type="number"
+                      name={`scoringRules.${key}`}
+                      value={value}
                       onChange={handleInputChange}
-                      placeholder="Enter highlight"
-                      className="w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                      className="mt-1 w-full p-3 border rounded-md"
                     />
-                    <button
-                      type="button"
-                      onClick={() => removeHighlight(index)}
-                      className="bg-red-600 text-white px-3 py-1 rounded-md hover:bg-red-700 transition focus:ring-2 focus:ring-red-500 focus:outline-none"
-                      disabled={formData.highlights.length === 1}
-                    >
-                      <TrashIcon className="w-4 h-4" />
-                    </button>
                   </div>
                 ))}
-                <button
-                  type="button"
-                  onClick={addHighlight}
-                  className="mt-2 flex items-center gap-2 bg-blue-600 text-white px-3 py-1 rounded-md hover:bg-blue-700 transition focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                >
-                  <PlusIcon className="w-4 h-4" />
-                  Add Highlight
-                </button>
-              </div>
-              <div className="mt-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <FilmIcon className="w-5 h-5 text-gray-500" />
-                  <h3 className="font-semibold text-gray-800">Media Links</h3>
-                </div>
-                {formData.mediaLinks.map((link, index) => (
-                  <div key={index} className="flex items-center gap-2 mb-2">
-                    <input
-                      type="url"
-                      name={`mediaLinks[${index}].url`}
-                      value={link.url}
-                      onChange={handleInputChange}
-                      placeholder="Enter media URL"
-                      className="w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                    />
-                    <input
-                      type="text"
-                      name={`mediaLinks[${index}].type`}
-                      value={link.type}
-                      onChange={handleInputChange}
-                      placeholder="Type (e.g., video, article)"
-                      className="w-1/3 p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => removeMediaLink(index)}
-                      className="bg-red-600 text-white px-3 py-1 rounded-md hover:bg-red-700 transition focus:ring-2 focus:ring-red-500 focus:outline-none"
-                      disabled={formData.mediaLinks.length === 1}
-                    >
-                      <TrashIcon className="w-4 h-4" />
-                    </button>
-                  </div>
-                ))}
-                <button
-                  type="button"
-                  onClick={addMediaLink}
-                  className="mt-2 flex items-center gap-2 bg-blue-600 text-white px-3 py-1 rounded-md hover:bg-blue-700 transition focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                >
-                  <PlusIcon className="w-4 h-4" />
-                  Add Media Link
-                </button>
-              </div>
-              <div className="flex flex-col">
-                <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                  <DocumentTextIcon className="w-5 h-5 text-gray-500" />
-                  Match Report (optional):
-                </label>
-                <textarea
-                  name="matchReport"
-                  value={formData.matchReport}
-                  onChange={handleInputChange}
-                  className="mt-1 w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                  rows="4"
-                />
+
               </div>
               <div className="flex gap-3">
                 <button
@@ -653,16 +473,7 @@ export default function ManageGames() {
                         score: { team1: 0, team2: 0 },
                         matchType: 'league',
                         eventType: 'regular',
-                        gameDuration: '',
-                        weatherConditions: '',
-                        referee: '',
                         attendance: '',
-                        previousMatchupScore: '',
-                        fanRating: 0,
-                        highlights: [''],
-                        matchReport: '',
-                        mediaLinks: [{ url: '', type: '' }],
-                        gameMVP: '',
                       });
                       setEditingGameId(null);
                       setActiveTab('create');
@@ -730,7 +541,7 @@ export default function ManageGames() {
                   return (
                     <div key={game._id} className="flex gap-2 items-center justify-between bg-white p-3 rounded-md border border-gray-200">
                       <div className="space-y-1 text-gray-700">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-8">
                           <UserGroupIcon className="w-4 h-4 text-gray-500" />
                           <span>{(game.teams[0]?.name || 'TBD')} vs {(game.teams[1]?.name || 'TBD')}</span>
                         </div>

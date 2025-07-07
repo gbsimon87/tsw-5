@@ -156,12 +156,10 @@ router.get('/:leagueId', authMiddleware, async (req, res) => {
   try {
     const { leagueId } = req.params;
 
-    // Validate leagueId
     if (!mongoose.Types.ObjectId.isValid(leagueId)) {
       return res.status(400).json({ error: 'Invalid leagueId' });
     }
 
-    // Fetch league with necessary population
     const league = await League.findById(leagueId)
       .populate({
         path: 'teams',
@@ -185,54 +183,22 @@ router.get('/:leagueId', authMiddleware, async (req, res) => {
       return res.status(404).json({ error: 'League not found' });
     }
 
-    // Structure the response
-    const populatedLeague = {
-      _id: league._id,
-      name: league.name,
-      sportType: league.sportType,
-      season: league.season,
-      visibility: league.visibility,
-      logo: league.logo,
-      establishedYear: league.establishedYear,
-      isActive: league.isActive,
-      location: league.location,
-      admins: league.admins.map(admin => ({
-        _id: admin._id,
-        name: admin.name || 'Unknown',
-      })),
-      managers: league.managers.map(manager => ({
-        _id: manager._id,
-        name: manager.name || 'Unknown',
-      })),
-      teams: league.teams.map(team => ({
-        _id: team._id,
-        name: team.name,
-        logo: team.logo,
-        createdBy: team.createdBy,
-        isActive: team.isActive,
-        members: team.members
-          .filter(member => member.player) // Filter out members with no player reference
-          .map(member => ({
-            playerId: member.player?._id || null,
-            name: member.player?.user?.name || member.player?.name || 'Unknown', // Fallback to player.name or 'Unknown'
-            jerseyNumber: member.player?.jerseyNumber || null,
-            position: member.player?.position || null,
-            role: member.role,
-            isActive: member.isActive,
-          })),
-      })),
-      seasons: league.seasons,
-      settings: league.settings,
-      status: league.status,
-    };
+    // Patch settings.statTypes if missing
+    if (!league.settings) league.settings = {};
+    if (!league.settings.statTypes || league.settings.statTypes.length === 0) {
+      // Compute default statTypes based on sportType
+      const statTypesDefault = League.schema.path('settings.statTypes').default.call(league);
+      league.settings.statTypes = statTypesDefault;
+    }
 
     res.set('Cache-Control', 'no-store');
-    res.json(populatedLeague);
+    res.json(league); // <-- Return the entire populated league object
   } catch (err) {
     console.error('Get league error:', err);
     res.status(500).json({ error: 'Failed to fetch league' });
   }
 });
+
 
 // Update a league (admin only)
 router.patch('/:leagueId', authMiddleware, async (req, res) => {

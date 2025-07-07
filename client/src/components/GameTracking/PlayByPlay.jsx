@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { TrashIcon } from '@heroicons/react/24/solid';
+
+// Utility functions
 import { statDisplayMap } from '../../utils/statDisplayMap';
+import { formatTime } from '../../utils/formatTime';
 
 export default function PlayByPlay({ playByPlay, teams, handleDeletePlay }) {
   const [filterTeam, setFilterTeam] = useState('all');
@@ -8,12 +11,6 @@ export default function PlayByPlay({ playByPlay, teams, handleDeletePlay }) {
 
   const getTeamName = (teamId) => {
     return teams?.find(team => team._id.toString() === teamId.toString())?.name || 'Unknown Team';
-  };
-
-  const formatTime = (seconds) => {
-    const minutes = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${minutes}:${secs < 10 ? '0' : ''}${secs}`;
   };
 
   const getPeriodOptions = () => {
@@ -55,31 +52,58 @@ export default function PlayByPlay({ playByPlay, teams, handleDeletePlay }) {
       {filteredPlays.length === 0 ? (
         <div className="text-center text-gray-500">No plays recorded</div>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-2 py-4">
           {filteredPlays.map((entry, index) => (
             <div
               key={index}
-              className="flex justify-between items-center bg-white border border-gray-200 p-3 rounded shadow-sm mb-2"
+              className="bg-white border border-gray-300 rounded-md shadow-sm p-3 mb-3 w-full flex flex-col sm:flex-row sm:items-center sm:justify-between"
             >
-              <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 flex-1">
-                <span className="font-semibold text-blue-900">{entry.playerName}</span>
-                <span className="text-sm text-gray-700">
-                  {statDisplayMap[entry.statType]?.label || entry.statType}
-                </span>
-                <span className="inline-block bg-gray-100 text-xs text-gray-600 rounded px-2 py-0.5 ml-0 sm:ml-2">
+              {/* LEFT SECTION: Details */}
+              <div className="flex flex-col gap-1 w-full sm:grid sm:grid-cols-[40px_1fr_1fr_1fr_1fr] sm:items-center sm:gap-4">
+                {/* Player Image + Name */}
+                <div className="flex items-center gap-2 sm:col-span-1">
+                  <div className="w-10 h-10 rounded-full bg-gray-300 overflow-hidden flex-shrink-0">
+                    {entry.playerImage ? (
+                      <img
+                        src={entry.playerImage}
+                        alt={`${entry.playerName} avatar`}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gray-300 rounded-full" />
+                    )}
+                  </div>
+                  <span className="font-semibold text-blue-900 text-sm truncate">
+                    {entry.playerName}
+                  </span>
+                </div>
+
+                {/* Team Name */}
+                <span className="text-xs text-gray-600 sm:truncate sm:overflow-hidden">
                   {getTeamName(entry.team)}
                 </span>
-                <span className="text-xs text-gray-400 ml-0 sm:ml-2">
+
+                {/* Stat Type */}
+                <span className="text-sm text-gray-700 sm:truncate sm:overflow-hidden">
+                  {statDisplayMap[entry.statType]?.label || entry.statType}
+                </span>
+
+                {/* Time + Period */}
+                <span className="text-xs text-gray-400 sm:truncate sm:overflow-hidden">
                   {formatTime(entry.time)} in {entry.period}
                 </span>
               </div>
-              <button
-                onClick={() => handleDeletePlay(entry)}
-                className="p-2 bg-red-500 text-white rounded-full hover:bg-red-600 ml-2 transition"
-                aria-label={`Delete play: ${statDisplayMap[entry.statType]?.label || entry.statType} for ${entry.playerName}`}
-              >
-                <TrashIcon className="h-5 w-5" />
-              </button>
+
+              {/* RIGHT SECTION: Delete Button */}
+              <div className="flex justify-end sm:justify-center mt-3 sm:mt-0 sm:ml-3">
+                <button
+                  onClick={() => handleDeletePlay(entry)}
+                  className="p-2 bg-red-600 hover:bg-red-700 text-white rounded-full transition-colors duration-200"
+                  aria-label={`Delete play: ${statDisplayMap[entry.statType]?.label || entry.statType} for ${entry.playerName}`}
+                >
+                  <TrashIcon className="h-5 w-5" />
+                </button>
+              </div>
             </div>
           ))}
         </div>
