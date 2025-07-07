@@ -124,6 +124,16 @@ export default function ManageTeams() {
     setTimeout(() => setCopiedKey(null), 2000);
   };
 
+  const copyAllSecretKeys = () => {
+    if (teams.length === 0) {
+      toast.info('No teams to copy keys from.', { position: 'top-right' });
+      return;
+    }
+    const allKeys = teams.map(team => `${team.name}: ${team.secretKey}`).join('\n');
+    navigator.clipboard.writeText(allKeys);
+    toast.success('Copied all secret keys to clipboard!', { position: 'top-right', autoClose: 3000 });
+  };
+
   const handleDeactivateMember = async (teamId, playerId) => {
     try {
       await axios.patch(
@@ -268,6 +278,17 @@ export default function ManageTeams() {
                 </select>
               </div>
             </div>
+            <div className='mb-4'>
+              <button
+                onClick={copyAllSecretKeys}
+                className="mt-4 flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition focus:ring-2 focus:ring-green-500 focus:outline-none"
+                aria-label="Copy all team secret keys"
+              >
+                <ClipboardIcon className="w-5 h-5" />
+                Copy All Secret Keys
+              </button>
+
+            </div>
             {teams.length === 0 ? (
               <p className="text-center text-gray-600">No teams found for this season.</p>
             ) : (
@@ -313,13 +334,13 @@ export default function ManageTeams() {
                         <span className="text-sm text-gray-600 font-mono break-all">{team.secretKey}</span>
                         <button
                           onClick={() => copyToClipboard(team.secretKey)}
-                          className="mt-2 flex items-center gap-2 bg-blue-600 text-white px-3 py-1 rounded-md hover:bg-blue-700 transition focus:ring-2 focus:ring-blue-500 focus:outline-none self-start"
+                          className="mt-4 inline-flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition focus:ring-2 focus:ring-green-500 focus:outline-none self-start"
                           aria-label={`Copy secret key for ${team.name}`}
-                        // No w-full here!
                         >
                           <ClipboardIcon className="w-4 h-4" />
                           {copiedKey === team.secretKey ? 'Copied!' : 'Copy Key'}
                         </button>
+
                       </div>
                     </div>
                     <div className="mt-4">
