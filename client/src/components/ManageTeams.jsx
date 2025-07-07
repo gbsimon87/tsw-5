@@ -10,7 +10,8 @@ import {
   UserGroupIcon,
   UserCircleIcon,
   PlusIcon,
-  ClipboardIcon
+  ClipboardIcon,
+  UsersIcon,
 } from '@heroicons/react/24/outline';
 
 export default function ManageTeams() {
@@ -182,8 +183,8 @@ export default function ManageTeams() {
               Back to League
             </button>
             <div>
-              <h1 className="text-2xl font-bold text-gray-800">Manage Teams</h1>
-              <div className="text-sm text-gray-500 font-normal">
+              <h1 className="text-2xl text-right font-bold text-gray-800">Manage Teams</h1>
+              <div className="text-sm text-right text-gray-500 font-normal">
                 Predovic, Deckow and Reichert Baseball League
               </div>
             </div>
@@ -195,21 +196,22 @@ export default function ManageTeams() {
         <div className="flex gap-2 mb-6">
           <button
             onClick={() => setActiveTab('create')}
-            className={`flex-1 py-2 px-4 rounded-lg font-semibold transition focus:ring-2 focus:ring-blue-500 focus:outline-none ${activeTab === 'create'
-              ? 'bg-blue-600 text-white'
-              : 'bg-white text-blue-700 border border-blue-600 hover:bg-blue-50'
-              }`}
+            className="flex items-center gap-2 bg-blue-600 text-white px-3 py-1 rounded-md hover:bg-blue-700 transition focus:ring-2 focus:ring-blue-500 focus:outline-none"
+            aria-label="New Game"
           >
-            Create New Team
+            <PlusIcon className="w-4 h-4" />
+            New Team
           </button>
+
           <button
             onClick={() => setActiveTab('view')}
-            className={`flex-1 py-2 px-4 rounded-lg font-semibold transition focus:ring-2 focus:ring-blue-500 focus:outline-none ${activeTab === 'view'
+            className={`flex items-center py-2 px-4 rounded-lg font-semibold transition focus:ring-2 focus:ring-blue-500 focus:outline-none ${activeTab === 'view'
               ? 'bg-blue-600 text-white'
               : 'bg-white text-blue-700 border border-blue-600 hover:bg-blue-50'
               }`}
           >
-            View All Teams
+            <UsersIcon className="w-4 h-4" />
+            View Teams
           </button>
         </div>
 
@@ -218,7 +220,7 @@ export default function ManageTeams() {
           <section className="bg-white shadow-xl rounded-2xl p-8 border border-gray-200 mb-8">
             <div className="flex items-center gap-3 mb-4">
               <PlusIcon className="w-6 h-6 text-blue-500" />
-              <h2 className="text-2xl font-semibold text-gray-800">Create New Team</h2>
+              <h2 className="text-2xl font-semibold text-gray-800">New Team</h2>
             </div>
             {error && <p className="text-red-500 mb-4 text-center">{error}</p>}
             {selectedSeason ? (

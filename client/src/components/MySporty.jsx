@@ -40,9 +40,8 @@ export default function MySporty() {
           headers: { Authorization: `Bearer ${user.token}` },
         });
         setPlayerIds(response.data.map(p => p._id));
-        setPlayer(response.data[0]); // Use first player for simplicity
+        setPlayer(response.data[0]);
       } catch (err) {
-        console.error('Fetch player data error:', err.response || err);
         setError('Failed to fetch player data');
         setLoading(false);
       }
@@ -55,7 +54,6 @@ export default function MySporty() {
         });
         setTeams(response.data);
       } catch (err) {
-        console.error('Fetch teams error:', err.response || err);
         setError(err.response?.data?.error || 'Failed to fetch teams');
         setLoading(false);
       }
@@ -69,7 +67,6 @@ export default function MySporty() {
         setNextGame(response.data);
         setLoading(false);
       } catch (err) {
-        console.error('Fetch next game error:', err.response || err);
         setError(err.response?.data?.error || 'Failed to fetch next game');
         setLoading(false);
       }
@@ -84,14 +81,13 @@ export default function MySporty() {
       if (chartRef.current) {
         chartRef.current.destroy();
       }
-
       const ctx = canvasRef.current.getContext('2d');
       const seasons = [...new Set(player.stats.gamePoints.map(gp => gp.season))];
       const datasets = seasons.map(season => ({
         label: `Season ${season}`,
         data: player.stats.gamePoints.filter(gp => gp.season === season).map(gp => gp.points),
-        borderColor: season === player.stats.seasonStats[player.stats.seasonStats.length - 1]?.season ? '#3B82F6' : '#9CA3AF',
-        backgroundColor: season === player.stats.seasonStats[player.stats.seasonStats.length - 1]?.season ? '#3B82F6' : '#9CA3AF',
+        borderColor: season === player.stats.seasonStats[player.stats.seasonStats.length - 1]?.season ? '#2563eb' : '#64748b',
+        backgroundColor: season === player.stats.seasonStats[player.stats.seasonStats.length - 1]?.season ? '#2563eb' : '#64748b',
         fill: false,
         tension: 0.3,
       }));
@@ -115,7 +111,6 @@ export default function MySporty() {
         },
       });
     }
-
     return () => {
       if (chartRef.current) {
         chartRef.current.destroy();
@@ -129,9 +124,7 @@ export default function MySporty() {
       if (trendChartRef.current) {
         trendChartRef.current.destroy();
       }
-
       const ctx = trendCanvasRef.current.getContext('2d');
-      const seasons = [...new Set(player.stats.gameStats.map(gs => gs.season))];
       const filteredStats = selectedSeason === 'all'
         ? player.stats.gameStats
         : player.stats.gameStats.filter(gs => gs.season === selectedSeason);
@@ -139,8 +132,8 @@ export default function MySporty() {
       const datasets = [{
         label: `${selectedStat.charAt(0).toUpperCase() + selectedStat.slice(1)}`,
         data: filteredStats.map(gs => gs[selectedStat] || 0),
-        borderColor: '#3B82F6',
-        backgroundColor: '#3B82F6',
+        borderColor: '#2563eb',
+        backgroundColor: '#2563eb',
         fill: false,
         tension: 0.3,
       }];
@@ -164,7 +157,6 @@ export default function MySporty() {
         },
       });
     }
-
     return () => {
       if (trendChartRef.current) {
         trendChartRef.current.destroy();
@@ -197,7 +189,7 @@ export default function MySporty() {
 
   if (loading) {
     return (
-      <div className="h-[var(--page-height)] flex items-center justify-center text-gray-600">
+      <div className="h-[var(--page-height)] flex items-center justify-center text-slate-600">
         Loading data...
       </div>
     );
@@ -216,49 +208,49 @@ export default function MySporty() {
   }
 
   return (
-    <div className="bg-gray-50 min-h-[var(--page-height)] py-10 px-4 sm:px-6 lg:px-8">
+    <div className="bg-gradient-to-br from-blue-900 via-blue-700 to-slate-800 min-h-[var(--page-height)] py-4 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         <div className="mb-10">
-          <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">My Sporty</h1>
-          <p className="mt-2 text-lg text-gray-600">Welcome, {user.name}</p>
+          <h1 className="text-4xl font-extrabold text-white tracking-tight drop-shadow">My Sporty</h1>
+          <p className="mt-2 text-lg text-blue-100">Welcome, {user.name}</p>
         </div>
 
         {nextGame && (
           <section className="mb-12">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Next Game</h2>
-            <div className="bg-white shadow-md rounded-2xl p-6 border border-gray-200">
+            <h2 className="text-2xl font-bold text-white mb-4">Next Game</h2>
+            <div className="bg-gradient-to-br from-blue-50 to-slate-100 shadow-md rounded-2xl p-6 border border-blue-200">
               <div className="flex items-center gap-4 mb-4">
                 {nextGame.userTeam?.logo ? (
                   <img
                     src={nextGame.userTeam.logo}
                     alt={`${nextGame.userTeam.name} logo`}
-                    className="w-12 h-12 object-cover rounded-full border-2 border-gray-200 shadow-sm"
+                    className="w-12 h-12 object-cover rounded-full border-2 border-blue-200 shadow-sm"
                   />
                 ) : (
-                  <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center border-2 border-gray-200 shadow-sm">
-                    <span className="text-gray-400 text-lg font-bold">?</span>
+                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center border-2 border-blue-200 shadow-sm">
+                    <span className="text-blue-300 text-lg font-bold">?</span>
                   </div>
                 )}
-                <span className="text-xl font-semibold text-gray-800">vs</span>
+                <span className="text-xl font-semibold text-blue-700">vs</span>
                 {nextGame.opponentTeam?.logo ? (
                   <img
                     src={nextGame.opponentTeam.logo}
                     alt={`${nextGame.opponentTeam.name} logo`}
-                    className="w-12 h-12 object-cover rounded-full border-2 border-gray-200 shadow-sm"
+                    className="w-12 h-12 object-cover rounded-full border-2 border-blue-200 shadow-sm"
                   />
                 ) : (
-                  <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center border-2 border-gray-200 shadow-sm">
-                    <span className="text-gray-400 text-lg font-bold">?</span>
+                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center border-2 border-blue-200 shadow-sm">
+                    <span className="text-blue-300 text-lg font-bold">?</span>
                   </div>
                 )}
               </div>
               <dl className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 <div className="flex items-center gap-3">
                   <dt>
-                    <CalendarIcon className="w-6 h-6 text-blue-500" aria-hidden="true" />
+                    <CalendarIcon className="w-6 h-6 text-blue-700" aria-hidden="true" />
                   </dt>
-                  <dt className="text-gray-500 font-medium min-w-[120px]">Date & Time:</dt>
-                  <dd className="text-gray-800 font-semibold">
+                  <dt className="text-slate-500 font-medium min-w-[120px]">Date & Time:</dt>
+                  <dd className="text-slate-800 font-semibold">
                     {new Date(nextGame.date).toLocaleDateString('en-US', {
                       year: 'numeric',
                       month: 'long',
@@ -269,77 +261,77 @@ export default function MySporty() {
                 </div>
                 <div className="flex items-center gap-3">
                   <dt>
-                    <MapPinIcon className="w-6 h-6 text-pink-500" aria-hidden="true" />
+                    <MapPinIcon className="w-6 h-6 text-blue-500" aria-hidden="true" />
                   </dt>
-                  <dt className="text-gray-500 font-medium min-w-[120px]">Location:</dt>
-                  <dd className="text-gray-800 font-semibold">{nextGame.location}</dd>
+                  <dt className="text-slate-500 font-medium min-w-[120px]">Location:</dt>
+                  <dd className="text-slate-800 font-semibold">{nextGame.location}</dd>
                 </div>
                 <div className="flex items-center gap-3">
                   <dt>
-                    <BuildingOfficeIcon className="w-6 h-6 text-indigo-500" aria-hidden="true" />
+                    <BuildingOfficeIcon className="w-6 h-6 text-green-700" aria-hidden="true" />
                   </dt>
-                  <dt className="text-gray-500 font-medium min-w-[120px]">Venue:</dt>
-                  <dd className="text-gray-800 font-semibold">{nextGame.venue}</dd>
+                  <dt className="text-slate-500 font-medium min-w-[120px]">Venue:</dt>
+                  <dd className="text-slate-800 font-semibold">{nextGame.venue}</dd>
                 </div>
                 <div className="flex items-center gap-3">
                   <dt>
-                    <TrophyIcon className="w-6 h-6 text-yellow-500" aria-hidden="true" />
+                    <TrophyIcon className="w-6 h-6 text-amber-600" aria-hidden="true" />
                   </dt>
-                  <dt className="text-gray-500 font-medium min-w-[120px]">League:</dt>
-                  <dd className="text-gray-800 font-semibold">{nextGame.league}</dd>
+                  <dt className="text-slate-500 font-medium min-w-[120px]">League:</dt>
+                  <dd className="text-slate-800 font-semibold">{nextGame.league}</dd>
                 </div>
                 <div className="flex items-center gap-3">
                   <dt>
-                    <UserIcon className="w-6 h-6 text-teal-500" aria-hidden="true" />
+                    <UserIcon className="w-6 h-6 text-blue-700" aria-hidden="true" />
                   </dt>
-                  <dt className="text-gray-500 font-medium min-w-[120px]">Your Team:</dt>
-                  <dd className="text-gray-800 font-semibold">{nextGame.userTeam?.name || 'N/A'}</dd>
+                  <dt className="text-slate-500 font-medium min-w-[120px]">Your Team:</dt>
+                  <dd className="text-slate-800 font-semibold">{nextGame.userTeam?.name || 'N/A'}</dd>
                 </div>
                 <div className="flex items-center gap-3">
                   <dt>
-                    <UserIcon className="w-6 h-6 text-orange-500" aria-hidden="true" />
+                    <UserIcon className="w-6 h-6 text-green-700" aria-hidden="true" />
                   </dt>
-                  <dt className="text-gray-500 font-medium min-w-[120px]">Opponent:</dt>
-                  <dd className="text-gray-800 font-semibold">{nextGame.opponentTeam?.name || 'N/A'}</dd>
+                  <dt className="text-slate-500 font-medium min-w-[120px]">Opponent:</dt>
+                  <dd className="text-slate-800 font-semibold">{nextGame.opponentTeam?.name || 'N/A'}</dd>
                 </div>
                 <div className="flex items-center gap-3">
                   <dt>
-                    <TrophyIcon className="w-6 h-6 text-green-500" aria-hidden="true" />
+                    <TrophyIcon className="w-6 h-6 text-blue-700" aria-hidden="true" />
                   </dt>
-                  <dt className="text-gray-500 font-medium min-w-[120px]">Match Type:</dt>
-                  <dd className="text-gray-800 font-semibold">
+                  <dt className="text-slate-500 font-medium min-w-[120px]">Match Type:</dt>
+                  <dd className="text-slate-800 font-semibold">
                     {nextGame.matchType.charAt(0).toUpperCase() + nextGame.matchType.slice(1)}
                   </dd>
                 </div>
                 <div className="flex items-center gap-3">
                   <dt>
-                    <TrophyIcon className="w-6 h-6 text-purple-500" aria-hidden="true" />
+                    <TrophyIcon className="w-6 h-6 text-slate-600" aria-hidden="true" />
                   </dt>
-                  <dt className="text-gray-500 font-medium min-w-[120px]">Event Type:</dt>
-                  <dd className="text-gray-800 font-semibold">
+                  <dt className="text-slate-500 font-medium min-w-[120px]">Event Type:</dt>
+                  <dd className="text-slate-800 font-semibold">
                     {nextGame.eventType.charAt(0).toUpperCase() + nextGame.eventType.slice(1)}
                   </dd>
                 </div>
                 <div className="flex items-center gap-3">
                   <dt>
-                    <ChartBarIcon className="w-6 h-6 text-gray-500" aria-hidden="true" />
+                    <ChartBarIcon className="w-6 h-6 text-slate-500" aria-hidden="true" />
                   </dt>
-                  <dt className="text-gray-500 font-medium min-w-[120px]">Previous Matchup:</dt>
-                  <dd className="text-gray-800 font-semibold">{nextGame.previousMatchupScore}</dd>
+                  <dt className="text-slate-500 font-medium min-w-[120px]">Previous Matchup:</dt>
+                  <dd className="text-slate-800 font-semibold">{nextGame.previousMatchupScore}</dd>
                 </div>
                 <div className="flex items-center gap-3">
                   <dt>
-                    <SunIcon className="w-6 h-6 text-yellow-500" aria-hidden="true" />
+                    <SunIcon className="w-6 h-6 text-amber-400" aria-hidden="true" />
                   </dt>
-                  <dt className="text-gray-500 font-medium min-w-[120px]">Weather:</dt>
-                  <dd className="text-gray-800 font-semibold">{nextGame.weatherConditions}</dd>
+                  <dt className="text-slate-500 font-medium min-w-[120px]">Weather:</dt>
+                  <dd className="text-slate-800 font-semibold">{nextGame.weatherConditions}</dd>
                 </div>
                 <div className="flex items-center gap-3">
                   <dt>
-                    <ClockIcon className="w-6 h-6 text-blue-500" aria-hidden="true" />
+                    <ClockIcon className="w-6 h-6 text-blue-700" aria-hidden="true" />
                   </dt>
-                  <dt className="text-gray-500 font-medium min-w-[120px]">Countdown:</dt>
-                  <dd className="text-gray-800 font-semibold">{countdown}</dd>
+                  <dt className="text-slate-500 font-medium min-w-[120px]">Countdown:</dt>
+                  <dd className="text-slate-800 font-semibold">{countdown}</dd>
                 </div>
               </dl>
             </div>
@@ -348,13 +340,13 @@ export default function MySporty() {
 
         {player && (
           <section className="mb-12">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Performance Trend</h2>
-            <div className="bg-white shadow-md rounded-2xl p-6 border border-gray-200">
+            <h2 className="text-2xl font-bold text-white mb-4">Performance Trend</h2>
+            <div className="bg-gradient-to-br from-slate-50 to-blue-100 shadow-md rounded-2xl p-6 border border-blue-200">
               <div className="flex items-center gap-4 mb-4">
                 <select
                   value={selectedSeason}
                   onChange={(e) => setSelectedSeason(e.target.value)}
-                  className="border border-gray-300 rounded-md p-2 text-gray-800"
+                  className="border border-blue-200 rounded-md p-2 text-blue-800"
                 >
                   <option value="all">All Seasons</option>
                   {player.stats?.seasonStats.map(s => (
@@ -364,14 +356,14 @@ export default function MySporty() {
                 <select
                   value={selectedStat}
                   onChange={(e) => setSelectedStat(e.target.value)}
-                  className="border border-gray-300 rounded-md p-2 text-gray-800"
+                  className="border border-blue-200 rounded-md p-2 text-blue-800"
                 >
                   <option value="points">Points</option>
                   <option value="rebounds">Rebounds</option>
                   <option value="steals">Steals</option>
                 </select>
                 {player.stats?.hotStreak && (
-                  <div className="flex items-center gap-2 text-green-600 font-semibold">
+                  <div className="flex items-center gap-2 text-green-700 font-semibold">
                     <FireIcon className="w-6 h-6" aria-hidden="true" />
                     <span>Hot Streak!</span>
                   </div>
@@ -384,52 +376,52 @@ export default function MySporty() {
 
         {player && (
           <section className="mb-12">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Your Performance Stats</h2>
-            <div className="bg-white shadow-md rounded-2xl p-6 border border-gray-200">
+            <h2 className="text-2xl font-bold text-white mb-4">Your Performance Stats</h2>
+            <div className="bg-gradient-to-br from-blue-50 to-slate-100 shadow-md rounded-2xl p-6 border border-blue-200">
               <dl className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 <div className="flex items-center gap-3">
                   <dt>
-                    <StarIcon className="w-6 h-6 text-yellow-500" aria-hidden="true" />
+                    <StarIcon className="w-6 h-6 text-amber-500" aria-hidden="true" />
                   </dt>
-                  <dt className="text-gray-500 font-medium min-w-[120px]">Total Points:</dt>
-                  <dd className="text-gray-800 font-semibold">{player.stats?.totalPoints || 0}</dd>
+                  <dt className="text-slate-500 font-medium min-w-[120px]">Total Points:</dt>
+                  <dd className="text-slate-800 font-semibold">{player.stats?.totalPoints || 0}</dd>
                 </div>
                 <div className="flex items-center gap-3">
                   <dt>
-                    <StarIcon className="w-6 h-6 text-yellow-500" aria-hidden="true" />
+                    <StarIcon className="w-6 h-6 text-amber-500" aria-hidden="true" />
                   </dt>
-                  <dt className="text-gray-500 font-medium min-w-[120px]">Performance Rating:</dt>
-                  <dd className="text-gray-800 font-semibold">{player.performanceRating || 0}</dd>
+                  <dt className="text-slate-500 font-medium min-w-[120px]">Performance Rating:</dt>
+                  <dd className="text-slate-800 font-semibold">{player.performanceRating || 0}</dd>
                 </div>
                 <div className="flex items-center gap-3">
                   <dt>
-                    <StarIcon className="w-6 h-6 text-yellow-500" aria-hidden="true" />
+                    <StarIcon className="w-6 h-6 text-amber-500" aria-hidden="true" />
                   </dt>
-                  <dt className="text-gray-500 font-medium min-w-[120px]">Career Avg Points:</dt>
-                  <dd className="text-gray-800 font-semibold">{player.careerAvgPoints || 0}</dd>
+                  <dt className="text-slate-500 font-medium min-w-[120px]">Career Avg Points:</dt>
+                  <dd className="text-slate-800 font-semibold">{player.careerAvgPoints || 0}</dd>
                 </div>
                 <div className="flex items-center gap-3">
                   <dt>
-                    <StarIcon className="w-6 h-6 text-yellow-500" aria-hidden="true" />
+                    <StarIcon className="w-6 h-6 text-amber-500" aria-hidden="true" />
                   </dt>
-                  <dt className="text-gray-500 font-medium min-w-[120px]">Career Avg Rebounds:</dt>
-                  <dd className="text-gray-800 font-semibold">{player.careerRebounds || 0}</dd>
+                  <dt className="text-slate-500 font-medium min-w-[120px]">Career Avg Rebounds:</dt>
+                  <dd className="text-slate-800 font-semibold">{player.careerRebounds || 0}</dd>
                 </div>
                 <div className="flex items-center gap-3">
                   <dt>
-                    <StarIcon className="w-6 h-6 text-yellow-500" aria-hidden="true" />
+                    <StarIcon className="w-6 h-6 text-amber-500" aria-hidden="true" />
                   </dt>
-                  <dt className="text-gray-500 font-medium min-w-[120px]">Career Avg Steals:</dt>
-                  <dd className="text-gray-800 font-semibold">{player.careerSteals || 0}</dd>
+                  <dt className="text-slate-500 font-medium min-w-[120px]">Career Avg Steals:</dt>
+                  <dd className="text-slate-800 font-semibold">{player.careerSteals || 0}</dd>
                 </div>
                 {player.stats?.seasonStats?.length > 0 && (
                   <>
                     <div className="flex items-center gap-3">
                       <dt>
-                        <StarIcon className="w-6 h-6 text-blue-500" aria-hidden="true" />
+                        <StarIcon className="w-6 h-6 text-blue-700" aria-hidden="true" />
                       </dt>
-                      <dt className="text-gray-500 font-medium min-w-[120px]">Current Season Points:</dt>
-                      <dd className="text-gray-800 font-semibold">
+                      <dt className="text-slate-500 font-medium min-w-[120px]">Current Season Points:</dt>
+                      <dd className="text-slate-800 font-semibold">
                         {player.stats.seasonStats[player.stats.seasonStats.length - 1]?.avgPoints.toFixed(1) || 0}
                         {player.careerAvgPoints > 0 && (
                           <span
@@ -450,10 +442,10 @@ export default function MySporty() {
                     </div>
                     <div className="flex items-center gap-3">
                       <dt>
-                        <StarIcon className="w-6 h-6 text-blue-500" aria-hidden="true" />
+                        <StarIcon className="w-6 h-6 text-blue-700" aria-hidden="true" />
                       </dt>
-                      <dt className="text-gray-500 font-medium min-w-[120px]">Current Season Rebounds:</dt>
-                      <dd className="text-gray-800 font-semibold">
+                      <dt className="text-slate-500 font-medium min-w-[120px]">Current Season Rebounds:</dt>
+                      <dd className="text-slate-800 font-semibold">
                         {player.stats.seasonStats[player.stats.seasonStats.length - 1]?.avgRebounds.toFixed(1) || 0}
                         {player.careerRebounds > 0 && (
                           <span
@@ -474,10 +466,10 @@ export default function MySporty() {
                     </div>
                     <div className="flex items-center gap-3">
                       <dt>
-                        <StarIcon className="w-6 h-6 text-blue-500" aria-hidden="true" />
+                        <StarIcon className="w-6 h-6 text-blue-700" aria-hidden="true" />
                       </dt>
-                      <dt className="text-gray-500 font-medium min-w-[120px]">Current Season Steals:</dt>
-                      <dd className="text-gray-800 font-semibold">
+                      <dt className="text-slate-500 font-medium min-w-[120px]">Current Season Steals:</dt>
+                      <dd className="text-slate-800 font-semibold">
                         {player.stats.seasonStats[player.stats.seasonStats.length - 1]?.avgSteals.toFixed(1) || 0}
                         {player.careerSteals > 0 && (
                           <span
@@ -507,7 +499,7 @@ export default function MySporty() {
         )}
 
         <section>
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Your Teams</h2>
+          <h2 className="text-2xl font-bold text-white mb-4">Your Teams</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {teams.map((team) => {
               const member = team.members.find((m) => playerIds.includes(m.player._id));
@@ -520,83 +512,83 @@ export default function MySporty() {
               return (
                 <article
                   key={team._id}
-                  className="relative bg-white shadow-md rounded-2xl p-6 flex flex-col border border-gray-200 hover:shadow-xl transition-shadow duration-300"
+                  className="relative bg-gradient-to-br from-white to-blue-50 shadow-md rounded-2xl p-6 flex flex-col border border-blue-200 hover:shadow-xl transition-shadow duration-300"
                   aria-label={`Team card for ${team.name}`}
                 >
                   {team.logo ? (
                     <img
                       src={team.logo}
                       alt={`${team.name} logo`}
-                      className="absolute top-6 right-6 w-16 h-16 object-cover rounded-full border-2 border-gray-200 shadow-sm hover:scale-105 transition-transform duration-200"
+                      className="absolute top-6 right-6 w-16 h-16 object-cover rounded-full border-2 border-blue-200 shadow-sm hover:scale-105 transition-transform duration-200"
                     />
                   ) : (
-                    <div className="absolute top-6 right-6 w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center border-2 border-gray-200 shadow-sm">
-                      <span className="text-gray-400 text-xl font-bold">?</span>
+                    <div className="absolute top-6 right-6 w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center border-2 border-blue-200 shadow-sm">
+                      <span className="text-blue-300 text-xl font-bold">?</span>
                     </div>
                   )}
                   <header className="mb-4">
-                    <h2 className="text-2xl font-bold text-gray-900">{team.name}</h2>
+                    <h2 className="text-2xl font-bold text-blue-800">{team.name}</h2>
                   </header>
                   <dl className="space-y-4">
                     <div className="flex items-center gap-3">
                       <dt>
-                        <BuildingOfficeIcon className="w-6 h-6 text-blue-500" aria-hidden="true" />
+                        <BuildingOfficeIcon className="w-6 h-6 text-blue-700" aria-hidden="true" />
                       </dt>
-                      <dt className="text-gray-500 font-medium min-w-[120px]">League:</dt>
-                      <dd className="text-gray-800 font-semibold">{team.league.name}</dd>
+                      <dt className="text-slate-500 font-medium min-w-[120px]">League:</dt>
+                      <dd className="text-slate-800 font-semibold">{team.league.name}</dd>
                     </div>
                     <div className="flex items-center gap-3">
                       <dt>
-                        <ClockIcon className="w-6 h-6 text-indigo-500" aria-hidden="true" />
+                        <ClockIcon className="w-6 h-6 text-slate-600" aria-hidden="true" />
                       </dt>
-                      <dt className="text-gray-500 font-medium min-w-[120px]">Season:</dt>
-                      <dd className="text-gray-800">{team.season}</dd>
+                      <dt className="text-slate-500 font-medium min-w-[120px]">Season:</dt>
+                      <dd className="text-slate-800">{team.season}</dd>
                     </div>
                     <div className="flex items-center gap-3">
                       <dt>
-                        <TrophyIcon className="w-6 h-6 text-yellow-500" aria-hidden="true" />
+                        <TrophyIcon className="w-6 h-6 text-amber-600" aria-hidden="true" />
                       </dt>
-                      <dt className="text-gray-500 font-medium min-w-[120px]">Sport:</dt>
-                      <dd className="text-gray-800">{team.league.sportType}</dd>
+                      <dt className="text-slate-500 font-medium min-w-[120px]">Sport:</dt>
+                      <dd className="text-slate-800">{team.league.sportType}</dd>
                     </div>
                     <div className="flex items-center gap-3">
                       <dt>
-                        <MapPinIcon className="w-6 h-6 text-pink-500" aria-hidden="true" />
+                        <MapPinIcon className="w-6 h-6 text-blue-500" aria-hidden="true" />
                       </dt>
-                      <dt className="text-gray-500 font-medium min-w-[120px]">Location:</dt>
-                      <dd className="text-gray-800">{team.league.location || 'N/A'}</dd>
+                      <dt className="text-slate-500 font-medium min-w-[120px]">Location:</dt>
+                      <dd className="text-slate-800">{team.league.location || 'N/A'}</dd>
                     </div>
                     <div className="flex items-center gap-3">
                       <dt>
-                        <UserIcon className="w-6 h-6 text-teal-500" aria-hidden="true" />
+                        <UserIcon className="w-6 h-6 text-green-700" aria-hidden="true" />
                       </dt>
-                      <dt className="text-gray-500 font-medium min-w-[120px]">Member Type:</dt>
-                      <dd className="text-gray-800">
+                      <dt className="text-slate-500 font-medium min-w-[120px]">Member Type:</dt>
+                      <dd className="text-slate-800">
                         {member ? (member.role.charAt(0).toUpperCase() + member.role.slice(1)) : 'Unknown'}
                       </dd>
                     </div>
                     <div className="flex items-center gap-3">
                       <dt>
-                        <CalendarIcon className="w-6 h-6 text-purple-500" aria-hidden="true" />
+                        <CalendarIcon className="w-6 h-6 text-blue-700" aria-hidden="true" />
                       </dt>
-                      <dt className="text-gray-500 font-medium min-w-[120px]">Member Since:</dt>
-                      <dd className="text-gray-800">{memberSince}</dd>
+                      <dt className="text-slate-500 font-medium min-w-[120px]">Member Since:</dt>
+                      <dd className="text-slate-800">{memberSince}</dd>
                     </div>
                     <div className="flex items-center gap-3">
                       <dt>
-                        <ChartBarIcon className="w-6 h-6 text-orange-500" aria-hidden="true" />
+                        <ChartBarIcon className="w-6 h-6 text-slate-600" aria-hidden="true" />
                       </dt>
-                      <dt className="text-gray-500 font-medium min-w-[120px]">Record:</dt>
-                      <dd className="text-gray-800">
+                      <dt className="text-slate-500 font-medium min-w-[120px]">Record:</dt>
+                      <dd className="text-slate-800">
                         {team.record ? `Wins: ${team.record.wins}, Losses: ${team.record.losses}` : 'No games played'}
                       </dd>
                     </div>
                     <div className="flex items-center gap-3">
                       <dt>
-                        <TrophyIcon className="w-6 h-6 text-green-500" aria-hidden="true" />
+                        <TrophyIcon className="w-6 h-6 text-green-700" aria-hidden="true" />
                       </dt>
-                      <dt className="text-gray-500 font-medium min-w-[120px]">Ranking:</dt>
-                      <dd className="text-gray-800">
+                      <dt className="text-slate-500 font-medium min-w-[120px]">Ranking:</dt>
+                      <dd className="text-slate-800">
                         {team.ranking && team.ranking.rank ? `Rank: ${team.ranking.rank} / ${team.ranking.totalTeams}` : 'Not ranked'}
                       </dd>
                     </div>
@@ -608,7 +600,7 @@ export default function MySporty() {
                           <XCircleIcon className="w-6 h-6 text-red-600" aria-hidden="true" />
                         )}
                       </dt>
-                      <dt className="text-gray-500 font-medium min-w-[120px]">Team Status:</dt>
+                      <dt className="text-slate-500 font-medium min-w-[120px]">Team Status:</dt>
                       <dd className={team.isActive ? 'text-green-600 font-semibold' : 'text-red-600 font-semibold'}>
                         {team.isActive ? 'Active' : 'Inactive'}
                       </dd>

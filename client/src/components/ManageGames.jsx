@@ -276,8 +276,8 @@ export default function ManageGames() {
               Back to League
             </button>
             <div>
-              <h1 className="text-2xl font-bold text-gray-800">Manage Games</h1>
-              <div className="text-sm text-gray-500 font-normal">
+              <h1 className="text-2xl text-right font-bold text-gray-800">Manage Games</h1>
+              <div className="text-sm text-right text-gray-500 font-normal">
                 {league.name}
               </div>
             </div>
@@ -290,21 +290,22 @@ export default function ManageGames() {
           <div className="flex gap-2">
             <button
               onClick={() => setActiveTab('create')}
-              className={`flex-1 py-2 px-4 rounded-lg font-semibold transition focus:ring-2 focus:ring-blue-500 focus:outline-none ${activeTab === 'create'
+              className={`flex items-center gap-2 bg-blue-600 text-white px-5 py-2 rounded-lg font-semibold shadow hover:bg-blue-700 transition focus:ring-2 focus:ring-blue-500 ${activeTab === 'create'
                 ? 'bg-blue-600 text-white'
                 : 'bg-white text-blue-700 border border-blue-600 hover:bg-blue-50'
                 }`}
             >
-              Create New Game
+              <PlusIcon className="w-6 h-6 text-blue-500" />
+              New Game
             </button>
             <button
               onClick={() => setActiveTab('view')}
-              className={`flex-1 py-2 px-4 rounded-lg font-semibold transition focus:ring-2 focus:ring-blue-500 focus:outline-none ${activeTab === 'view'
+              className={`flex items-center gap-2 bg-white text-blue-700 border border-blue-600 px-3 py-1.5 text-sm rounded-lg font-semibold shadow hover:bg-blue-50 transition focus:ring-2 focus:ring-blue-500 focus:outline-none ${activeTab === 'view'
                 ? 'bg-blue-600 text-white'
                 : 'bg-white text-blue-700 border border-blue-600 hover:bg-blue-50'
                 }`}
             >
-              Current Season Games
+              Past Games
             </button>
           </div>
         </div>

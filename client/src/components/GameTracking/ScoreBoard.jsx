@@ -22,7 +22,7 @@ const Scoreboard = ({ teamScores }) => {
             {team1.teamName || 'Team 1'}
           </h2>
           <p className="text-xl font-bold">
-            {typeof team1.score === 'number' ? team1.score : '-'}
+            {typeof team1?.score === 'number' ? Math.round(team1?.score) : '-'}
           </p>
         </div>
         <div className="p-4 w-full text-right">
@@ -30,7 +30,7 @@ const Scoreboard = ({ teamScores }) => {
             {team2.teamName || 'Team 2'}
           </h2>
           <p className="text-xl font-bold">
-            {typeof team2.score === 'number' ? team2.score : '-'}
+            {typeof team2?.score === 'number' ? Math.round(team2?.score) : '-'}
           </p>
         </div>
       </div>

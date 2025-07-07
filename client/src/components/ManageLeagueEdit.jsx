@@ -301,8 +301,8 @@ export default function ManageLeagueEdit() {
               Back to League
             </button>
             <div>
-              <h1 className="text-2xl font-bold text-gray-800">Edit League</h1>
-              <div className="text-sm text-gray-500 font-normal">{formData.name}</div>
+              <h1 className="text-2xl text-right font-bold text-gray-800">Edit League</h1>
+              <div className="text-sm text-right text-gray-500 font-normal">{formData.name}</div>
             </div>
           </div>
           <div className="flex gap-3">
