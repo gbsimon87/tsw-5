@@ -3,7 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import {
-  ArrowLeftIcon,
   CalendarIcon,
   ChartBarIcon,
   PlusIcon,
@@ -21,6 +20,7 @@ import {
   TrophyIcon,
   UserGroupIcon
 } from '@heroicons/react/24/outline';
+import AdminPanelPageHeader from './AdminPanelPageHeader';
 
 export default function ManageGames() {
   const { leagueId } = useParams();
@@ -55,6 +55,19 @@ export default function ManageGames() {
     gameMVP: '',
   });
   const [editingGameId, setEditingGameId] = useState(null);
+
+  const tabs = [
+    {
+      id: 'create',
+      label: 'New Game',
+      icon: PlusIcon
+    },
+    {
+      id: 'view',
+      label: 'Past Games',
+      icon: ClockIcon
+    }
+  ];
 
   useEffect(() => {
     const fetchData = async () => {
@@ -265,50 +278,16 @@ export default function ManageGames() {
   return (
     <div className="min-h-[var(--page-height)] bg-gray-50 py-4 px-4">
       <div className="max-w-4xl mx-auto">
-        <header className="flex flex-col mb-4 gap-4">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => navigate(`/leagues/${leagueId}`)}
-              className="flex items-center gap-2 bg-white text-blue-700 border border-blue-600 px-4 py-1.5 rounded-lg font-semibold shadow hover:bg-blue-50 transition focus:ring-2 focus:ring-blue-500 focus:outline-none"
-              aria-label="Back to League"
-            >
-              <ArrowLeftIcon className="w-5 h-5" />
-              Back to League
-            </button>
-            <div>
-              <h1 className="text-2xl text-right font-bold text-gray-800">Manage Games</h1>
-              <div className="text-sm text-right text-gray-500 font-normal">
-                {league.name}
-              </div>
-            </div>
-          </div>
-        </header>
 
-
-        {/* Tab Buttons */}
-        <div className="flex flex-col mb-8 gap-4">
-          <div className="flex gap-2">
-            <button
-              onClick={() => setActiveTab('create')}
-              className={`flex items-center gap-2 bg-blue-600 text-white px-5 py-2 rounded-lg font-semibold shadow hover:bg-blue-700 transition focus:ring-2 focus:ring-blue-500 ${activeTab === 'create'
-                ? 'bg-blue-600 text-white'
-                : 'bg-white text-blue-700 border border-blue-600 hover:bg-blue-50'
-                }`}
-            >
-              <PlusIcon className="w-6 h-6 text-blue-500" />
-              New Game
-            </button>
-            <button
-              onClick={() => setActiveTab('view')}
-              className={`flex items-center gap-2 bg-white text-blue-700 border border-blue-600 px-3 py-1.5 text-sm rounded-lg font-semibold shadow hover:bg-blue-50 transition focus:ring-2 focus:ring-blue-500 focus:outline-none ${activeTab === 'view'
-                ? 'bg-blue-600 text-white'
-                : 'bg-white text-blue-700 border border-blue-600 hover:bg-blue-50'
-                }`}
-            >
-              Past Games
-            </button>
-          </div>
-        </div>
+        <AdminPanelPageHeader
+          backButtonLink={`/leagues/${leagueId}`}
+          backButtonText="Back to League"
+          pageTitle="Manage Games"
+          subHeader={league?.name || 'Unnamed League'}
+          tabs={tabs}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+        />
 
         {/* Create Game Form */}
         {activeTab === 'create' && (

@@ -7,7 +7,8 @@ import {
   ChatBubbleLeftRightIcon,
   UserCircleIcon,
   Cog6ToothIcon,
-  ArrowRightEndOnRectangleIcon
+  ArrowRightEndOnRectangleIcon,
+  CalendarDaysIcon
 } from '@heroicons/react/24/outline';
 
 // Masculine, athletic gradients and icon colors
@@ -29,17 +30,28 @@ const adminFeatures = [
     iconColor: "text-amber-600",
     comingSoon: true,
     bg: "from-gray-100 to-gray-300"
+  },
+  {
+    title: "Manage Team Schedules",
+    description: "Create and organize detailed schedules for all your teams.",
+    icon: CalendarDaysIcon, // You'll need to import this
+    iconColor: "text-purple-700",
+    link: "/admin/schedules",
+    linkLabel: "Manage Schedules",
+    comingSoon: false,
+    bg: "from-purple-100 to-purple-300"
   }
+
 ];
 
 const playerFeatures = [
   {
-    title: "Sporty Leagues",
-    description: "Discover Sporty leagues, view teams, and join the action.",
-    icon: SparklesIcon,
+    title: "Join Multiple Teams",
+    description: "Join different teams across various sports with one account.",
+    icon: UsersIcon,
     iconColor: "text-green-700",
-    link: "/public-leagues",
-    linkLabel: "Explore Now",
+    link: "/teams/join",
+    linkLabel: "Join Teams",
     comingSoon: false,
     bg: "from-green-100 to-green-300"
   },
@@ -50,6 +62,16 @@ const playerFeatures = [
     iconColor: "text-blue-700",
     comingSoon: true,
     bg: "from-slate-100 to-slate-300"
+  },
+  {
+    title: "Career Stats per Team",
+    description: "View your full career stats broken down by team.",
+    icon: UserCircleIcon,
+    iconColor: "text-sky-700",
+    link: "/my-sporty/stats",
+    linkLabel: "View Stats",
+    comingSoon: false,
+    bg: "from-sky-100 to-sky-300"
   }
 ];
 
@@ -233,7 +255,7 @@ function Home() {
           </h2>
           <div className="overflow-hidden relative w-full">
             <div
-              className="flex w-max"
+              className="flex w-max py-4"
               style={{
                 animation: "marquee-left 45s linear infinite"
               }}

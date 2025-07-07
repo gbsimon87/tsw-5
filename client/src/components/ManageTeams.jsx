@@ -4,7 +4,6 @@ import { toast } from 'react-toastify';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import {
-  ArrowLeftIcon,
   ShieldExclamationIcon,
   TrashIcon,
   UserGroupIcon,
@@ -13,11 +12,11 @@ import {
   ClipboardIcon,
   UsersIcon,
 } from '@heroicons/react/24/outline';
+import AdminPanelPageHeader from './AdminPanelPageHeader';
 
 export default function ManageTeams() {
   const { leagueId } = useParams();
   const { user } = useAuth();
-  const navigate = useNavigate();
   const [league, setLeague] = useState(null);
   const [teams, setTeams] = useState([]);
   const [selectedSeason, setSelectedSeason] = useState('');
@@ -25,6 +24,19 @@ export default function ManageTeams() {
   const [error, setError] = useState(null);
   const [copiedKey, setCopiedKey] = useState(null);
   const [activeTab, setActiveTab] = useState('create');
+
+  const tabs = [
+    {
+      id: 'create',
+      label: 'New Team',
+      icon: PlusIcon
+    },
+    {
+      id: 'view',
+      label: 'View Teams',
+      icon: UsersIcon
+    }
+  ];
 
   useEffect(() => {
     const fetchLeague = async () => {
@@ -172,48 +184,15 @@ export default function ManageTeams() {
   return (
     <div className="min-h-[var(--page-height)] bg-gray-50 py-4 px-4">
       <div className="max-w-4xl mx-auto">
-        <header className="flex flex-col mb-8 gap-4">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => navigate(`/leagues/${leagueId}`)}
-              className="flex items-center gap-2 bg-white text-blue-700 border border-blue-600 px-4 py-1.5 rounded-lg font-semibold shadow hover:bg-blue-50 transition focus:ring-2 focus:ring-blue-500 focus:outline-none"
-              aria-label="Back to League"
-            >
-              <ArrowLeftIcon className="w-5 h-5" />
-              Back to League
-            </button>
-            <div>
-              <h1 className="text-2xl text-right font-bold text-gray-800">Manage Teams</h1>
-              <div className="text-sm text-right text-gray-500 font-normal">
-                Predovic, Deckow and Reichert Baseball League
-              </div>
-            </div>
-          </div>
-        </header>
-
-
-        {/* Tab Buttons */}
-        <div className="flex gap-2 mb-6">
-          <button
-            onClick={() => setActiveTab('create')}
-            className="flex items-center gap-2 bg-blue-600 text-white px-3 py-1 rounded-md hover:bg-blue-700 transition focus:ring-2 focus:ring-blue-500 focus:outline-none"
-            aria-label="New Game"
-          >
-            <PlusIcon className="w-4 h-4" />
-            New Team
-          </button>
-
-          <button
-            onClick={() => setActiveTab('view')}
-            className={`flex items-center py-2 px-4 rounded-lg font-semibold transition focus:ring-2 focus:ring-blue-500 focus:outline-none ${activeTab === 'view'
-              ? 'bg-blue-600 text-white'
-              : 'bg-white text-blue-700 border border-blue-600 hover:bg-blue-50'
-              }`}
-          >
-            <UsersIcon className="w-4 h-4" />
-            View Teams
-          </button>
-        </div>
+        <AdminPanelPageHeader
+          backButtonLink={`/leagues/${leagueId}`}
+          backButtonText="Back to League"
+          pageTitle="Manage Teams"
+          subHeader="Predovic, Deckow and Reichert Baseball League"
+          tabs={tabs}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+        />
 
         {/* Create Team Form */}
         {activeTab === 'create' && (

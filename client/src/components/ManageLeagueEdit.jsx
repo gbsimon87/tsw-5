@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   FlagIcon,
-  ArrowLeftIcon,
   PlusIcon,
   TrashIcon,
   CheckCircleIcon,
@@ -19,8 +18,11 @@ import {
   XMarkIcon,
   ListBulletIcon
 } from '@heroicons/react/24/outline';
+
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
+import AdminPanelPageHeader from './AdminPanelPageHeader';
+
 
 const scoringRulesMap = {
   basketball: { twoPointFGM: 2, threePointFGM: 3, freeThrowM: 1 },
@@ -86,6 +88,25 @@ export default function ManageLeagueEdit() {
   });
   const [carryOverTeams, setCarryOverTeams] = useState([]);
   const [previousSeasonTeams, setPreviousSeasonTeams] = useState([]);
+  const [activeTab, setActiveTab] = useState(null);
+
+  const tabs = [
+    {
+      id: 'save',
+      label: 'Save Changes',
+      icon: CheckCircleIcon,
+      onClick: () => {
+        document.getElementById('leagueForm')?.requestSubmit(); // trigger form submit
+      },
+      alwaysActive: true
+    },
+    {
+      id: 'cancel',
+      label: 'Cancel',
+      icon: XMarkIcon,
+      onClick: () => navigate(`/leagues/${leagueId}`)
+    }
+  ];
 
   useEffect(() => {
     const fetchLeague = async () => {
@@ -289,41 +310,15 @@ export default function ManageLeagueEdit() {
     <div className="min-h-[var(--page-height)] bg-gray-50 py-4 px-4">
       <div className="max-w-4xl mx-auto">
         {/* Header with actions */}
-        <header className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 gap-4">
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => navigate(`/leagues/${leagueId}`)}
-              className="flex items-center gap-2 bg-white text-blue-700 border border-blue-600 px-4 py-1.5 rounded-lg font-semibold shadow hover:bg-blue-50 transition focus:ring-2 focus:ring-blue-500 focus:outline-none"
-              aria-label="Back to League"
-            >
-              <ArrowLeftIcon className="w-5 h-5" />
-              Back to League
-            </button>
-            <div>
-              <h1 className="text-2xl text-right font-bold text-gray-800">Edit League</h1>
-              <div className="text-sm text-right text-gray-500 font-normal">{formData.name}</div>
-            </div>
-          </div>
-          <div className="flex gap-3">
-            <button
-              type="submit"
-              form="leagueForm"
-              className="flex items-center gap-2 bg-blue-600 text-white px-5 py-2 rounded-lg font-semibold shadow hover:bg-blue-700 transition focus:ring-2 focus:ring-blue-500 focus:outline-none"
-            >
-              <CheckCircleIcon className="w-5 h-5" />
-              Save Changes
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate(`/leagues/${leagueId}`)}
-              className="flex items-center gap-2 bg-white text-blue-700 border border-blue-600 px-3 py-1.5 text-sm rounded-lg font-semibold shadow hover:bg-blue-50 transition focus:ring-2 focus:ring-blue-500 focus:outline-none sm:px-5 sm:py-2 sm:text-base"
-            >
-              <XMarkIcon className="w-5 h-5" />
-              Cancel
-            </button>
-          </div>
-        </header>
+        <AdminPanelPageHeader
+          backButtonLink={`/leagues/${leagueId}`}
+          backButtonText="Back to League"
+          pageTitle="Edit League"
+          subHeader={formData.name}
+          tabs={tabs}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+        />
 
 
         {/* League Details */}
