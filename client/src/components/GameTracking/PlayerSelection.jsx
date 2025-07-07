@@ -265,7 +265,7 @@ export default function PlayerSelection({
               Select Stat for {getInitialAndLastName(selectedPlayer?.name) || 'Unknown'}
             </h3>
             <div id="stat-modal-description" className="grid grid-cols-2 gap-2">
-              {league?.settings?.statTypes.map(statType => (
+              {league?.settings?.statTypes?.map(statType => (
                 <button
                   key={statType}
                   onClick={() => handleStatSelect(statType)}

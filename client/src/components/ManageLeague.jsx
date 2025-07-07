@@ -212,7 +212,7 @@ export default function ManageLeague() {
               </div>
               <div className="space-y-2 ml-6">
                 {league.settings.statTypes && league.settings.statTypes.length > 0 ? (
-                  league.settings.statTypes.map((stat, index) => {
+                  league.settings.statTypes?.map((stat, index) => {
                     const statInfo = statDisplayMap[stat];
                     return (
                       <div key={index} className="flex items-center bg-white p-3 rounded-md border border-gray-200">

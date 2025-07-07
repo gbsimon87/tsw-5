@@ -59,7 +59,7 @@ export default function BoxScore({ game, league, tab, setTab, boxScoreTabLabels,
               >
                 Name
               </th>
-              {statTypes.map(statKey => (
+              {statTypes?.map(statKey => (
                 <th
                   key={statKey}
                   className="sticky top-0 bg-white z-20 border-b border-gray-200 px-3 py-2 text-xs font-semibold text-gray-700 whitespace-nowrap"
@@ -89,7 +89,7 @@ export default function BoxScore({ game, league, tab, setTab, boxScoreTabLabels,
                   >
                     {player.playerName}
                   </td>
-                  {statTypes.map(statKey => (
+                  {statTypes?.map(statKey => (
                     <td
                       key={statKey}
                       className="border-b border-gray-100 px-3 py-2 text-center"

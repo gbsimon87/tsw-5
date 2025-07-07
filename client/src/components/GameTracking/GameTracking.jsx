@@ -62,8 +62,8 @@ export default function GameTracking() {
         const team2Roster = gameData.teams[1]?.members
           .filter(member => member.isActive)
           .slice(0, startersCount) || [];
-        const team1Active = team1Roster.map(r => r.playerId);
-        const team2Active = team2Roster.map(r => r.playerId);
+        const team1Active = team1Roster?.map(r => r.playerId);
+        const team2Active = team2Roster?.map(r => r.playerId);
         setActivePlayersTeam1(team1Active);
         setActivePlayersTeam2(team2Active);
         setSelectedPlayersTeam1(team1Active);
@@ -155,7 +155,7 @@ export default function GameTracking() {
   };
 
   const handleStatIncrement = (stats) => {
-    const newEntries = stats.map(({ player, statType, time, period }) => {
+    const newEntries = stats?.map(({ player, statType, time, period }) => {
       const teamId = game?.teams.find(team => team.members.some(m => m.playerId === player.playerId))?._id;
       return {
         player: player.playerId,
@@ -182,7 +182,7 @@ export default function GameTracking() {
     });
 
     const toastMessage = newEntries
-      .map(entry => `${statDisplayMap[entry.statType]?.label || entry.statType} for ${entry.playerName}`)
+      ?.map(entry => `${statDisplayMap[entry.statType]?.label || entry.statType} for ${entry.playerName}`)
       .join(' and ');
     toast.success(`${toastMessage} at ${formatTime(newEntries[0].time)} in ${newEntries[0].period}`, {
       toastId: `stat-${newEntries[0].player}-${Date.now()}`,
@@ -234,7 +234,7 @@ export default function GameTracking() {
         {
           score: formData.score,
           gameMVP: formData.gameMVP || null,
-          playerStats: Object.entries(formData.playerStats).map(([playerId, stats]) => ({ playerId, stats })),
+          playerStats: Object.entries(formData.playerStats)?.map(([playerId, stats]) => ({ playerId, stats })),
           playByPlay,
         },
         { headers: { Authorization: `Bearer ${user.token}` } }
