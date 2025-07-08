@@ -33,7 +33,7 @@ const getPeriodInfo = (settings) => {
   };
 };
 
-export default function GameTrackingTwo() {
+export default function GameTracking() {
   const { leagueId, gameId } = useParams();
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
