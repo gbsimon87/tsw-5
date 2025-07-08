@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 
 const Scoreboard = ({ teamScores }) => {
   useEffect(() => {
-    console.log('Scoreboard teamScores:', teamScores);
+    // console.log('Scoreboard teamScores:', teamScores);
   }, [teamScores]);
 
   const isValidArray = Array.isArray(teamScores) && teamScores.length >= 2;

@@ -31,7 +31,7 @@ export default function BoxScore({ game, league, tab, setTab, boxScoreTabLabels,
   const statTypes = league.settings.statTypes;
 
   return (
-    <div className="w-full">
+    <div className="w-full mt-2">
       <div className="flex justify-center mb-4 gap-2">
         {boxScoreTabLabels.map((label, idx) => (
           <button

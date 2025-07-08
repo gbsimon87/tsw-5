@@ -24,7 +24,7 @@ export default function PlayByPlay({ playByPlay, teams, handleDeletePlay }) {
     .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)); // Most recent first
 
   return (
-    <div className="w-full" role="region" aria-label="Play-by-Play Log">
+    <div className="w-full mt-2" role="region" aria-label="Play-by-Play Log">
       <h2 className="text-lg font-bold mb-2">Play-by-Play</h2>
       <div className="flex gap-4 mb-4">
         <select
@@ -95,7 +95,7 @@ export default function PlayByPlay({ playByPlay, teams, handleDeletePlay }) {
               </div>
 
               {/* RIGHT SECTION: Delete Button */}
-              <div className="flex justify-end sm:justify-center mt-3 sm:mt-0 sm:ml-3">
+              <div className="flex sm:justify-center mt-3 sm:mt-0 sm:ml-3">
                 <button
                   onClick={() => handleDeletePlay(entry)}
                   className="p-2 bg-red-600 hover:bg-red-700 text-white rounded-full transition-colors duration-200"
