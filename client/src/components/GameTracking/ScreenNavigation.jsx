@@ -9,8 +9,8 @@ export default function ScreenNavigation({ activeScreen, onScreenChange }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const screens = [
-    { id: 'rosters', icon: UsersIcon, label: activeScreen === 'substitutions' ? 'Confirm' : 'Rosters' },
-    { id: 'substitutions', icon: ArrowsRightLeftIcon, label: 'Substitutions' },
+    { id: 'rosters', icon: UsersIcon, label: activeScreen === 'subs' ? 'Confirm' : 'Rosters' },
+    { id: 'subs', icon: ArrowsRightLeftIcon, label: 'Subs' },
     { id: 'boxScore', icon: ChartBarIcon, label: 'Box Score' },
     { id: 'playByPlay', icon: ListBulletIcon, label: 'Play By Play' },
   ];
@@ -29,44 +29,45 @@ export default function ScreenNavigation({ activeScreen, onScreenChange }) {
   };
 
   const handleFinishEditing = () => {
-    console.log(leagueId)
     navigate(`/leagues/${leagueId}`);
   };
 
   return (
-    <div className="flex justify-between mt-2 gap-2 p-4">
-      {screens.map(({ id, icon: Icon, label }) => (
+    <div className="flex justify-between mt-2 gap-2 p-4 w-full">
+      <div className="grid grid-cols-5 gap-2 w-full">
+        {screens.map(({ id, icon: Icon, label }) => (
+          <button
+            key={id}
+            onClick={() => onScreenChange(id)}
+            className={`flex flex-col gap-2 items-center justify-center p-2 rounded-xl transition-colors duration-200 w-full ${
+              activeScreen === id
+                ? 'bg-blue-800 text-white shadow-lg scale-105'
+                : 'bg-gray-200 text-gray-900 hover:bg-gray-300'
+            }`}
+            aria-label={`Switch to ${label} screen`}
+          >
+            <Icon className="h-5 w-5 mb-1" />
+            <span className="text-xs text-center">{label}</span>
+          </button>
+        ))}
         <button
-          key={id}
-          onClick={() => onScreenChange(id)}
-          className={`flex flex-1 flex-col gap-2 items-center justify-center p-2 rounded-xl transition-colors duration-200 ${
-            activeScreen === id
-              ? 'bg-blue-800 text-white shadow-lg scale-105'
-              : 'bg-gray-200 text-gray-900 hover:bg-gray-300'
-          }`}
-          aria-label={`Switch to ${label} screen`}
+          onClick={openModal}
+          className="flex flex-col gap-2 items-center justify-center p-2 rounded-xl bg-gray-200 text-gray-900 hover:bg-gray-300 transition-colors duration-200 w-full"
+          aria-label="Open options menu"
         >
-          <Icon className="h-5 w-5 mb-1" />
-          <span className="text-xs">{label}</span>
+          <CheckCircleIcon className="h-5 w-5 mb-1" />
+          <span className="text-xs text-center">Options</span>
         </button>
-      ))}
-      <button
-        onClick={openModal}
-        className="flex flex-col items-center justify-center p-2 rounded-xl bg-gray-200 text-gray-900 hover:bg-gray-300 transition-colors duration-200"
-        aria-label="Open options menu"
-      >
-        <CheckCircleIcon className="h-5 w-5 mb-1" />
-        <span className="text-xs">Options</span>
-      </button>
-      {activeScreen === 'substitutions' && (
-        <button
-          onClick={handleCancel}
-          className="flex flex-col items-center justify-center p-2 rounded-xl bg-gray-200 text-gray-900 hover:bg-gray-300 transition-colors duration-200"
-          aria-label="Cancel substitutions"
-        >
-          <span className="text-xs">Cancel</span>
-        </button>
-      )}
+        {activeScreen === 'substitutions' && (
+          <button
+            onClick={handleCancel}
+            className="flex flex-col gap-2 items-center justify-center p-2 rounded-xl bg-gray-200 text-gray-900 hover:bg-gray-300 transition-colors duration-200 w-full"
+            aria-label="Cancel substitutions"
+          >
+            <span className="text-xs text-center">Cancel</span>
+          </button>
+        )}
+      </div>
 
       <Modal
         isOpen={isModalOpen}

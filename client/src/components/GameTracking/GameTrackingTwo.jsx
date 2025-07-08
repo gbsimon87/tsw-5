@@ -177,7 +177,7 @@ export default function GameTrackingTwo() {
   };
 
   const handleScreenChange = useCallback((newScreen) => {
-    if (screen === 'substitutions' && newScreen === 'rosters') {
+    if (screen === 'subs' && newScreen === 'rosters') {
       if (selectedPlayersTeam1.length > startersCount) {
         toast.error(`You can select up to ${startersCount} players for ${game?.teams[0]?.name || 'Team 1'}`, {
           toastId: 'team1-selection-error',
@@ -348,7 +348,7 @@ export default function GameTrackingTwo() {
   const renderScreenView = useCallback(() => {
     switch (screen) {
       case 'rosters':
-      case 'substitutions':
+      case 'subs':
         return (
           <PlayerSelection
             teams={game?.teams}
@@ -360,7 +360,7 @@ export default function GameTrackingTwo() {
             selectedPlayersTeam2={selectedPlayersTeam2}
             startersCount={startersCount}
             handlePlayerClick={handleStatIncrement}
-            isSubstitutionMode={screen === 'substitutions'}
+            isSubstitutionMode={screen === 'subs'}
             setSelectedPlayersTeam1={setSelectedPlayersTeam1}
             setSelectedPlayersTeam2={setSelectedPlayersTeam2}
             clockState={clockState}
