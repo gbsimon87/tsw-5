@@ -3,7 +3,95 @@ import { toast } from 'react-toastify';
 import { getFirstCapitalLetter } from '../../utils/getFirstCapitalLetter';
 import { getInitialAndLastName } from '../../utils/getInitialAndLastName';
 import { statDisplayMap } from '../../utils/statDisplayMap';
-import StatModal from './StatModal'; // Adjust path as needed
+import StatModal from './StatModal';
+
+function getFollowUpConfig(statType, selectedPlayer, activePlayers) {
+  if (!selectedPlayer || !activePlayers) {
+    console.error('Missing selectedPlayer or activePlayers');
+    return null;
+  }
+
+  switch (statType) {
+    case 'twoPointFGA':
+    case 'threePointFGA':
+    case 'freeThrowA':
+      return {
+        question: `Who got the rebound after ${selectedPlayer.name}'s shot attempt?`,
+        players: activePlayers, // Both teams can rebound
+        allowNone: true,
+      };
+    case 'twoPointFGM':
+    case 'threePointFGM':
+      return {
+        question: `Who assisted on ${selectedPlayer.name}'s made shot?`,
+        players: activePlayers.filter(p => p.teamId === selectedPlayer.teamId && p.playerId !== selectedPlayer.playerId),
+        allowNone: false,
+      };
+    case 'offensiveRebound':
+      return {
+        question: `Who shot the ball for ${selectedPlayer.name}'s offensive rebound?`,
+        players: activePlayers.filter(p => p.teamId === selectedPlayer.teamId && p.playerId !== selectedPlayer.playerId),
+        allowNone: false,
+        extra: 'twoPointFGA', // Assume shot attempt
+      };
+    case 'assist':
+      return {
+        question: `Who shot the ball for ${selectedPlayer.name}'s assist?`,
+        players: activePlayers.filter(p => p.teamId === selectedPlayer.teamId && p.playerId !== selectedPlayer.playerId),
+        allowNone: false,
+        extra: 'twoPointFGM', // Assume made shot
+      };
+    case 'defensiveRebound':
+      return {
+        question: `Who shot the ball for ${selectedPlayer.name}'s defensive rebound?`,
+        players: activePlayers.filter(p => p.teamId !== selectedPlayer.teamId),
+        allowNone: false,
+        extra: 'twoPointFGA', // Assume shot attempt
+      };
+    case 'personalFoul':
+      return {
+        question: `Who was fouled by ${selectedPlayer.name}?`,
+        players: activePlayers.filter(p => p.teamId !== selectedPlayer.teamId),
+        allowNone: false,
+      };
+    case 'drawnFoul':
+      return {
+        question: `Who fouled ${selectedPlayer.name}?`,
+        players: activePlayers.filter(p => p.teamId !== selectedPlayer.teamId),
+        allowNone: false,
+      };
+    case 'steal':
+      return {
+        question: `Who turned over the ball for ${selectedPlayer.name}'s steal?`,
+        players: activePlayers.filter(p => p.teamId !== selectedPlayer.teamId),
+        allowNone: false,
+        extra: 'turnover',
+      };
+    case 'turnover':
+      return {
+        question: `Who stole the ball from ${selectedPlayer.name}'s turnover?`,
+        players: activePlayers.filter(p => p.teamId !== selectedPlayer.teamId),
+        allowNone: false,
+        extra: 'steal',
+      };
+    case 'block':
+      return {
+        question: `Who was blocked by ${selectedPlayer.name}?`,
+        players: activePlayers.filter(p => p.teamId !== selectedPlayer.teamId),
+        allowNone: false,
+        extra: 'blockedShotAttempt',
+      };
+    case 'blockedShotAttempt':
+      return {
+        question: `Who blocked ${selectedPlayer.name}'s shot?`,
+        players: activePlayers.filter(p => p.teamId !== selectedPlayer.teamId),
+        allowNone: false,
+        extra: 'block',
+      };
+    default:
+      return null;
+  }
+}
 
 export default function PlayerSelection({
   teams,
@@ -15,9 +103,11 @@ export default function PlayerSelection({
   selectedPlayersTeam2,
   startersCount,
   handlePlayerClick,
+  remainingSeconds,
   isSubstitutionMode,
   setSelectedPlayersTeam1,
   setSelectedPlayersTeam2,
+  clockState
 }) {
   if (!teams || !Array.isArray(teams) || teams.length !== 2) {
     throw new Error('[PlayerSelection]: Valid teams data is required (expected array of two teams)');
@@ -29,12 +119,11 @@ export default function PlayerSelection({
   const [overrideMinutes, setOverrideMinutes] = useState('');
   const [overrideSeconds, setOverrideSeconds] = useState('');
   const [overridePeriod, setOverridePeriod] = useState('');
-  const [followUpPlayerId, setFollowUpPlayerId] = useState(null);
 
   const handleSelectPlayer = (teamId, playerId) => {
-    const isTeam1 = teamId === teams[0]._id;
+    const isTeam1 = teamId === teams[0]?._id;
     const setSelected = isTeam1 ? setSelectedPlayersTeam1 : setSelectedPlayersTeam2;
-    const teamName = isTeam1 ? teams[0].name : teams[1].name;
+    const teamName = isTeam1 ? teams[0]?.name : teams[1]?.name;
 
     setSelected(prev => {
       const isChecked = prev.includes(playerId);
@@ -64,9 +153,9 @@ export default function PlayerSelection({
   };
 
   const renderPlayerCard = (player, teamId) => {
-    const isTeam1 = teamId === teams[0]._id;
-    const isChecked = (isTeam1 ? selectedPlayersTeam1 : selectedPlayersTeam2).includes(player.playerId);
-    const { personalFoul, points, assist } = getPlayerStats(player.playerId);
+    const isTeam1 = teamId === teams[0]?._id;
+    const isChecked = (isTeam1 ? selectedPlayersTeam1 : selectedPlayersTeam2)?.includes(player?.playerId);
+    const { personalFoul, points, assist } = getPlayerStats(player?.playerId);
 
     return (
       <div
@@ -82,7 +171,6 @@ export default function PlayerSelection({
               onChange={() => handleSelectPlayer(teamId, player.playerId)}
               className="mt-1"
               aria-label={`Toggle active status for ${player.name || 'Unknown'}`}
-            // disabled prop removed
             />
           ) : (
             <img
@@ -110,24 +198,23 @@ export default function PlayerSelection({
   };
 
   const team1Players = isSubstitutionMode
-    ? teams[0].members.filter(member => member.isActive)
-    : teams[0].members.filter(member => activePlayersTeam1.includes(member.playerId) && member.isActive).slice(0, startersCount);
+    ? teams?.[0]?.members?.filter(member => member?.isActive) || []
+    : teams?.[0]?.members?.filter(member => activePlayersTeam1.includes(member.playerId) && member?.isActive).slice(0, startersCount) || [];
   const team2Players = isSubstitutionMode
-    ? teams[1].members.filter(member => member.isActive)
-    : teams[1].members.filter(member => activePlayersTeam2.includes(member.playerId) && member.isActive).slice(0, startersCount);
+    ? teams?.[1]?.members?.filter(member => member?.isActive) || []
+    : teams?.[1]?.members?.filter(member => activePlayersTeam2.includes(member.playerId) && member?.isActive).slice(0, startersCount) || [];
 
-  const activePlayers = teams.flatMap(team => {
-    const activePlayerIds = team._id === teams[0]._id ? activePlayersTeam1 : activePlayersTeam2;
-    return team.members
-      .filter(member => member.isActive && activePlayerIds.includes(member.playerId))
-      .map(member => ({ ...member, teamId: team._id }));
+  const activePlayers = teams?.flatMap(team => {
+    const activePlayerIds = team?._id === teams[0]?._id ? activePlayersTeam1 : activePlayersTeam2;
+    return team?.members
+      ?.filter(member => member?.isActive && activePlayerIds?.includes(member?.playerId))
+      ?.map(member => ({ ...member, teamId: team?._id }));
   });
 
   const handleStatSelect = (statType) => {
     setSelectedStatType(statType);
     if (['twoPointFGA', 'threePointFGA', 'freeThrowA'].includes(statType)) {
       setModalStep('followUpRebound');
-      // } else if (['twoPointFGM', 'threePointFGM', 'freeThrowM'].includes(statType)) {
     } else if (['twoPointFGM', 'threePointFGM'].includes(statType)) {
       setModalStep('followUpAssist');
     } else if (['offensiveRebound', 'defensiveRebound', 'assist'].includes(statType)) {
@@ -136,16 +223,16 @@ export default function PlayerSelection({
       setModalStep('followUpTurnover');
     } else if (statType === 'turnover') {
       setModalStep('followUpSteal');
-    } else if (statType === 'personalFoul') {
+    } else if (['personalFoul', 'drawnFoul'].includes(statType)) {
       setModalStep('followUpFoul');
-    } else if (statType === 'block') {
+    } else if (['block', 'blockedShotAttempt'].includes(statType)) {
       setModalStep('followUpBlock');
     } else {
       handlePlayerClick([{
         player: selectedPlayer,
         statType,
         time: overrideMinutes && overrideSeconds ?
-          parseInt(overrideMinutes, 10) * 60 + parseInt(overrideSeconds, 10) : null,
+          parseInt(overrideMinutes, 10) * 60 + parseInt(overrideSeconds, 10) : remainingSeconds,
         period: overridePeriod || null,
       }]);
       resetModal();
@@ -156,25 +243,29 @@ export default function PlayerSelection({
     const statsToRecord = [{
       player: selectedPlayer,
       statType: selectedStatType,
-      time: overrideMinutes && overrideSeconds ?
-        parseInt(overrideMinutes, 10) * 60 + parseInt(overrideSeconds, 10) : null,
-      period: overridePeriod || null,
+      time: overrideMinutes && overrideSeconds
+        ? parseInt(overrideMinutes, 10) * 60 + parseInt(overrideSeconds, 10)
+        : remainingSeconds,
+      period: overridePeriod || clockState.period,
     }];
 
     if (followUpData) {
+      const followUpConfig = getFollowUpConfig(selectedStatType, selectedPlayer, activePlayers);
       const followUpPlayer = activePlayers.find(p => p.playerId === followUpData.playerId);
       if (followUpPlayer) {
-        const followUpStatType = followUpData.statType || selectedStatType; // Fallback to selectedStatType if no extra stat
+        const followUpStatType = followUpConfig?.extra || 'assist'; // Default to 'assist' if no extra
         statsToRecord.push({
           player: followUpPlayer,
           statType: followUpStatType,
-          time: overrideMinutes && overrideSeconds ?
-            parseInt(overrideMinutes, 10) * 60 + parseInt(overrideSeconds, 10) : null,
-          period: overridePeriod || null,
+          time: overrideMinutes && overrideSeconds
+            ? parseInt(overrideMinutes, 10) * 60 + parseInt(overrideSeconds, 10)
+            : remainingSeconds,
+          period: overridePeriod || clockState.period,
         });
       }
     }
 
+    // console.log('Stats to handlePlayerClick:', statsToRecord);
     handlePlayerClick(statsToRecord);
     resetModal();
   };
@@ -183,7 +274,6 @@ export default function PlayerSelection({
     setSelectedPlayer(null);
     setModalStep('selectStat');
     setSelectedStatType(null);
-    // setFollowUpPlayerId(null);
     setOverrideMinutes('');
     setOverrideSeconds('');
     setOverridePeriod('');
@@ -196,24 +286,28 @@ export default function PlayerSelection({
         ['P1', 'P2', 'P3', 'OT1', 'OT2'];
   };
 
+  // console.log('teams:', teams);
+  // console.log('team1Players:', team1Players);
+  // console.log('team2Players:', team2Players);
+
   return (
     <div className="grid grid-cols-2 sm:grid-cols-2 w-full gap-2 sm:gap-6 pt-0">
       <div className="flex flex-col gap-2 w-full">
         <h2 className="text-lg font-bold text-center">
-          {isSubstitutionMode && `(${selectedPlayersTeam1.length}/${startersCount})`}
+          {isSubstitutionMode && `(${selectedPlayersTeam1?.length}/${startersCount})`}
         </h2>
-        {team1Players.length > 0 ? (
-          team1Players.map(player => renderPlayerCard(player, teams[0]._id))
+        {team1Players?.length > 0 ? (
+          team1Players.map(player => renderPlayerCard(player, teams[0]?._id))
         ) : (
           <div className="text-center text-gray-500">No active players</div>
         )}
       </div>
       <div className="flex flex-col gap-2 w-full">
         <h2 className="text-lg font-bold text-center">
-          {isSubstitutionMode && `(${selectedPlayersTeam2.length}/${startersCount})`}
+          {isSubstitutionMode && `(${selectedPlayersTeam2?.length}/${startersCount})`}
         </h2>
-        {team2Players.length > 0 ? (
-          team2Players.map(player => renderPlayerCard(player, teams[1]._id))
+        {team2Players?.length > 0 ? (
+          team2Players.map(player => renderPlayerCard(player, teams[1]?._id))
         ) : (
           <div className="text-center text-gray-500">No active players</div>
         )}
@@ -239,6 +333,7 @@ export default function PlayerSelection({
         overridePeriod={overridePeriod}
         setOverridePeriod={setOverridePeriod}
         getPeriodOptions={getPeriodOptions}
+        getFollowUpConfig={getFollowUpConfig}
       />
     </div>
   );

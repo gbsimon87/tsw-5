@@ -1,4 +1,12 @@
+import { useEffect } from "react";
+
 const Scoreboard = ({ teamScores }) => {
+  // console.log(teamScores);
+
+  useEffect(() => {
+    // console.log('Component mounted');
+  }, [teamScores]);
+  
   // Defensive checks
   const isValidArray = Array.isArray(teamScores) && teamScores.length >= 2;
   const team1 = isValidArray && teamScores[0] ? teamScores[0] : null;

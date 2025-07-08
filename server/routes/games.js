@@ -67,12 +67,10 @@ router.get('/:gameId', authMiddleware, async (req, res) => {
   try {
     const { gameId } = req.params;
 
-    // Validate gameId
     if (!mongoose.Types.ObjectId.isValid(gameId)) {
       return res.status(400).json({ error: 'Invalid gameId' });
     }
 
-    // Fetch game with necessary population
     const game = await Game.findById(gameId)
       .populate({
         path: 'teams',
@@ -90,7 +88,7 @@ router.get('/:gameId', authMiddleware, async (req, res) => {
       })
       .populate({
         path: 'playerStats.player',
-        select: 'name user',
+        select: 'name jerseyNumber user',
         populate: {
           path: 'user',
           model: 'User',
@@ -99,7 +97,7 @@ router.get('/:gameId', authMiddleware, async (req, res) => {
       })
       .populate({
         path: 'gameMVP',
-        select: 'name user',
+        select: 'name jerseyNumber user',
         populate: {
           path: 'user',
           model: 'User',
@@ -112,9 +110,11 @@ router.get('/:gameId', authMiddleware, async (req, res) => {
       return res.status(404).json({ error: 'Game not found' });
     }
 
-    // Structure the response
+    const getTeamName = (teamId) =>
+      game.teams.find((t) => t._id.toString() === teamId.toString())?.name || 'Unknown';
+
     const populatedGame = {
-      // Game information
+      // Core
       _id: game._id,
       league: game.league,
       season: game.season,
@@ -122,25 +122,32 @@ router.get('/:gameId', authMiddleware, async (req, res) => {
       location: game.location,
       isCompleted: game.isCompleted,
       matchType: game.matchType,
-      weatherConditions: game.weatherConditions,
-      referee: game.referee,
-      gameDuration: game.gameDuration,
       eventType: game.eventType,
+      referee: game.referee,
+      weatherConditions: game.weatherConditions,
       attendance: game.attendance,
       venue: game.venue,
+      venueCapacity: game.venueCapacity,
       previousMatchupScore: game.previousMatchupScore,
       fanRating: game.fanRating,
-      mediaLinks: game.mediaLinks,
-      venueCapacity: game.venueCapacity,
+      highlights: game.highlights || [],
+      matchReport: game.matchReport || '',
+      mediaLinks: game.mediaLinks || [],
 
-      // Team information
-      teams: game.teams.map(team => ({
+      // Game Settings
+      periodType: game.periodType,
+      periodDuration: game.periodDuration,
+      overtimeDuration: game.overtimeDuration,
+      scoringRules: game.scoringRules,
+
+      // Teams
+      teams: game.teams.map((team) => ({
         _id: team._id,
         name: team.name,
         logo: team.logo,
-        createdBy: team.createdBy,
         isActive: team.isActive,
-        members: team.members.map(member => ({
+        createdBy: team.createdBy,
+        members: team.members.map((member) => ({
           playerId: member.player?._id,
           name: member.player?.user?.name || 'Unknown',
           jerseyNumber: member.player?.jerseyNumber || null,
@@ -150,27 +157,40 @@ router.get('/:gameId', authMiddleware, async (req, res) => {
         })),
       })),
 
-      // Team scores
-      teamScores: game.teamScores.map(score => ({
+      // Team Scores
+      teamScores: game.teamScores.map((score) => ({
         teamId: score.team,
-        teamName: game.teams.find(t => t._id.toString() === score.team.toString())?.name || 'Unknown',
+        teamName: getTeamName(score.team),
         score: score.score,
       })),
 
-      // Player stats
-      playerStats: game.playerStats.map(stat => ({
+      // Player Stats
+      playerStats: game.playerStats.map((stat) => ({
         playerId: stat.player?._id,
         playerName: stat.player?.user?.name || 'Unknown',
+        jerseyNumber: stat.player?.jerseyNumber || null,
         teamId: stat.team,
-        teamName: game.teams.find(t => t._id.toString() === stat.team.toString())?.name || 'Unknown',
+        teamName: getTeamName(stat.team),
         stats: stat.stats,
       })),
 
-      // Game MVP
+      // Play-by-play
+      playByPlay: game.playByPlay.map((entry) => ({
+        player: entry.player,
+        playerName: entry.playerName,
+        team: entry.team,
+        statType: entry.statType,
+        period: entry.period,
+        time: entry.time,
+        timestamp: entry.timestamp,
+      })),
+
+      // MVP
       gameMVP: game.gameMVP
         ? {
             playerId: game.gameMVP._id,
             name: game.gameMVP.user?.name || 'Unknown',
+            jerseyNumber: game.gameMVP.jerseyNumber || null,
           }
         : null,
     };
@@ -359,10 +379,11 @@ router.post('/', authMiddleware, checkAdminOrManager, async (req, res) => {
 router.patch('/:gameId', authMiddleware, checkAdminOrManager, async (req, res) => {
   try {
     const { gameId } = req.params;
-    const { teams, date, location, venue, venueCapacity, playerStats, matchType, eventType, gameDuration, weatherConditions, referee, attendance, previousMatchupScore, fanRating, highlights, matchReport, mediaLinks, gameMVP, season } = req.body;
+    const { teams, date, location, venue, venueCapacity, playerStats, playByPlay, matchType, eventType, gameDuration, weatherConditions, referee, attendance, previousMatchupScore, fanRating, highlights, matchReport, mediaLinks, gameMVP, season } = req.body;
 
     const game = await Game.findById(gameId).populate('league');
     if (!game) return res.status(404).json({ error: 'Game not found' });
+    if (!game.league) return res.status(400).json({ error: 'Game is missing league reference' });
 
     if (teams && (teams.length !== 2 || teams[0] === teams[1])) {
       return res.status(400).json({ error: 'Exactly two unique teams required' });
@@ -381,6 +402,26 @@ router.patch('/:gameId', authMiddleware, checkAdminOrManager, async (req, res) =
       }
     }
 
+    // Validate playByPlay
+    if (playByPlay && Array.isArray(playByPlay)) {
+      const leagueDoc = await League.findById(game.league);
+      const validTeamIds = (teams || game.teams).map(id => id.toString());
+      for (const play of playByPlay) {
+        if (!mongoose.Types.ObjectId.isValid(play.player) || !mongoose.Types.ObjectId.isValid(play.team)) {
+          return res.status(400).json({ error: 'Invalid player or team ID in playByPlay' });
+        }
+        if (!validTeamIds.includes(play.team.toString())) {
+          return res.status(400).json({ error: 'PlayByPlay team must match one of the game teams' });
+        }
+        if (!leagueDoc.settings.statTypes.includes(play.statType)) {
+          return res.status(400).json({ error: 'Invalid stat type in playByPlay' });
+        }
+        if (!play.playerName || !play.period || typeof play.time !== 'number' || play.time < 0) {
+          return res.status(400).json({ error: 'PlayByPlay requires valid playerName, period, and time' });
+        }
+      }
+    }
+
     // Validate playerStats
     let newPlayerIds = [];
     if (playerStats && Array.isArray(playerStats)) {
@@ -389,7 +430,7 @@ router.patch('/:gameId', authMiddleware, checkAdminOrManager, async (req, res) =
         if (!mongoose.Types.ObjectId.isValid(stat.player) || !mongoose.Types.ObjectId.isValid(stat.team)) {
           return res.status(400).json({ error: 'Invalid player or team ID in playerStats' });
         }
-        if (!game.teams.includes(stat.team.toString()) && (!teams || !teams.includes(stat.team.toString()))) {
+        if (!(teams || game.teams).map(id => id.toString()).includes(stat.team.toString())) {
           return res.status(400).json({ error: 'playerStats team must match one of the game teams' });
         }
         if (!Object.keys(stat.stats).every(key => leagueDoc.settings.statTypes.includes(key))) {
@@ -413,10 +454,11 @@ router.patch('/:gameId', authMiddleware, checkAdminOrManager, async (req, res) =
       venue: venue !== undefined ? venue : game.venue,
       venueCapacity: venueCapacity !== undefined ? venueCapacity : game.venueCapacity,
       playerStats: playerStats || game.playerStats,
+      playByPlay: playByPlay || game.playByPlay,
       matchType: matchType || game.matchType,
       eventType: eventType || game.eventType,
       gameDuration: gameDuration !== undefined ? gameDuration : game.gameDuration,
-      weatherConditions: weatherConditions !== undefined ? weatherConditions : game.weatherConditions,
+      weatherConditions: weatherConditions !== undefined ? game.weatherConditions : game.weatherConditions,
       referee: referee !== undefined ? referee : game.referee,
       attendance: attendance !== undefined ? attendance : game.attendance,
       previousMatchupScore: previousMatchupScore !== undefined ? previousMatchupScore : game.previousMatchupScore,
@@ -438,48 +480,6 @@ router.patch('/:gameId', authMiddleware, checkAdminOrManager, async (req, res) =
       updateData.teamScores = teams.map(team => ({ team, score: 0 }));
     }
 
-    // Update Player.stats for career stats
-    if (playerStats && playerStats.length > 0) {
-      const leagueDoc = await League.findById(game.league);
-      const oldPlayerIds = game.playerStats.map(stat => stat.player.toString());
-
-      // Subtract old stats
-      for (const oldStat of game.playerStats) {
-        const player = await Player.findById(oldStat.player);
-        if (player && player.stats[leagueDoc.sportType]) {
-          Object.entries(oldStat.stats).forEach(([key, value]) => {
-            player.stats[leagueDoc.sportType][key] = Math.max(
-              (player.stats[leagueDoc.sportType][key] || 0) - (value || 0),
-              0
-            ); // Prevent negative stats
-          });
-          // Only decrement gamesPlayed if the player is not in the new playerStats
-          if (!newPlayerIds.includes(oldStat.player.toString())) {
-            player.gamesPlayed = Math.max((player.gamesPlayed || 0) - 1, 0);
-          }
-          await player.save();
-        }
-      }
-
-      // Add new stats
-      for (const stat of playerStats) {
-        const player = await Player.findById(stat.player);
-        if (player) {
-          if (!player.stats[leagueDoc.sportType]) {
-            player.stats[leagueDoc.sportType] = {};
-          }
-          Object.entries(stat.stats).forEach(([key, value]) => {
-            player.stats[leagueDoc.sportType][key] = (player.stats[leagueDoc.sportType][key] || 0) + (value || 0);
-          });
-          // Only increment gamesPlayed if the player wasn't in the old playerStats
-          if (!oldPlayerIds.includes(stat.player.toString())) {
-            player.gamesPlayed = (player.gamesPlayed || 0) + 1;
-          }
-          await player.save();
-        }
-      }
-    }
-
     Object.assign(game, updateData);
     await game.save();
 
@@ -497,19 +497,22 @@ router.patch('/:gameId', authMiddleware, checkAdminOrManager, async (req, res) =
 
     populatedGame.teamScores = populatedGame.teamScores.map(score => ({
       team: populatedGame.teams.find(t => t._id.toString() === score.team.toString()) || { name: 'Unknown' },
-      score: score.score
+      score: score.score,
+      teamName: populatedGame.teams.find(t => t._id.toString() === score.team.toString())?.name || 'Unknown',
     }));
     populatedGame.playerStats = populatedGame.playerStats.map(stat => ({
       ...stat,
-      player: stat.player ? { _id: stat.player._id, name: stat.player.user?.name || 'Unknown' } : null,
-      team: populatedGame.teams.find(t => t._id.toString() === stat.team.toString()) || { name: 'Unknown' }
+      player: stat.player ? { _id: stat.player._id, name: stat.player.user?.name || 'Unknown', playerId: stat.player._id } : null,
+      team: populatedGame.teams.find(t => t._id.toString() === stat.team.toString()) || { name: 'Unknown' },
+      teamId: stat.team,
+      playerName: stat.player?.user?.name || 'Unknown',
     }));
     populatedGame.gameMVP = populatedGame.gameMVP ? { _id: populatedGame.gameMVP._id, name: populatedGame.gameMVP.user?.name || 'Unknown' } : null;
 
     res.json(populatedGame);
   } catch (err) {
     console.error('Update game error:', err);
-    res.status(500).json({ error: 'Failed to update game' });
+    res.status(500).json({ error: err.message || 'Failed to update game' });
   }
 });
 

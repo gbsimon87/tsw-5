@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { statDisplayMap } from '../../utils/statDisplayMap';
 
 export default function BoxScore({ game, league, tab, setTab, boxScoreTabLabels, filteredPlayers }) {

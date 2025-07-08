@@ -10,7 +10,6 @@ import AdminPanel from './components/AdminPanel';
 import ManageLeague from './components/ManageLeague';
 import ManageLeagueEdit from './components/ManageLeagueEdit';
 import ManageGames from './components/ManageGames';
-import GameTracking from './components/GameTracking/GameTracking';
 import GameTrackingTwo from './components/GameTracking/GameTrackingTwo';
 import NavBar from './components/NavBar';
 import About from './components/About';
@@ -102,7 +101,6 @@ function AppContent() {
             path="/leagues/:leagueId/games/:gameId/tracking"
             element={
               <ProtectedRoute>
-                {/* <GameTracking /> */}
                 <GameTrackingTwo />
               </ProtectedRoute>
             }

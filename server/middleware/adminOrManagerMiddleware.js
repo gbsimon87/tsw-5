@@ -1,11 +1,22 @@
 const League = require('../models/League');
 const Team = require('../models/Team');
+const Game = require('../models/Game');
 
 const checkAdminOrManager = async (req, res, next) => {
   try {
     let leagueId = req.body.leagueId || req.query.leagueId || req.body.league;
-    // console.log('checkAdminOrManager: leagueId from body/query:', leagueId);
 
+    // Try to get leagueId from Game document if gameId is provided
+    if (!leagueId && req.params.gameId) {
+      const game = await Game.findById(req.params.gameId).select('league');
+      if (!game) {
+        console.error('checkAdminOrManager: Game not found for gameId:', req.params.gameId);
+        return res.status(404).json({ error: 'Game not found' });
+      }
+      leagueId = game.league;
+    }
+
+    // Fallback to teamId if provided
     if (!leagueId && req.params.teamId) {
       const team = await Team.findById(req.params.teamId);
       if (!team) {
@@ -13,7 +24,6 @@ const checkAdminOrManager = async (req, res, next) => {
         return res.status(404).json({ error: 'Team not found' });
       }
       leagueId = team.league;
-      // console.log('checkAdminOrManager: leagueId from team.league:', leagueId);
     }
 
     if (!leagueId) {
