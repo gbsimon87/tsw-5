@@ -151,6 +151,20 @@ router.get('/', authMiddleware, async (req, res) => {
   }
 });
 
+// Get all active public leagues (no authentication required)
+router.get('/public-leagues', async (req, res) => {
+  try {
+    const leagues = await League.find({ isActive: true })
+      .select('name logo')
+      .lean();
+    res.set('Cache-Control', 'no-store');
+    res.json(leagues);
+  } catch (error) {
+    console.error('Get public leagues error:', error);
+    res.status(500).json({ error: 'Failed to fetch public leagues' });
+  }
+});
+
 // Get a single league by ID
 router.get('/:leagueId', authMiddleware, async (req, res) => {
   try {
@@ -198,7 +212,6 @@ router.get('/:leagueId', authMiddleware, async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch league' });
   }
 });
-
 
 // Update a league (admin only)
 router.patch('/:leagueId', authMiddleware, async (req, res) => {

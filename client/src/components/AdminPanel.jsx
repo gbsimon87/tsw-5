@@ -65,7 +65,7 @@ export default function AdminPanel() {
             </h2>
             {error && <p className="text-red-500 mb-6 text-center">{error}</p>}
             {leagues.length === 0 ? (
-              <p className="text-gray-500 text-center">No leagues found.</p>
+              <p className="text-gray-500">You do not manage any leagues.</p>
             ) : (
               <div className="space-y-6">
                 {leagues.map(league => (

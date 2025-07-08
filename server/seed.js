@@ -145,6 +145,10 @@ const generateUniqueDate = (from, to) => {
   return date;
 };
 
+const now = new Date();
+const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+const twoMonthsAhead = new Date(now.getFullYear(), now.getMonth() + 2, now.getDate());
+
 // Clear database
 async function clearDatabase() {
   try {
@@ -526,7 +530,8 @@ async function seedGames(leagues, teams, players) {
             { team: team1._id, score: 0 },
             { team: team2._id, score: 0 },
           ],
-          date: generateUniqueDate('2025-07-01', '2025-12-31'),
+          // date: generateUniqueDate('2025-07-01', '2025-12-31'),
+          date: generateUniqueDate(tomorrow, twoMonthsAhead),
           location: faker.location.city(),
           venue: `${faker.company.name()} Arena`,
           venueCapacity: faker.number.int({ min: 5000, max: 20000 }),
