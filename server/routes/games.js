@@ -454,7 +454,7 @@ router.patch('/:gameId', authMiddleware, checkAdminOrManager, async (req, res) =
       venue: venue !== undefined ? venue : game.venue,
       venueCapacity: venueCapacity !== undefined ? venueCapacity : game.venueCapacity,
       playerStats: playerStats || game.playerStats,
-      playByPlay: playByPlay || game.playByPlay,
+      playByPlay: playByPlay ? [...game.playByPlay, ...playByPlay] : game.playByPlay,
       matchType: matchType || game.matchType,
       eventType: eventType || game.eventType,
       gameDuration: gameDuration !== undefined ? gameDuration : game.gameDuration,

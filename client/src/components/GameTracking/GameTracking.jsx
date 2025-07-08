@@ -91,7 +91,6 @@ export default function GameTracking() {
         setSelectedPlayersTeam1(team1Active);
         setSelectedPlayersTeam2(team2Active);
 
-        // Initialize score with team order preserved
         const initialScore = gameData.teamScores
           ? gameData.teamScores.map(s => ({
             team: s.teamId?.toString(),
@@ -276,7 +275,7 @@ export default function GameTracking() {
         `/api/games/${gameId}`,
         {
           league: game.league,
-          playByPlay: [...playByPlay, ...newEntries],
+          playByPlay: newEntries, // Send only new entries
           playerStats: playerStatsPayload,
         },
         { headers: { Authorization: `Bearer ${user.token}` } }
