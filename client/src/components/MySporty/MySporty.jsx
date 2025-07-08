@@ -224,42 +224,6 @@ export default function MySporty() {
 
         {/* Performance Trend */}
         {/* {player && (
-          <section className="mb-12">
-            <h2 className="text-2xl font-bold text-white mb-4">Performance Trend</h2>
-            <div className="bg-gradient-to-br from-slate-50 to-blue-100 shadow-md rounded-2xl p-6 border border-blue-200">
-              <div className="flex items-center gap-4 mb-4">
-                <select
-                  value={selectedSeason}
-                  onChange={(e) => setSelectedSeason(e.target.value)}
-                  className="border border-blue-200 rounded-md p-2 text-blue-800"
-                >
-                  <option value="all">All Seasons</option>
-                  {player.stats?.seasonStats.map(s => (
-                    <option key={s.season} value={s.season}>Season {s.season}</option>
-                  ))}
-                </select>
-                <select
-                  value={selectedStat}
-                  onChange={(e) => setSelectedStat(e.target.value)}
-                  className="border border-blue-200 rounded-md p-2 text-blue-800"
-                >
-                  <option value="points">Points</option>
-                  <option value="rebounds">Rebounds</option>
-                  <option value="steals">Steals</option>
-                </select>
-                {player.stats?.hotStreak && (
-                  <div className="flex items-center gap-2 text-green-700 font-semibold">
-                    <FireIcon className="w-6 h-6" aria-hidden="true" />
-                    <span>Hot Streak!</span>
-                  </div>
-                )}
-              </div>
-              <canvas ref={trendCanvasRef} className="max-w-full" />
-            </div>
-          </section>
-        )} */}
-
-        {player && (
           <PerformanceTrend
             player={player}
             selectedSeason={selectedSeason}
@@ -267,12 +231,12 @@ export default function MySporty() {
             selectedStat={selectedStat}
             setSelectedStat={setSelectedStat}
           />
-        )}
+        )} */}
 
         {/* Performance Stats */}
-        {player && (
+        {/* {player && (
           <PerformanceStats player={player} canvasRef={canvasRef} />
-        )}
+        )} */}
 
         <section>
           <h2 className="text-2xl font-bold text-white mb-4">Your Teams</h2>
