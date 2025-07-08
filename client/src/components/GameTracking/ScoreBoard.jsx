@@ -21,7 +21,7 @@ const Scoreboard = ({ teamScores }) => {
   }
 
   return (
-    <div className="w-full bg-gradient-to-br from-slate-800 via-blue-700 to-slate-800 text-white text-center">
+    <div className="w-full p-2 bg-gradient-to-br from-slate-800 via-blue-700 to-slate-800 text-white text-center">
       <div className="w-full max-w-3xl mx-auto flex justify-between items-stretch space-x-2">
         {/* Team 1 */}
         <div className="flex-1 bg-blue-800 bg-opacity-30 flex flex-col justify-between">

@@ -72,10 +72,10 @@ export default function PlayerSelection({
     return (
       <div
         key={player.playerId}
-        className="w-full bg-white border border-gray-200 shadow-md p-1 flex flex-col gap-2 transition"
+        className="w-full h-[100px] bg-white border border-gray-200 shadow-md flex flex-col justify-between transition cursor-pointer"
         onClick={() => !isSubstitutionMode && setSelectedPlayer({ ...player, teamId })}
       >
-        <div className="flex flex-row items-center gap-3 w-full">
+        <div className="flex flex-row items-center gap-3 w-full px-2 pt-2">
           {isSubstitutionMode ? (
             <input
               type="checkbox"
@@ -97,17 +97,18 @@ export default function PlayerSelection({
             </span>
             <span className="text-xs text-gray-700 mt-1">
               {getFirstCapitalLetter(player.position) || 'N/A'}
-              <span className="text-gray-400">|</span>
+              <span className="text-gray-400"> | </span>
               #{player.jerseyNumber || 'N/A'}
             </span>
           </div>
         </div>
-        <div className="w-full text-xs text-blue-700 text-center py-1 border-t border-gray-100">
+        <div className="text-xs text-blue-700 text-center py-1 border-t border-gray-100">
           <span>PF: {personalFoul}</span> | <span>PTS: {points}</span> | <span>AST: {assist}</span>
         </div>
       </div>
     );
   };
+
 
   const team1Players = isSubstitutionMode
     ? teams?.[0]?.members?.filter(member => member?.isActive) || []
