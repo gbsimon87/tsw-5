@@ -5,94 +5,6 @@ import { getInitialAndLastName } from '../../utils/getInitialAndLastName';
 import { statDisplayMap } from '../../utils/statDisplayMap';
 import StatModal from './StatModal';
 
-function getFollowUpConfig(statType, selectedPlayer, activePlayers) {
-  if (!selectedPlayer || !activePlayers) {
-    console.error('Missing selectedPlayer or activePlayers');
-    return null;
-  }
-
-  switch (statType) {
-    case 'twoPointFGA':
-    case 'threePointFGA':
-    case 'freeThrowA':
-      return {
-        question: `Who got the rebound after ${selectedPlayer.name}'s shot attempt?`,
-        players: activePlayers, // Both teams can rebound
-        allowNone: true,
-      };
-    case 'twoPointFGM':
-    case 'threePointFGM':
-      return {
-        question: `Who assisted on ${selectedPlayer.name}'s made shot?`,
-        players: activePlayers.filter(p => p.teamId === selectedPlayer.teamId && p.playerId !== selectedPlayer.playerId),
-        allowNone: false,
-      };
-    case 'offensiveRebound':
-      return {
-        question: `Who shot the ball for ${selectedPlayer.name}'s offensive rebound?`,
-        players: activePlayers.filter(p => p.teamId === selectedPlayer.teamId && p.playerId !== selectedPlayer.playerId),
-        allowNone: false,
-        extra: 'twoPointFGA', // Assume shot attempt
-      };
-    case 'assist':
-      return {
-        question: `Who shot the ball for ${selectedPlayer.name}'s assist?`,
-        players: activePlayers.filter(p => p.teamId === selectedPlayer.teamId && p.playerId !== selectedPlayer.playerId),
-        allowNone: false,
-        extra: 'twoPointFGM', // Assume made shot
-      };
-    case 'defensiveRebound':
-      return {
-        question: `Who shot the ball for ${selectedPlayer.name}'s defensive rebound?`,
-        players: activePlayers.filter(p => p.teamId !== selectedPlayer.teamId),
-        allowNone: false,
-        extra: 'twoPointFGA', // Assume shot attempt
-      };
-    case 'personalFoul':
-      return {
-        question: `Who was fouled by ${selectedPlayer.name}?`,
-        players: activePlayers.filter(p => p.teamId !== selectedPlayer.teamId),
-        allowNone: false,
-      };
-    case 'drawnFoul':
-      return {
-        question: `Who fouled ${selectedPlayer.name}?`,
-        players: activePlayers.filter(p => p.teamId !== selectedPlayer.teamId),
-        allowNone: false,
-      };
-    case 'steal':
-      return {
-        question: `Who turned over the ball for ${selectedPlayer.name}'s steal?`,
-        players: activePlayers.filter(p => p.teamId !== selectedPlayer.teamId),
-        allowNone: false,
-        extra: 'turnover',
-      };
-    case 'turnover':
-      return {
-        question: `Who stole the ball from ${selectedPlayer.name}'s turnover?`,
-        players: activePlayers.filter(p => p.teamId !== selectedPlayer.teamId),
-        allowNone: false,
-        extra: 'steal',
-      };
-    case 'block':
-      return {
-        question: `Who was blocked by ${selectedPlayer.name}?`,
-        players: activePlayers.filter(p => p.teamId !== selectedPlayer.teamId),
-        allowNone: false,
-        extra: 'blockedShotAttempt',
-      };
-    case 'blockedShotAttempt':
-      return {
-        question: `Who blocked ${selectedPlayer.name}'s shot?`,
-        players: activePlayers.filter(p => p.teamId !== selectedPlayer.teamId),
-        allowNone: false,
-        extra: 'block',
-      };
-    default:
-      return null;
-  }
-}
-
 export default function PlayerSelection({
   teams,
   game,
@@ -253,7 +165,14 @@ export default function PlayerSelection({
       const followUpConfig = getFollowUpConfig(selectedStatType, selectedPlayer, activePlayers);
       const followUpPlayer = activePlayers.find(p => p.playerId === followUpData.playerId);
       if (followUpPlayer) {
-        const followUpStatType = followUpConfig?.extra || 'assist'; // Default to 'assist' if no extra
+        let followUpStatType;
+        if (followUpConfig?.extra) {
+          followUpStatType = followUpConfig.extra;
+        } else if (['twoPointFGA', 'threePointFGA', 'freeThrowA'].includes(selectedStatType)) {
+          followUpStatType = followUpPlayer.teamId === selectedPlayer.teamId ? 'offensiveRebound' : 'defensiveRebound';
+        } else {
+          followUpStatType = 'assist'; // Default for other cases
+        }
         statsToRecord.push({
           player: followUpPlayer,
           statType: followUpStatType,
@@ -265,7 +184,6 @@ export default function PlayerSelection({
       }
     }
 
-    // console.log('Stats to handlePlayerClick:', statsToRecord);
     handlePlayerClick(statsToRecord);
     resetModal();
   };
@@ -286,9 +204,93 @@ export default function PlayerSelection({
         ['P1', 'P2', 'P3', 'OT1', 'OT2'];
   };
 
-  // console.log('teams:', teams);
-  // console.log('team1Players:', team1Players);
-  // console.log('team2Players:', team2Players);
+  function getFollowUpConfig(statType, selectedPlayer, activePlayers) {
+    if (!selectedPlayer || !activePlayers) {
+      console.error('Missing selectedPlayer or activePlayers');
+      return null;
+    }
+
+    switch (statType) {
+      case 'twoPointFGA':
+      case 'threePointFGA':
+      case 'freeThrowA':
+        return {
+          question: `Who got the rebound after ${selectedPlayer.name}'s shot attempt?`,
+          players: activePlayers,
+          allowNone: true,
+        };
+      case 'twoPointFGM':
+      case 'threePointFGM':
+        return {
+          question: `Who assisted on ${selectedPlayer.name}'s made shot?`,
+          players: activePlayers.filter(p => p.teamId === selectedPlayer.teamId && p.playerId !== selectedPlayer.playerId),
+          allowNone: false,
+        };
+      case 'offensiveRebound':
+        return {
+          question: `Who shot the ball for ${selectedPlayer.name}'s offensive rebound?`,
+          players: activePlayers.filter(p => p.teamId === selectedPlayer.teamId && p.playerId !== selectedPlayer.playerId),
+          allowNone: false,
+          extra: 'twoPointFGA',
+        };
+      case 'assist':
+        return {
+          question: `Who shot the ball for ${selectedPlayer.name}'s assist?`,
+          players: activePlayers.filter(p => p.teamId === selectedPlayer.teamId && p.playerId !== selectedPlayer.playerId),
+          allowNone: false,
+          extra: 'twoPointFGM',
+        };
+      case 'defensiveRebound':
+        return {
+          question: `Who shot the ball for ${selectedPlayer.name}'s defensive rebound?`,
+          players: activePlayers.filter(p => p.teamId !== selectedPlayer.teamId),
+          allowNone: false,
+          extra: 'twoPointFGA',
+        };
+      case 'personalFoul':
+        return {
+          question: `Who was fouled by ${selectedPlayer.name}?`,
+          players: activePlayers.filter(p => p.teamId !== selectedPlayer.teamId),
+          allowNone: false,
+        };
+      case 'drawnFoul':
+        return {
+          question: `Who fouled ${selectedPlayer.name}?`,
+          players: activePlayers.filter(p => p.teamId !== selectedPlayer.teamId),
+          allowNone: false,
+        };
+      case 'steal':
+        return {
+          question: `Who turned over the ball for ${selectedPlayer.name}'s steal?`,
+          players: activePlayers.filter(p => p.teamId !== selectedPlayer.teamId),
+          allowNone: false,
+          extra: 'turnover',
+        };
+      case 'turnover':
+        return {
+          question: `Who stole the ball from ${selectedPlayer.name}'s turnover?`,
+          players: activePlayers.filter(p => p.teamId !== selectedPlayer.teamId),
+          allowNone: false,
+          extra: 'steal',
+        };
+      case 'block':
+        return {
+          question: `Who was blocked by ${selectedPlayer.name}?`,
+          players: activePlayers.filter(p => p.teamId !== selectedPlayer.teamId),
+          allowNone: false,
+          extra: 'blockedShotAttempt',
+        };
+      case 'blockedShotAttempt':
+        return {
+          question: `Who blocked ${selectedPlayer.name}'s shot?`,
+          players: activePlayers.filter(p => p.teamId !== selectedPlayer.teamId),
+          allowNone: false,
+          extra: 'block',
+        };
+      default:
+        return null;
+    }
+  }
 
   return (
     <div className="grid grid-cols-2 sm:grid-cols-2 w-full gap-2 sm:gap-6 pt-0">
