@@ -81,31 +81,37 @@ export default function BoxScore({ game, league, tab, setTab, boxScoreTabLabels,
                 </td>
               </tr>
             ) : (
-              filteredPlayers.map((player, idx) => (
-                <tr
-                  key={player.playerId}
-                  className={idx % 2 === 0 ? 'bg-white hover:bg-gray-50' : 'bg-gray-50 hover:bg-gray-100'}
-                >
-                  <td
-                    className="sticky left-0 bg-white border-b border-gray-100 px-4 py-2 font-medium whitespace-normal z-10"
-                    style={{ minWidth: 120, maxWidth: 200 }}
+              filteredPlayers.map((player, idx) => {
+                const isGreyRow = idx % 2 !== 0;
+                return (
+                  <tr
+                    key={player.playerId}
+                    className={isGreyRow ? 'bg-gray-50 hover:bg-gray-100' : 'bg-white hover:bg-gray-50'}
                   >
-                    {player.playerName}
-                  </td>
-                  {statTypes?.map(statKey => (
                     <td
-                      key={statKey}
-                      className="border-b border-gray-100 px-3 py-2 text-center text-sm text-gray-700"
+                      className={`sticky left-0 border-b border-gray-100 px-4 py-2 font-medium whitespace-normal z-10
+              ${isGreyRow ? 'bg-gray-50 text-gray-900' : 'bg-white text-gray-900'}
+            `}
+                      style={{ minWidth: 120, maxWidth: 200 }}
                     >
-                      {typeof player.stats?.[statKey] === 'number'
-                        ? player.stats[statKey]
-                        : 0}
+                      {player.playerName}
                     </td>
-                  ))}
-                </tr>
-              ))
+                    {statTypes?.map(statKey => (
+                      <td
+                        key={statKey}
+                        className="border-b border-gray-100 px-3 py-2 text-center text-sm text-gray-700"
+                      >
+                        {typeof player.stats?.[statKey] === 'number'
+                          ? player.stats[statKey]
+                          : 0}
+                      </td>
+                    ))}
+                  </tr>
+                );
+              })
             )}
           </tbody>
+
         </table>
       </div>
     </div>
