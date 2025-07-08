@@ -5,7 +5,7 @@ import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Login from './components/Login';
 import Register from './components/Register';
-import MySporty from './components/MySporty';
+import MySporty from './components/MySporty/MySporty';
 import AdminPanel from './components/AdminPanel';
 import ManageLeague from './components/ManageLeague';
 import ManageLeagueEdit from './components/ManageLeagueEdit';
