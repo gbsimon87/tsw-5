@@ -517,12 +517,12 @@ export default function MySporty() {
                 >
                   {team.logo ? (
                     <img
-                      src={team.logo}
-                      alt={`${team.name} logo`}
-                      className="absolute top-6 right-6 w-16 h-16 object-cover rounded-full border-2 border-blue-200 shadow-sm hover:scale-105 transition-transform duration-200"
+                      src={team?.logo}
+                      alt={`${team?.name} logo`}
+                      className="w-16 h-16 object-cover rounded-full border-2 border-blue-200 shadow-sm hover:scale-105 transition-transform duration-200"
                     />
                   ) : (
-                    <div className="absolute top-6 right-6 w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center border-2 border-blue-200 shadow-sm">
+                    <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center border-2 border-blue-200 shadow-sm">
                       <span className="text-blue-300 text-xl font-bold">?</span>
                     </div>
                   )}
