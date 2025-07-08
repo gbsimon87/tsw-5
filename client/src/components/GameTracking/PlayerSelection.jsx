@@ -72,7 +72,7 @@ export default function PlayerSelection({
     return (
       <div
         key={player.playerId}
-        className="w-full h-[100px] bg-white border border-gray-200 shadow-md flex flex-col justify-between transition cursor-pointer"
+        className="w-full h-[100px] bg-white border border-gray-200 shadow-sm hover:shadow-md flex flex-col justify-between transition cursor-pointer rounded-md"
         onClick={() => !isSubstitutionMode && setSelectedPlayer({ ...player, teamId })}
       >
         <div className="flex flex-row items-center gap-3 w-full px-2 pt-2">
@@ -81,7 +81,7 @@ export default function PlayerSelection({
               type="checkbox"
               checked={isChecked}
               onChange={() => handleSelectPlayer(teamId, player.playerId)}
-              className="mt-1"
+              className="accent-blue-600 w-4 h-4 mt-1 rounded focus:ring-2 focus:ring-blue-400 transition"
               aria-label={`Toggle active status for ${player.name || 'Unknown'}`}
             />
           ) : (
@@ -92,20 +92,22 @@ export default function PlayerSelection({
             />
           )}
           <div className="flex flex-col flex-1 min-w-0">
-            <span className="font-semibold text-base break-words whitespace-normal block">
+            <span className="font-semibold text-sm text-gray-900 truncate">
               {getInitialAndLastName(player.name) || 'Unknown'}
             </span>
-            <span className="text-xs text-gray-700 mt-1">
+            <span className="text-xs text-gray-500 mt-0.5">
               {getFirstCapitalLetter(player.position) || 'N/A'}
-              <span className="text-gray-400"> | </span>
+              <span className="text-gray-400 px-1">|</span>
               #{player.jerseyNumber || 'N/A'}
             </span>
           </div>
         </div>
-        <div className="text-xs text-blue-700 text-center py-1 border-t border-gray-100">
+
+        <div className="text-[11px] text-blue-700 text-center py-1 border-t border-gray-100 bg-blue-50/10">
           <span>PF: {personalFoul}</span> | <span>PTS: {points}</span> | <span>AST: {assist}</span>
         </div>
       </div>
+
     );
   };
 

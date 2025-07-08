@@ -404,7 +404,7 @@ export default function GameTracking() {
           };
         })}
       />
-      <div className="bg-white h-[70vh] overflow-y-auto px-2">{renderScreenView()}</div>
+      <div className="bg-white h-[65vh] overflow-y-auto px-2">{renderScreenView()}</div>
       <ClockControls
         clockState={clockState}
         handleClockToggle={handleClockToggle}

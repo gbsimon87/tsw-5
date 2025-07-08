@@ -59,9 +59,9 @@ export default function PlayByPlay({ playByPlay, teams, handleDeletePlay }) {
               className="bg-white border border-gray-300 rounded-md shadow-sm p-3 mb-3 w-full flex flex-col sm:flex-row sm:items-center sm:justify-between"
             >
               {/* LEFT SECTION: Details */}
-              <div className="flex flex-col gap-1 w-full sm:grid sm:grid-cols-[40px_1fr_1fr_1fr_1fr] sm:items-center sm:gap-4">
+              <div className="flex flex-col w-full sm:grid sm:grid-cols-[40px_1fr_1fr_auto] sm:items-center sm:gap-4">
                 {/* Player Image + Name */}
-                <div className="flex items-center gap-2 sm:col-span-1">
+                <div className="flex items-center gap-3 sm:col-span-1 min-w-0">
                   <div className="w-10 h-10 rounded-full bg-gray-300 overflow-hidden flex-shrink-0">
                     {entry.playerImage ? (
                       <img
@@ -79,18 +79,16 @@ export default function PlayByPlay({ playByPlay, teams, handleDeletePlay }) {
                 </div>
 
                 {/* Team Name */}
-                <span className="text-xs text-gray-600 sm:truncate sm:overflow-hidden">
+                <span className="text-xs text-gray-600 sm:truncate sm:overflow-hidden sm:col-span-1 flex items-center">
                   {getTeamName(entry.team)}
                 </span>
 
-                {/* Stat Type */}
-                <span className="text-sm text-gray-700 sm:truncate sm:overflow-hidden">
-                  {statDisplayMap[entry.statType]?.label || entry.statType}
-                </span>
-
-                {/* Time + Period */}
-                <span className="text-xs text-gray-400 sm:truncate sm:overflow-hidden">
-                  {formatTime(entry.time)} in {entry.period}
+                {/* Stat + Time + Period all on one line */}
+                <span className="text-sm text-gray-700 sm:col-span-2 flex flex-wrap sm:flex-nowrap items-center gap-2">
+                  <span className="font-semibold">{statDisplayMap[entry.statType]?.label || entry.statType}</span>
+                  <span className="text-gray-400 text-xs">
+                    {formatTime(entry.time)} in {entry.period}
+                  </span>
                 </span>
               </div>
 
@@ -105,6 +103,7 @@ export default function PlayByPlay({ playByPlay, teams, handleDeletePlay }) {
                 </button>
               </div>
             </div>
+
           ))}
         </div>
       )}

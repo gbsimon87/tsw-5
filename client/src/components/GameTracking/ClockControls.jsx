@@ -88,7 +88,7 @@ export default function ClockControls({
   }, [clockState.seconds, clockState.running, handleClockToggle]);
 
   return (
-    <div className="w-full flex justify-center items-center mb-4" role="region" aria-label="Game Clock Controls">
+    <div className="w-full flex justify-center items-center mt-4 mb-4" role="region" aria-label="Game Clock Controls">
       <div className="flex items-center gap-4 px-4 py-2 bg-white/90 backdrop-blur border border-gray-200 shadow rounded-lg">
         {/* Period Button */}
         <button
