@@ -1,18 +1,17 @@
-import { useEffect } from "react";
+import { useEffect } from 'react';
 
 const Scoreboard = ({ teamScores }) => {
-  // console.log(teamScores);
-
   useEffect(() => {
-    // console.log('Component mounted');
+    console.log('Scoreboard teamScores:', teamScores);
   }, [teamScores]);
-  
+
   // Defensive checks
   const isValidArray = Array.isArray(teamScores) && teamScores.length >= 2;
   const team1 = isValidArray && teamScores[0] ? teamScores[0] : null;
   const team2 = isValidArray && teamScores[1] ? teamScores[1] : null;
 
   if (!isValidArray || !team1 || !team2) {
+    console.error('Invalid teamScores data:', teamScores);
     return (
       <div className="w-full flex justify-center">
         <div className="bg-red-100 text-red-700 p-4 rounded">
@@ -30,7 +29,7 @@ const Scoreboard = ({ teamScores }) => {
             {team1.teamName || 'Team 1'}
           </h2>
           <p className="text-xl font-bold">
-            {typeof team1?.score === 'number' ? Math.round(team1?.score) : '-'}
+            {typeof team1.score === 'number' ? Math.round(team1.score) : '-'}
           </p>
         </div>
         <div className="p-4 w-full text-right">
@@ -38,7 +37,7 @@ const Scoreboard = ({ teamScores }) => {
             {team2.teamName || 'Team 2'}
           </h2>
           <p className="text-xl font-bold">
-            {typeof team2?.score === 'number' ? Math.round(team2?.score) : '-'}
+            {typeof team2.score === 'number' ? Math.round(team2.score) : '-'}
           </p>
         </div>
       </div>

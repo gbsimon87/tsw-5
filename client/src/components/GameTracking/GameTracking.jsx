@@ -94,12 +94,12 @@ export default function GameTracking() {
         // Initialize score with team order preserved
         const initialScore = gameData.teamScores
           ? gameData.teamScores.map(s => ({
-            team: (s.team?._id || s?.team)?.toString(),
+            team: s.teamId?.toString(),
             score: s.score || 0,
           }))
           : [
-            { team: gameData?.teams[0]?._id?.toString(), score: 0 },
-            { team: gameData?.teams[1]?._id?.toString(), score: 0 },
+            { team: gameData?.teams[0]?._id?.toString() || 'team1', score: 0 },
+            { team: gameData?.teams[1]?._id?.toString() || 'team2', score: 0 },
           ];
 
         setFormData({
