@@ -1,4 +1,5 @@
 const express = require('express');
+const { isValidObjectId } = require('mongoose');
 const router = express.Router();
 const Team = require('../models/Team');
 const Player = require('../models/Player');
@@ -300,6 +301,154 @@ router.get('/my-teams', authMiddleware, async (req, res) => {
   } catch (error) {
     console.error('Get my teams error:', error);
     res.status(400).json({ error: 'Failed to fetch user teams' });
+  }
+});
+
+// Route to get a single team by ID, with user validation and record/ranking
+// Route to get a single team by ID, with user validation and record/ranking
+router.get('/:teamId', authMiddleware, async (req, res) => {
+  try {
+    const { teamId } = req.params;
+
+    // Validate teamId
+    if (!isValidObjectId(teamId)) {
+      console.error(`Invalid teamId: ${teamId}`);
+      return res.status(400).json({ error: 'Invalid team ID' });
+    }
+
+    // Find Player documents for the authenticated user
+    const players = await Player.find({ user: req.user._id }).select('_id');
+    const playerIds = players.map((player) => player._id);
+    // console.log(`User ${req.user._id} has player IDs:`, playerIds);
+
+    // Find the team, ensuring the user is a member and the team is active
+    const team = await Team.findOne({
+      _id: teamId,
+      'members.player': { $in: playerIds },
+      isActive: true,
+    })
+      .populate({
+        path: 'members.player',
+        populate: {
+          path: 'user',
+          model: 'User',
+          select: 'name',
+        },
+      })
+      .populate('league', 'name sportType location teams')
+      .lean();
+
+    if (!team) {
+      console.error(`Team not found or user not a member: teamId=${teamId}, playerIds=${playerIds}`);
+      return res.status(404).json({ error: 'Team not found or user is not a member' });
+    }
+
+    // Calculate team record (wins/losses) for the current season
+    const teamRecord = await Game.aggregate([
+      {
+        $match: {
+          teams: team._id,
+          isCompleted: true,
+          season: team.season,
+        },
+      },
+      {
+        $project: {
+          teamScores: 1,
+          winner: {
+            $cond: {
+              if: {
+                $gt: [
+                  // Team's score
+                  {
+                    $arrayElemAt: [
+                      '$teamScores.score',
+                      { $indexOfArray: ['$teamScores.team', team._id] },
+                    ],
+                  },
+                  // Opposing team's score
+                  {
+                    $arrayElemAt: [
+                      '$teamScores.score',
+                      {
+                        $indexOfArray: [
+                          '$teamScores.team',
+                          {
+                            $arrayElemAt: [
+                              {
+                                $filter: {
+                                  input: '$teams',
+                                  as: 'team',
+                                  cond: { $ne: ['$$team', team._id] },
+                                },
+                              },
+                              0,
+                            ],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+              then: 1,
+              else: 0,
+            },
+          },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          wins: { $sum: '$winner' },
+          losses: { $sum: { $cond: [{ $eq: ['$winner', 0] }, 1, 0] } },
+        },
+      },
+    ]);
+
+    team.record = teamRecord.length
+      ? { wins: teamRecord[0].wins, losses: teamRecord[0].losses }
+      : { wins: 0, losses: 0 };
+
+    // Calculate team ranking in the league for the current season
+    const teamScores = await Game.aggregate([
+      {
+        $match: {
+          league: team.league._id,
+          season: team.season,
+          isCompleted: true,
+        },
+      },
+      { $unwind: '$teamScores' },
+      {
+        $group: {
+          _id: '$teamScores.team',
+          totalScore: { $sum: '$teamScores.score' },
+        },
+      },
+      { $sort: { totalScore: -1 } },
+    ]);
+
+    const rank =
+      teamScores.findIndex((t) => t._id.toString() === team._id.toString()) + 1;
+    const totalTeams = team.league.teams.length;
+    team.ranking = rank > 0 ? { rank, totalTeams } : { rank: null, totalTeams };
+
+    // Prevent caching to ensure fresh data
+    res.set('Cache-Control', 'no-store');
+    res.json(team);
+  } catch (err) {
+    if (err.name === 'CastError') {
+      console.error(`CastError for teamId: ${req.params.teamId}`);
+      return res.status(400).json({ error: 'Invalid team ID' });
+    }
+    console.error('Get team error:', err.message, err.stack);
+    res.status(500).json({ 
+      error: 'Failed to fetch team',
+      details: err.message,
+      teamId: req.params.teamId,
+      userId: req.user?._id || 'unknown'
+    });
   }
 });
 

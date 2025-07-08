@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Chart from 'chart.js/auto';
 import {
@@ -35,15 +36,16 @@ export default function MySporty() {
   const trendCanvasRef = useRef(null);
   const [selectedSeason, setSelectedSeason] = useState('all');
   const [selectedStat, setSelectedStat] = useState('points');
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchPlayerData = async () => {
       try {
-        const response = await axios.get(`/api/players?userId=${user._id}`, {
-          headers: { Authorization: `Bearer ${user.token}` },
+        const response = await axios.get(`/api/players?userId=${user?._id}`, {
+          headers: { Authorization: `Bearer ${user?.token}` },
         });
-        setPlayerIds(response.data.map(p => p._id));
-        setPlayer(response.data[0]);
+        setPlayerIds(response?.data?.map(p => p?._id));
+        setPlayer(response?.data[0]);
       } catch (err) {
         setError('Failed to fetch player data');
         setLoading(false);
@@ -76,7 +78,7 @@ export default function MySporty() {
     };
 
     Promise.all([fetchPlayerData(), fetchTeams(), fetchNextGame()]);
-  }, [user._id, user.token]);
+  }, [user?._id, user?.token]);
 
   // Performance stats chart
   useEffect(() => {
@@ -242,20 +244,21 @@ export default function MySporty() {
           <h2 className="text-2xl font-bold text-white mb-4">Your Teams</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {teams.map((team) => {
-              const member = team.members.find((m) => playerIds.includes(m.player._id));
-              const memberSince = new Date(team.createdAt).toLocaleDateString('en-US', {
+              const member = team.members.find((m) => playerIds?.includes(m?.player?._id));
+              const memberSince = new Date(team?.createdAt)?.toLocaleDateString('en-US', {
                 year: 'numeric',
                 month: 'long',
                 day: 'numeric',
               });
-
+              
               return (
                 <article
-                  key={team._id}
+                  key={team?._id}
                   className="relative bg-gradient-to-br from-white to-blue-50 shadow-md rounded-2xl p-6 flex flex-col border border-blue-200 hover:shadow-xl transition-shadow duration-300"
-                  aria-label={`Team card for ${team.name}`}
+                  aria-label={`Team card for ${team?.name}`}
+                  onClick={() => navigate(`/league/${team?.league?._id}/team/${team?._id}`)}
                 >
-                  {team.logo ? (
+                  {team?.logo ? (
                     <img
                       src={team?.logo}
                       alt={`${team?.name} logo`}
