@@ -32,15 +32,15 @@ export default function BoxScore({ game, league, tab, setTab, boxScoreTabLabels,
 
   return (
     <div className="w-full mt-2">
-      <div className="flex justify-center mb-4 gap-2">
+      <div className="flex justify-center mb-4 flex-wrap gap-2">
         {boxScoreTabLabels.map((label, idx) => (
           <button
             key={label}
-            className={`px-4 py-2 rounded-md font-semibold transition
-            ${tab === idx
+            className={`px-4 py-2 rounded-md font-semibold transition-all duration-200
+              ${tab === idx
                 ? 'bg-blue-600 text-white shadow'
                 : 'bg-gray-100 text-gray-700 hover:bg-blue-100'}
-          `}
+            `}
             onClick={() => setTab(idx)}
           >
             {label}
@@ -48,12 +48,12 @@ export default function BoxScore({ game, league, tab, setTab, boxScoreTabLabels,
         ))}
       </div>
 
-      <div className="overflow-x-auto max-h-[500px] overflow-y-auto">
-        <table className="min-w-full border border-gray-200">
-          <thead className="bg-white">
+      <div className="overflow-x-auto max-h-[500px] overflow-y-auto rounded-md border border-gray-200 shadow-sm">
+        <table className="min-w-full text-sm">
+          <thead className="bg-gray-50 text-gray-700">
             <tr>
               <th
-                className="sticky top-0 left-0 bg-white z-30 border-b border-gray-200 px-4 py-2 text-left font-bold"
+                className="sticky top-0 left-0 z-30 bg-gray-50 border-b border-gray-200 px-4 py-2 text-left font-semibold"
                 style={{ minWidth: 120 }}
                 scope="col"
               >
@@ -62,7 +62,7 @@ export default function BoxScore({ game, league, tab, setTab, boxScoreTabLabels,
               {statTypes?.map(statKey => (
                 <th
                   key={statKey}
-                  className="sticky top-0 bg-white z-20 border-b border-gray-200 px-3 py-2 text-xs font-semibold text-gray-700 whitespace-nowrap"
+                  className="sticky top-0 z-20 bg-gray-50 border-b border-gray-200 px-3 py-2 text-xs font-semibold text-gray-700 whitespace-nowrap text-center"
                   scope="col"
                 >
                   {statDisplayMap[statKey]?.abbr || statKey}
@@ -70,7 +70,7 @@ export default function BoxScore({ game, league, tab, setTab, boxScoreTabLabels,
               ))}
             </tr>
           </thead>
-          <tbody>
+          <tbody className="divide-y divide-gray-100">
             {filteredPlayers.length === 0 ? (
               <tr>
                 <td
@@ -81,8 +81,11 @@ export default function BoxScore({ game, league, tab, setTab, boxScoreTabLabels,
                 </td>
               </tr>
             ) : (
-              filteredPlayers.map(player => (
-                <tr key={player.playerId}>
+              filteredPlayers.map((player, idx) => (
+                <tr
+                  key={player.playerId}
+                  className={idx % 2 === 0 ? 'bg-white hover:bg-gray-50' : 'bg-gray-50 hover:bg-gray-100'}
+                >
                   <td
                     className="sticky left-0 bg-white border-b border-gray-100 px-4 py-2 font-medium whitespace-normal z-10"
                     style={{ minWidth: 120, maxWidth: 200 }}
@@ -92,7 +95,7 @@ export default function BoxScore({ game, league, tab, setTab, boxScoreTabLabels,
                   {statTypes?.map(statKey => (
                     <td
                       key={statKey}
-                      className="border-b border-gray-100 px-3 py-2 text-center"
+                      className="border-b border-gray-100 px-3 py-2 text-center text-sm text-gray-700"
                     >
                       {typeof player.stats?.[statKey] === 'number'
                         ? player.stats[statKey]
