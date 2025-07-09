@@ -63,6 +63,58 @@ export default function UpcomingFeatures() {
       title: "As a player, I want to select which stat to display on my profile chart so that I can focus on the stats that matter most to me.",
       status: "todo",
     },
+    {
+      title: "As an admin, I need the ability to add other administrators.",
+      status: "todo",
+    },
+    {
+      title: "As an admin, I need to add a a second admin to the league within 90 days or the functionality to edit the league will be cut off.",
+      status: "todo",
+    },
+    {
+      title: "As a user, if my authentication token goes invalid, I should be redirected to the login page.",
+      status: "todo",
+    },
+    {
+      title: "As an admin, I need clearer wording to see my upcoming/past games from the Admin Panel",
+      status: "todo",
+    },
+    {
+      title: "As a user, I should be able to request to join a league.",
+      status: "todo",
+    },
+    {
+      title: "As an admin, I should see a list of requests to join the league, and accept or deny them.",
+      status: "todo",
+    },
+    {
+      title: "As an admin, I want to be able to create a season and carry over teams for the next season.",
+      status: "todo",
+    },
+    {
+      title: "As a player, I should be informed from MySporty if I don't have any upcoming games.",
+      status: "todo",
+    },
+    {
+      title: "As a user who is logged in, I should be able to vote on upcoming features.",
+      status: "todo",
+    },
+    {
+      title: "As a user, I should be able to upload a profile picture.",
+      status: "todo",
+    },
+    {
+      title: "As an admin, I should be able to upload images for the league logo and team logos.",
+      status: "todo",
+    },
+    {
+      title: "As a team manager, I should be able to upload images for the team logos.",
+      status: "todo",
+    },
+    {
+      title: "System - Fix refresh token expiration.",
+      status: "todo",
+    },
   ];
 
   // Sort features: in-progress, todo, done
