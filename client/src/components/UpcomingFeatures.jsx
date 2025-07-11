@@ -10,11 +10,11 @@ export default function UpcomingFeatures() {
     // Difficulty 1: Simple UI changes or notifications
     {
       title: "As a user, I want to receive a confirmation or error toast when creating a game so that I know if it was successful.",
-      status: "todo"
+      status: "done"
     },
     {
-      title: "As an admin, I need clearer wording to see my upcoming/past games from the Admin Panel",
-      status: "todo"
+      title: "As an admin, I need clearer wording to see my scheduled games from the Admin Panel",
+      status: "done"
     },
 
     // Difficulty 2: Basic functionality or simple logic

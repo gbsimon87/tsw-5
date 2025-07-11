@@ -60,7 +60,7 @@ export default function ManageGames() {
     },
     {
       id: 'view',
-      label: 'Past Games',
+      label: 'Scheduled Games',
       icon: ClockIcon
     }
   ];
