@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import {
@@ -149,88 +150,144 @@ export default function ManageGames() {
   };
 
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      if (formData.teams[0] === formData.teams[1]) {
-        setError('Home and Away teams must be different');
-        return;
-      }
-
-      const dateTime = new Date(`${formData.date}T${formData.time}`).toISOString();
-      const payload = {
-        ...formData,
-        date: dateTime,
-        league: leagueId,
-        season: league?.seasons.find(s => s.isActive)?.name || 'Season 1',
-        teams: formData.teams.filter(id => id),
-        venueCapacity: parseInt(formData.venueCapacity) || 0,
-        attendance: parseInt(formData.attendance) || 0,
-        isCompleted: formData.eventType === 'final' || formData.score.team1 > 0 || formData.score.team2 > 0,
-        periodType: formData.periodType,
-        periodDuration: parseInt(formData.periodDuration),
-        overtimeDuration: parseInt(formData.overtimeDuration),
-        scoringRules: formData.scoringRules,
-      };
-
-      if (editingGameId) {
-        await axios.patch(`/api/games/${editingGameId}`, payload, {
-          headers: { Authorization: `Bearer ${user.token}` },
-        });
-      } else {
-        await axios.post(`/api/games`, payload, {
-          headers: { Authorization: `Bearer ${user.token}` },
-        });
-      }
-
-      const activeSeason = league?.seasons.find(s => s.isActive)?.name || 'Season 1';
-      const gamesResponse = await axios.get(`/api/games?leagueId=${leagueId}&season=${activeSeason}&t=${Date.now()}`, {
-        headers: {
-          Authorization: `Bearer ${user.token}`,
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache',
-        },
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  try {
+    if (formData.teams[0] === formData.teams[1]) {
+      setError('Home and Away teams must be different');
+      toast.error('Home and Away teams must be different', {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        theme: "light",
       });
-      setGames(gamesResponse.data || []);
-
-      setFormData({
-        date: '',
-        time: '',
-        teams: ['', ''],
-        location: '',
-        venue: '',
-        venueCapacity: '',
-        score: { team1: 0, team2: 0 },
-        matchType: 'league',
-        eventType: 'regular',
-        attendance: '',
-      });
-      setEditingGameId(null);
-      setError(null);
-      setActiveTab('view');
-    } catch (err) {
-      console.error('Save game error:', err.response?.data || err.message);
-      setError(err.response?.data?.error || 'Failed to save game');
+      return;
     }
-  };
+
+    const dateTime = new Date(`${formData.date}T${formData.time}`).toISOString();
+    const payload = {
+      ...formData,
+      date: dateTime,
+      league: leagueId,
+      season: league?.seasons.find(s => s.isActive)?.name || 'Season 1',
+      teams: formData.teams.filter(id => id),
+      venueCapacity: parseInt(formData.venueCapacity) || 0,
+      attendance: parseInt(formData.attendance) || 0,
+      isCompleted: formData.eventType === 'final' || formData.score.team1 > 0 || formData.score.team2 > 0,
+      periodType: formData.periodType,
+      periodDuration: parseInt(formData.periodDuration),
+      overtimeDuration: parseInt(formData.overtimeDuration),
+      scoringRules: formData.scoringRules,
+    };
+
+    if (editingGameId) {
+      await axios.patch(`/api/games/${editingGameId}`, payload, {
+        headers: { Authorization: `Bearer ${user.token}` },
+      });
+      toast.success('Game updated successfully!', {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        theme: "light",
+      });
+    } else {
+      await axios.post(`/api/games`, payload, {
+        headers: { Authorization: `Bearer ${user.token}` },
+      });
+      toast.success('Game created successfully!', {
+        position: "top-right",
+        autoClose: 1000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        theme: "light",
+      });
+    }
+
+    const activeSeason = league?.seasons.find(s => s.isActive)?.name || 'Season 1';
+    const gamesResponse = await axios.get(`/api/games?leagueId=${leagueId}&season=${activeSeason}&t=${Date.now()}`, {
+      headers: {
+        Authorization: `Bearer ${user.token}`,
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache',
+      },
+    });
+    setGames(gamesResponse.data || []);
+
+    setFormData({
+      date: '',
+      time: '',
+      teams: ['', ''],
+      location: '',
+      venue: '',
+      venueCapacity: '',
+      score: { team1: 0, team2: 0 },
+      matchType: 'league',
+      eventType: 'regular',
+      attendance: '',
+    });
+    setEditingGameId(null);
+    setError(null);
+    setActiveTab('view');
+  } catch (err) {
+    console.error('Save game error:', err.response?.data || err.message);
+    const errorMessage = err.response?.data?.error || 'Failed to save game';
+    setError(errorMessage);
+    toast.error(errorMessage, {
+      position: "top-right",
+      autoClose: 3000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      theme: "light",
+    });
+  }
+};
 
   const handleEditGame = (game) => {
     navigate(`/leagues/${leagueId}/games/${game._id}/tracking`);
   };
 
-  const handleDeleteGame = async (gameId) => {
-    if (!window.confirm('Are you sure you want to delete this game?')) return;
-    try {
-      await axios.delete(`/api/games/${gameId}`, {
-        headers: { Authorization: `Bearer ${user.token}` },
-      });
-      setGames(games.filter(game => game._id !== gameId));
-      setError(null);
-    } catch (err) {
-      console.error('Delete game error:', err.response?.data || err.message);
-      setError(err.response?.data?.error || 'Failed to delete game');
-    }
-  };
+const handleDeleteGame = async (gameId) => {
+  if (!window.confirm('Are you sure you want to delete this game?')) return;
+  try {
+    await axios.delete(`/api/games/${gameId}`, {
+      headers: { Authorization: `Bearer ${user.token}` },
+    });
+    setGames(games.filter(game => game._id !== gameId));
+    setError(null);
+    toast.success('Game deleted successfully!', {
+      position: "top-right",
+      autoClose: 3000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      theme: "light",
+    });
+  } catch (err) {
+    console.error('Delete game error:', err.response?.data || err.message);
+    const errorMessage = err.response?.data?.error || 'Failed to delete game';
+    setError(errorMessage);
+    toast.error(errorMessage, {
+      position: "top-right",
+      autoClose: 3000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      theme: "light",
+    });
+  }
+};
 
   if (loading) {
     return (
