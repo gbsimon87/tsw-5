@@ -1,7 +1,43 @@
 import { useState, useEffect } from 'react';
+import { toast } from 'react-toastify';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
+
+const scoringRulesMap = {
+  basketball: { twoPointFGM: 2, threePointFGM: 3, freeThrowM: 1 },
+  hockey: { goal: 1 },
+  football: { goal: 1 },
+  baseball: { single: 1, double: 2, triple: 3, homeRun: 4 },
+  americanFootball: { touchdown: 6, fieldGoal: 3, extraPoint: 1, twoPointConversion: 2, safety: 2 },
+};
+
+const semanticScoringRulesMap = {
+  basketball: {
+    twoPointFGM: 'Two-Point Field Goal Made',
+    threePointFGM: 'Three-Point Field Goal Made',
+    freeThrowM: 'Free Throw Made',
+  },
+  hockey: {
+    goal: 'Goal',
+  },
+  football: {
+    goal: 'Goal',
+  },
+  baseball: {
+    single: 'Single',
+    double: 'Double',
+    triple: 'Triple',
+    homeRun: 'Home Run',
+  },
+  americanFootball: {
+    touchdown: 'Touchdown',
+    fieldGoal: 'Field Goal',
+    extraPoint: 'Extra Point',
+    twoPointConversion: 'Two-Point Conversion',
+    safety: 'Safety',
+  },
+};
 
 export default function AdminPanel() {
   const { user } = useAuth();
@@ -11,7 +47,13 @@ export default function AdminPanel() {
     logo: '',
     location: '',
     sportType: 'basketball',
-    visibility: 'public'
+    visibility: 'public',
+    settings: {
+      periodType: 'halves',
+      periodDuration: 12,
+      overtimeDuration: 5,
+      scoringRules: scoringRulesMap['basketball'],
+    },
   });
   const [error, setError] = useState(null);
 
@@ -24,8 +66,33 @@ export default function AdminPanel() {
   }, [user.token]);
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    const { name, value, type } = e.target;
+    if (name.includes('settings.')) {
+      const field = name.split('.')[1];
+      if (field === 'scoringRules') {
+        const ruleKey = e.target.dataset.rule;
+        setFormData({
+          ...formData,
+          settings: {
+            ...formData.settings,
+            scoringRules: {
+              ...formData.settings.scoringRules,
+              [ruleKey]: parseFloat(value),
+            },
+          },
+        });
+      } else {
+        setFormData({
+          ...formData,
+          settings: {
+            ...formData.settings,
+            [field]: type === 'number' ? parseFloat(value) : value,
+          },
+        });
+      }
+    } else {
+      setFormData({ ...formData, [name]: value });
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -35,10 +102,41 @@ export default function AdminPanel() {
         headers: { Authorization: `Bearer ${user.token}` }
       });
       setLeagues([...leagues, response.data]);
-      setFormData({ name: '', logo: '', location: '', sportType: 'basketball', visibility: 'public' });
+      setFormData({
+        name: '',
+        logo: '',
+        location: '',
+        sportType: 'basketball',
+        visibility: 'public',
+        settings: {
+          periodType: 'halves',
+          periodDuration: 24,
+          overtimeDuration: 5,
+          scoringRules: scoringRulesMap['basketball'],
+        },
+      });
       setError(null);
+      toast.success('League created successfully!', {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        theme: "light",
+      });
     } catch (err) {
-      setError('Failed to create league');
+      const errorMessage = err.response?.data?.error || 'Failed to create league, try again.';
+      setError(errorMessage);
+      toast.error(errorMessage, {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        theme: "light",
+      });
     }
   };
 
@@ -133,26 +231,6 @@ export default function AdminPanel() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Logo URL (optional)</label>
-                <input
-                  type="url"
-                  name="logo"
-                  value={formData.logo}
-                  onChange={handleInputChange}
-                  className="w-full p-3 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Location (optional)</label>
-                <input
-                  type="text"
-                  name="location"
-                  value={formData.location}
-                  onChange={handleInputChange}
-                  className="w-full p-3 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                />
-              </div>
-              <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Sport Type</label>
                 <select
                   name="sportType"
@@ -180,6 +258,85 @@ export default function AdminPanel() {
                   <option value="public">Public</option>
                   <option value="private">Private</option>
                 </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Period Type</label>
+                <select
+                  name="settings.periodType"
+                  value={formData.settings.periodType}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full p-3 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                >
+                  <option value="halves">Halves</option>
+                  <option value="quarters">Quarters</option>
+                  <option value="periods">Periods</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Period Duration (minutes)</label>
+                <input
+                  type="number"
+                  name="settings.periodDuration"
+                  value={formData.settings.periodDuration}
+                  onChange={handleInputChange}
+                  required
+                  min="1"
+                  className="w-full p-3 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Overtime Duration (minutes)</label>
+                <input
+                  type="number"
+                  name="settings.overtimeDuration"
+                  value={formData.settings.overtimeDuration}
+                  onChange={handleInputChange}
+                  required
+                  min="1"
+                  className="w-full p-3 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Logo URL (optional)</label>
+                <input
+                  type="url"
+                  name="logo"
+                  value={formData.logo}
+                  onChange={handleInputChange}
+                  className="w-full p-3 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Location (optional)</label>
+                <input
+                  type="text"
+                  name="location"
+                  value={formData.location}
+                  onChange={handleInputChange}
+                  className="w-full p-3 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Scoring Rules (optional)</label>
+                <div className="space-y-2">
+                  {Object.keys(formData.settings.scoringRules).map((rule) => (
+                    <div key={rule} className="flex items-center">
+                      <span className="text-sm text-slate-600 min-w-[200px]">
+                        {semanticScoringRulesMap[formData.sportType][rule] || rule} (optional):
+                      </span>
+                      <input
+                        type="number"
+                        name="settings.scoringRules"
+                        data-rule={rule}
+                        value={formData.settings.scoringRules[rule]}
+                        onChange={handleInputChange}
+                        min="0"
+                        className="w-24 p-2 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                      />
+                    </div>
+                  ))}
+                </div>
               </div>
               <button
                 type="submit"

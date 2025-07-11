@@ -9,7 +9,11 @@ export default function UpcomingFeatures() {
   const features = [
     // Difficulty 1: Simple UI changes or notifications
     {
-      title: "As a user, I want to receive a confirmation or error toast when creating a game so that I know if it was successful.",
+      title: "As a user, I want to receive a confirmation or error toast when creating a game so that I know the answer.",
+      status: "done"
+    },
+    {
+      title: "As a user, I want to receive a confirmation or error toast when creating a league so that I know the answer.",
       status: "done"
     },
     {
