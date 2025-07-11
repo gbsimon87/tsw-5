@@ -1,7 +1,9 @@
 const express = require('express');
 const path = require('path');
 const connectDB = require('./config/db');
-require('dotenv').config({ path: '.env' });
+
+const envFile = process.env.NODE_ENV === 'production' ? '.env.production' : '.env.development';
+require('dotenv').config({ path: path.resolve(__dirname, '..', envFile) });
 
 const app = express();
 app.use(express.json());

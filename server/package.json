@@ -4,7 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "NODE_ENV=production node index.js",
+    "dev": "NODE_ENV=development node index.js",
+    "seed:dev": "NODE_ENV=development node seed.js",
+    "seed:prod": "NODE_ENV=production node seed.js"
   },
   "keywords": [],
   "author": "",

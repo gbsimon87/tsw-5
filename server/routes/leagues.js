@@ -2,6 +2,8 @@ const express = require('express');
 const mongoose = require('mongoose');
 const router = express.Router();
 const League = require('../models/League');
+const Player = require('../models/Player');
+const Game = require('../models/Game');
 const Team = require('../models/Team');
 const authMiddleware = require('../middleware/authMiddleware');
 
@@ -135,6 +137,122 @@ router.post('/:leagueId/teams/carry-over', authMiddleware, async (req, res) => {
   }
 });
 
+// Get all active public leagues
+router.get('/public', async (req, res) => {
+  try {
+    const leagues = await League.find({ isActive: true, visibility: 'public' })
+      .lean();
+    res.set('Cache-Control', 'no-store');
+    res.json(leagues);
+  } catch (error) {
+    console.error('Get public leagues error:', error);
+    res.status(500).json({ error: 'Failed to fetch public leagues' });
+  }
+});
+
+// Get a specific public league by ID
+router.get('/public/:leagueId', async (req, res) => {
+  try {
+    const league = await League.findOne({
+      _id: req.params.leagueId,
+      isActive: true,
+      visibility: 'public',
+    })
+      .populate({
+        path: 'teams',
+        match: { isActive: true, season: { $eq: '$season' } },
+        populate: {
+          path: 'members.player',
+          model: 'Player',
+          match: { isActive: true },
+          select: 'user stats jerseyNumber position',
+          populate: {
+            path: 'user',
+            select: 'firstName lastName',
+          },
+        },
+      })
+      .lean();
+
+    if (!league) {
+      return res.status(404).json({ error: 'League not found or not public' });
+    }
+
+    // Fetch games for the league's active season
+    const games = await Game.find({
+      league: req.params.leagueId,
+      season: league.season,
+    })
+      .populate('teams', 'name logo')
+      .populate('playerStats.player', 'user stats')
+      .populate('playerStats.team', 'name')
+      .lean();
+
+    // Calculate team standings
+    const standings = league.teams.map((team) => {
+      const teamGames = games.filter((game) =>
+        game.teams.some((t) => t._id.toString() === team._id.toString())
+      );
+      const wins = teamGames.filter((game) => {
+        const teamScore = game.teamScores.find(
+          (ts) => ts.team._id.toString() === team._id.toString()
+        )?.score || 0;
+        const opponentScore = game.teamScores.find(
+          (ts) => ts.team._id.toString() !== team._id.toString()
+        )?.score || 0;
+        return teamScore > opponentScore && game.isCompleted;
+      }).length;
+      const losses = teamGames.filter((game) => {
+        const teamScore = game.teamScores.find(
+          (ts) => ts.team._id.toString() === team._id.toString()
+        )?.score || 0;
+        const opponentScore = game.teamScores.find(
+          (ts) => ts.team._id.toString() !== team._id.toString()
+        )?.score || 0;
+        return teamScore < opponentScore && game.isCompleted;
+      }).length;
+      return { _id: team._id, name: team.name, wins, losses };
+    }).sort((a, b) => b.wins - a.wins || a.losses - b.losses);
+
+    // Calculate league leaders (top 5 players by points)
+    const players = league.teams.flatMap((team) => team.members.map((m) => m.player));
+    const leagueLeaders = await Player.find({ _id: { $in: players } })
+      .populate('user', 'firstName lastName')
+      .lean()
+      .then((players) => {
+        return players
+          .map((player) => {
+            const points = league.settings.scoringRules
+              ? Object.entries(league.settings.scoringRules).reduce((total, [statType, value]) => {
+                  return total + (player.stats[statType] || 0) * value;
+                }, 0)
+              : 0;
+            return {
+              _id: player._id,
+              name: `${player.user.firstName} ${player.user.lastName}`,
+              team: league.teams.find((t) =>
+                t.members.some((m) => m.player._id.toString() === player._id.toString())
+              )?.name || 'Unknown',
+              points,
+            };
+          })
+          .sort((a, b) => b.points - a.points)
+          .slice(0, 5);
+      });
+
+    res.set('Cache-Control', 'no-store');
+    res.json({
+      ...league,
+      standings,
+      games,
+      leagueLeaders,
+    });
+  } catch (error) {
+    console.error('Get public league error:', error);
+    res.status(500).json({ error: 'Failed to fetch league data' });
+  }
+});
+
 // Get user's leagues (admin or manager)
 router.get('/', authMiddleware, async (req, res) => {
   try {
@@ -148,20 +266,6 @@ router.get('/', authMiddleware, async (req, res) => {
   } catch (error) {
     console.error('Get leagues error:', error);
     res.status(500).json({ error: 'Failed to fetch leagues' });
-  }
-});
-
-// Get all active public leagues (no authentication required)
-router.get('/public-leagues', async (req, res) => {
-  try {
-    const leagues = await League.find({ isActive: true })
-      .select('name logo')
-      .lean();
-    res.set('Cache-Control', 'no-store');
-    res.json(leagues);
-  } catch (error) {
-    console.error('Get public leagues error:', error);
-    res.status(500).json({ error: 'Failed to fetch public leagues' });
   }
 });
 

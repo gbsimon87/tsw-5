@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import {
   SparklesIcon,
@@ -123,7 +123,6 @@ const whyChooseSporty = [
 
 // Helper to render feature cards
 function renderFeatures(features, isAuthenticated) {
-  console.log('renderFeatures called with features:', features);
   if (!Array.isArray(features)) {
     console.error('Features is not an array:', features);
     return (
@@ -172,7 +171,8 @@ function renderFeatures(features, isAuthenticated) {
 
 // Helper to render discover leagues
 function DiscoverLeagues({ leagues }) {
-  console.log('DiscoverLeagues called with leagues:', leagues);
+  const navigate = useNavigate();
+
   if (!Array.isArray(leagues)) {
     console.error('Leagues is not an array:', leagues);
     return (
@@ -182,6 +182,7 @@ function DiscoverLeagues({ leagues }) {
     );
   }
 
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
       {leagues.length === 0 ? (
@@ -190,7 +191,8 @@ function DiscoverLeagues({ leagues }) {
         leagues.map((league) => (
           <article
             key={league._id}
-            className="bg-gradient-to-br from-blue-100 to-slate-100 glass rounded-xl shadow p-5 border border-white/20 flex flex-col items-center transition-all hover:shadow-xl"
+            className="bg-gradient-to-br from-blue-100 to-slate-100 glass rounded-xl shadow p-5 border border-white/20 flex flex-col items-center transition-all hover:shadow-xl hover:cursor-pointer"
+            onClick={() => {navigate(`/leagues/public/${league._id}`)}}
           >
             <img
               src={league.logo || '/league-logo.png'}
@@ -198,13 +200,6 @@ function DiscoverLeagues({ leagues }) {
               className="w-16 h-16 rounded-full mb-3 object-cover"
             />
             <h3 className="text-lg font-bold text-gray-900 mb-1 text-center">{league.name}</h3>
-            <Link
-              to="/login"
-              className="text-blue-700 font-medium hover:underline mt-auto"
-              aria-label={`Login to join ${league.name}`}
-            >
-              Join League
-            </Link>
           </article>
         ))
       )}
@@ -224,8 +219,7 @@ export default function Home() {
     async function fetchPublicLeagues() {
       setLoading(true);
       try {
-        const response = await axios.get('/api/leagues/public-leagues');
-        console.log('Public leagues response:', response.data);
+        const response = await axios.get('/api/leagues/public');
         setLeagues(response.data || []);
       } catch (err) {
         console.error('Fetch public leagues error:', err);
@@ -411,7 +405,7 @@ export default function Home() {
           <p className="mb-4 text-lg">Join the sports community today!</p>
           <div className="flex align-center justify-center space-x-6">
             <Link
-              to="/public-leagues"
+              to="/leagues/public-leagues"
               className="text-white hover:text-amber-300 focus:ring-2 focus:ring-amber-400 focus:outline-none"
               aria-label="View Sporty Leagues"
             >

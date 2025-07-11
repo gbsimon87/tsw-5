@@ -19,6 +19,7 @@ import ManageTeams from './components/ManageTeams';
 import TeamJoin from './components/TeamJoin';
 import NotFound from './components/NotFound';
 import Team from './components/Team/Team';
+import PublicFacingLeaguePage from './components/PublicFacingLeaguePage';
 import './App.css';
 
 function AppContent() {
@@ -42,6 +43,7 @@ function AppContent() {
           <Route path="/upcoming-features" element={<UpcomingFeatures />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/leagues/public/:leagueId" element={<PublicFacingLeaguePage />} />
           <Route
             path="/league/:leagueId/team/:teamId"
             element={

@@ -12,6 +12,36 @@ export default function UpcomingFeatures() {
       status: "done",
     },
     {
+      title: "As a scorekeeper, I want to be able to choose a 2PT field goal or a 3PT field goal and choose 'nobody' as the assist.",
+      status: "done",
+    },
+    {
+      title: "As a league admin/manager, I want to assign jersey numbers to the players.",
+      status: "todo",
+    },
+    {
+      title: "As a member of a team, I want to have a clear view of which of my teams are active and which are inactive.",
+      status: "todo",
+    },
+    {
+      title: "As a player, I want to see accurate heatmaps on my profile so that I can analyze my performance.",
+      status: "todo",
+      subtasks: [
+        {
+          title: "As a player, I want to select spots on the court for the heatmap so that I can track my actions precisely.",
+          status: "todo",
+        },
+        {
+          title: "As a player, I want a play-by-play heatmap option so that I can see how my performance changes throughout the game.",
+          status: "todo",
+        },
+      ],
+    },
+    {
+      title: "As a league administrator, I want to choose halves or quarters when creating a league so that the game format matches our needs.",
+      status: "done",
+    },
+    {
       title: "As a scorekeeper, I want the option to skip recording the court location for a play so that I can save time when it's not needed.",
       status: "todo",
     },

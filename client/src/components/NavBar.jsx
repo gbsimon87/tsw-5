@@ -138,12 +138,6 @@ function NavBar() {
                       Log out
                     </a>
                   </MenuItem>
-                  <MenuItem>
-                    <span className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 bg-gray-100">
-                      <UserCircleIcon className="w-5 h-5 text-gray-400" aria-hidden="true" />
-                      {user.name || user.email}
-                    </span>
-                  </MenuItem>
                 </MenuItems>
 
               </Menu>

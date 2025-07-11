@@ -243,7 +243,7 @@ export default function ManageTeams() {
                 </div>
                 <button
                   type="submit"
-                  className="flex-1 flex items-center justify-center gap-2 bg-blue-600 text-white px-5 py-2 rounded-lg font-semibold shadow hover:bg-blue-700 transition focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  className="flex-1 flex items-center justify-center gap-2 bg-green-600 text-white px-5 py-2 rounded-lg font-semibold shadow hover:bg-green-700 transition focus:ring-2 focus:ring-green-500 focus:outline-none"
                 >
                   <PlusIcon className="w-5 h-5" />
                   Create Team

@@ -2,15 +2,23 @@ const mongoose = require('mongoose');
 const connectDB = require('./config/db');
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
+const path = require('path');
 const { faker } = require('@faker-js/faker');
 const User = require('./models/User');
 const League = require('./models/League');
 const Team = require('./models/Team');
 const Player = require('./models/Player');
 const Game = require('./models/Game');
-require('dotenv').config({ path: '.env' });
 
-const SMALL_MODE = false;
+// Load the correct .env file based on NODE_ENV
+const envFile =
+  process.env.NODE_ENV === 'production'
+    ? '.env.production'
+    : '.env.development';
+
+require('dotenv').config({ path: path.resolve(__dirname, envFile) });
+
+const SMALL_MODE = true;
 const CLEAR_DATABASE = true;
 
 // Configuration for seeding
@@ -455,7 +463,7 @@ async function seedGames(leagues, teams, players) {
         // Generate playByPlay to ensure all stat categories are populated for each player
         const playByPlay = [];
         const periods = league.settings.periodType === 'quarters' ? ['Q1', 'Q2', 'Q3', 'Q4'] :
-                        league.settings.periodType === 'periods' ? ['P1', 'P2', 'P3'] : ['H1', 'H2'];
+          league.settings.periodType === 'periods' ? ['P1', 'P2', 'P3'] : ['H1', 'H2'];
         const maxTime = league.settings.periodDuration * 60;
         const sportStats = statRanges[league.sportType] || { points: [0, 5] };
         const statTypes = league.settings.statTypes;

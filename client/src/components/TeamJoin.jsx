@@ -64,11 +64,6 @@ export default function TeamJoin() {
             Join Team
           </button>
         </form>
-        <div className="mt-6 text-center">
-          <p className="text-sm text-gray-300">
-            Discover Teams feature coming soon!
-          </p>
-        </div>
       </div>
     </div>
   );
