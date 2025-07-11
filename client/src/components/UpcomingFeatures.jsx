@@ -7,61 +7,138 @@ import {
 
 export default function UpcomingFeatures() {
   const features = [
+    // Difficulty 1: Simple UI changes or notifications
     {
-      title: "As a league administrator, I want to choose halves or quarters when creating a league so that the game format matches our needs.",
-      status: "done",
+      title: "As a user, I want to receive a confirmation or error toast when creating a game so that I know if it was successful.",
+      status: "todo"
     },
     {
-      title: "As a scorekeeper, I want to be able to choose a 2PT field goal or a 3PT field goal and choose 'nobody' as the assist.",
-      status: "done",
+      title: "As an admin, I need clearer wording to see my upcoming/past games from the Admin Panel",
+      status: "todo"
+    },
+
+    // Difficulty 2: Basic functionality or simple logic
+    {
+      title: "As a league administrator, I want to choose halves or quarters when creating a league so that the game format matches our needs.",
+      status: "done"
     },
     {
       title: "As a league admin/manager, I want to assign jersey numbers to the players.",
-      status: "todo",
-    },
-    {
-      title: "As a member of a team, I want to have a clear view of which of my teams are active and which are inactive.",
-      status: "todo",
-    },
-    {
-      title: "As a player, I want to see accurate heatmaps on my profile so that I can analyze my performance.",
-      status: "todo",
-      subtasks: [
-        {
-          title: "As a player, I want to select spots on the court for the heatmap so that I can track my actions precisely.",
-          status: "todo",
-        },
-        {
-          title: "As a player, I want a play-by-play heatmap option so that I can see how my performance changes throughout the game.",
-          status: "todo",
-        },
-      ],
+      status: "todo"
     },
     {
       title: "As a league administrator, I want to choose halves or quarters when creating a league so that the game format matches our needs.",
-      status: "done",
+      status: "done"
     },
     {
       title: "As a scorekeeper, I want the option to skip recording the court location for a play so that I can save time when it's not needed.",
-      status: "todo",
+      status: "todo"
     },
     {
       title: "As a league administrator, I want to prevent duplicate team names so that each team is uniquely identifiable.",
-      status: "in-progress",
+      status: "in-progress"
     },
+    {
+      title: "As a league administrator, I want to set the number of fouls for a foul out in league settings so that rules match our league's requirements.",
+      status: "todo"
+    },
+    {
+      title: "As a user, I should be able to upload a profile picture.",
+      status: "todo"
+    },
+    {
+      title: "As an admin, I should be able to upload images for the league logo and team logos.",
+      status: "todo"
+    },
+    {
+      title: "As a team manager, I should be able to upload images for the team logos.",
+      status: "todo"
+    },
+
+    // Difficulty 3: Moderate complexity with logic or data handling
+    {
+      title: "As a scorekeeper, I want to be able to choose a 2PT field goal or a 3PT field goal and choose 'nobody' as the assist.",
+      status: "done"
+    },
+    {
+      title: "As a member of a team, I want to have a clear view of which of my teams are active and which are inactive.",
+      status: "todo"
+    },
+    {
+      title: "As a coach or scorekeeper, I want to see fouls per player and have fouled out players disabled on the subs screen so that substitutions are accurate.",
+      status: "todo"
+    },
+    {
+      title: "As a player, I want to select which stat to display on my profile chart so that I can focus on the stats that matter most to me.",
+      status: "todo"
+    },
+    {
+      title: "As an admin, I need the ability to add other administrators.",
+      status: "todo"
+    },
+    {
+      title: "As a user, if my authentication token goes invalid, I should be redirected to the login page.",
+      status: "todo"
+    },
+    {
+      title: "As a user, I should be able to request to join a league.",
+      status: "todo"
+    },
+    {
+      title: "As an admin, I should see a list of requests to join the league, and accept or deny them.",
+      status: "todo"
+    },
+    {
+      title: "As a player, I should be informed from MySporty if I don't have any upcoming games.",
+      status: "todo"
+    },
+
+    // Difficulty 4: Complex features with significant logic or system impact
     {
       title: "As a league administrator, I want all related data handled properly when deleting a league so that no active teams or players remain by mistake.",
       status: "todo",
       subtasks: [
         {
           title: "As a league administrator, I want all teams in a deleted league to become inactive so that they don't appear in active lists.",
-          status: "todo",
+          status: "todo"
         },
         {
           title: "As a league administrator, I want all player accounts on those teams to become inactive so that they can't participate in deleted leagues.",
-          status: "todo",
+          status: "todo"
+        }
+      ]
+    },
+    {
+      title: "As an admin, I need to add a a second admin to the league within 90 days or the functionality to edit the league will be cut off.",
+      status: "todo"
+    },
+    {
+      title: "As an admin, I want to be able to create a season and carry over teams for the next season.",
+      status: "todo"
+    },
+    {
+      title: "As a user who is logged in, I should be able to vote on upcoming features.",
+      status: "todo"
+    },
+    {
+      title: "System - Fix refresh token expiration.",
+      status: "todo"
+    },
+
+    // Difficulty 5: Highly complex features with extensive processing
+    {
+      title: "As a player, I want to see accurate heatmaps on my profile so that I can analyze my performance.",
+      status: "todo",
+      subtasks: [
+        {
+          title: "As a player, I want to select spots on the court for the heatmap so that I can track my actions precisely.",
+          status: "todo"
         },
-      ],
+        {
+          title: "As a player, I want a play-by-play heatmap option so that I can see how my performance changes throughout the game.",
+          status: "todo"
+        }
+      ]
     },
     {
       title: "As a player, I want to see accurate heatmaps on my profile so that I can analyze my performance.",
@@ -69,82 +146,14 @@ export default function UpcomingFeatures() {
       subtasks: [
         {
           title: "As a player, I want to select spots on the court for the heatmap so that I can track my actions precisely.",
-          status: "todo",
+          status: "todo"
         },
         {
           title: "As a player, I want a play-by-play heatmap option so that I can see how my performance changes throughout the game.",
-          status: "todo",
-        },
-      ],
-    },
-    {
-      title: "As a user, I want to receive a confirmation or error toast when creating a game so that I know if it was successful.",
-      status: "todo",
-    },
-    {
-      title: "As a coach or scorekeeper, I want to see fouls per player and have fouled out players disabled on the subs screen so that substitutions are accurate.",
-      status: "todo",
-    },
-    {
-      title: "As a league administrator, I want to set the number of fouls for a foul out in league settings so that rules match our league's requirements.",
-      status: "todo",
-    },
-    {
-      title: "As a player, I want to select which stat to display on my profile chart so that I can focus on the stats that matter most to me.",
-      status: "todo",
-    },
-    {
-      title: "As an admin, I need the ability to add other administrators.",
-      status: "todo",
-    },
-    {
-      title: "As an admin, I need to add a a second admin to the league within 90 days or the functionality to edit the league will be cut off.",
-      status: "todo",
-    },
-    {
-      title: "As a user, if my authentication token goes invalid, I should be redirected to the login page.",
-      status: "todo",
-    },
-    {
-      title: "As an admin, I need clearer wording to see my upcoming/past games from the Admin Panel",
-      status: "todo",
-    },
-    {
-      title: "As a user, I should be able to request to join a league.",
-      status: "todo",
-    },
-    {
-      title: "As an admin, I should see a list of requests to join the league, and accept or deny them.",
-      status: "todo",
-    },
-    {
-      title: "As an admin, I want to be able to create a season and carry over teams for the next season.",
-      status: "todo",
-    },
-    {
-      title: "As a player, I should be informed from MySporty if I don't have any upcoming games.",
-      status: "todo",
-    },
-    {
-      title: "As a user who is logged in, I should be able to vote on upcoming features.",
-      status: "todo",
-    },
-    {
-      title: "As a user, I should be able to upload a profile picture.",
-      status: "todo",
-    },
-    {
-      title: "As an admin, I should be able to upload images for the league logo and team logos.",
-      status: "todo",
-    },
-    {
-      title: "As a team manager, I should be able to upload images for the team logos.",
-      status: "todo",
-    },
-    {
-      title: "System - Fix refresh token expiration.",
-      status: "todo",
-    },
+          status: "todo"
+        }
+      ]
+    }
   ];
 
   // Sort features: in-progress, todo, done
