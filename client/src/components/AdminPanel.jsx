@@ -126,7 +126,7 @@ export default function AdminPanel() {
         theme: "light",
       });
     } catch (err) {
-      const errorMessage = err.response?.data?.error || 'Failed to create league, try again.';
+      const errorMessage = err.response?.data?.error || 'Failed to create league';
       setError(errorMessage);
       toast.error(errorMessage, {
         position: "top-right",

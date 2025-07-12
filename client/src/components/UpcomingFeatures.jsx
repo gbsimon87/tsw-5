@@ -39,6 +39,10 @@ export default function UpcomingFeatures() {
       status: "todo"
     },
     {
+      title: "As a league administrator, I want to prevent duplicate league names that I am the admin of.",
+      status: "done"
+    },
+    {
       title: "As a league administrator, I want to prevent duplicate team names so that each team is uniquely identifiable.",
       status: "in-progress"
     },

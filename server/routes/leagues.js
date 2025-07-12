@@ -10,15 +10,35 @@ const authMiddleware = require('../middleware/authMiddleware');
 // Create a league (admin only)
 router.post('/', authMiddleware, async (req, res) => {
   try {
-    const { name, sportType, location, visibility, establishedYear } = req.body;
+    const { name, sportType, location, visibility, establishedYear, settings } = req.body;
+
+    // Trim the name to remove leading/trailing whitespace
+    const trimmedName = name?.trim();
+    if (!trimmedName) {
+      return res.status(400).json({ error: 'League name is required' });
+    }
+
+    // Check if a league with the same trimmed name exists for the user (as admin or manager)
+    const existingLeague = await League.findOne({
+      name: trimmedName,
+      $or: [
+        { admins: req.user._id },
+        { managers: req.user._id }
+      ]
+    });
+    if (existingLeague) {
+      return res.status(400).json({ error: 'A league with this name already exists' });
+    }
+
     const league = await League.create({
-      name,
+      name: trimmedName,
       sportType,
       location,
       visibility,
       establishedYear,
       admins: [req.user._id],
       isActive: true,
+      settings,
       seasons: [{ name: 'Season 1', startDate: new Date(), endDate: new Date(), isActive: true }],
     });
     res.status(201).json(league);
