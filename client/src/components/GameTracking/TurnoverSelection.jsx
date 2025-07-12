@@ -13,7 +13,7 @@ function TurnoverSelection({ currentPlayer, opposingPlayers, onBack, onTurnoverS
         <div className="font-bold text-lg text-center flex-1">
           Select player who committed turnover for{' '}
           <span className="text-blue-700">
-            {currentPlayer.name} #{currentPlayer.jersey}
+            {currentPlayer.name} #{currentPlayer.jerseyNumber}
           </span>
         </div>
       </div>
@@ -25,7 +25,7 @@ function TurnoverSelection({ currentPlayer, opposingPlayers, onBack, onTurnoverS
             onClick={() => onTurnoverSelection(player.id)}
             aria-label={`Turnover by ${player.name}`}
           >
-            #{player.jersey} {player.name}
+            #{player.jerseyNumber} {player.name}
           </button>
         ))}
       </div>

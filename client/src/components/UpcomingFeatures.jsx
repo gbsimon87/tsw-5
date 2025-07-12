@@ -28,7 +28,7 @@ export default function UpcomingFeatures() {
     },
     {
       title: "As a league admin/manager, I want to assign jersey numbers to the players.",
-      status: "todo"
+      status: "done"
     },
     {
       title: "As a league administrator, I want to choose halves or quarters when creating a league so that the game format matches our needs.",

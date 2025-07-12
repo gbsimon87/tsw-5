@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import { debounce } from 'lodash';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import {
@@ -83,6 +84,29 @@ export default function ManageTeams() {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
+
+  const handleJerseyNumberChange = debounce(async (teamId, playerId, jerseyNumber) => {
+    try {
+      await axios.patch(
+        `/api/players/${playerId}`,
+        { jerseyNumber: jerseyNumber ? parseInt(jerseyNumber) : null, leagueId },
+        { headers: { Authorization: `Bearer ${user.token}` } }
+      );
+      toast.success('Jersey number updated successfully!', {
+        position: 'top-right',
+        autoClose: 3000,
+      });
+      fetchTeams(selectedSeason);
+    } catch (err) {
+      console.error('Update jersey number error:', err.response || err);
+      const errorMessage = err.response?.data?.error || 'Failed to update jersey number';
+      setError(errorMessage);
+      toast.error(errorMessage, {
+        position: 'top-right',
+        autoClose: 3000,
+      });
+    }
+  }, 500);
 
   const handleSeasonChange = (e) => {
     const season = e.target.value;
@@ -258,30 +282,30 @@ export default function ManageTeams() {
         {/* View All Teams */}
         {activeTab === 'view' && (
           <section className="bg-white shadow-xl rounded-2xl p-4 border border-gray-200">
-            <div className="flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-center mb-4">
-              <div className="flex items-center gap-3">
+            <div className="flex flex-col items-end gap-2 justify-end sm:flex-row sm:items-center mb-4">
+              {/* <div className="flex items-center gap-3">
                 <UserGroupIcon className="w-6 h-6 text-blue-500" />
                 <h2 className="text-2xl font-semibold text-gray-800">All Teams</h2>
-              </div>
-              <div className="flex items-center">
-                <label className="mr-2 text-sm font-medium text-gray-700">Season:</label>
-                <select
-                  value={selectedSeason}
-                  onChange={handleSeasonChange}
-                  className="p-2 border border-gray-200 rounded-md max-w-full focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                >
-                  {league.seasons.map((season) => (
-                    <option key={season.name} value={season.name}>
-                      {season.name} {season.isActive ? '(Active)' : ''}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              </div> */}
+              {/* <div className="flex items-center"> */}
+              {/* <label className="mr-2 text-sm font-medium text-gray-700">Season:</label> */}
+              <select
+                value={selectedSeason}
+                onChange={handleSeasonChange}
+                className="p-2 border border-gray-200 rounded-md max-w-full focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              >
+                {league.seasons.map((season) => (
+                  <option key={season.name} value={season.name}>
+                    {season.name} {season.isActive ? '(Active)' : ''}
+                  </option>
+                ))}
+              </select>
+              {/* </div> */}
             </div>
-            <div className='mb-4'>
+            <div className='mb-4 flex flex-col items-end gap-2 justify-end sm:flex-row sm:items-center'>
               <button
                 onClick={copyAllSecretKeys}
-                className="mt-4 flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition focus:ring-2 focus:ring-green-500 focus:outline-none"
+                className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition focus:ring-2 focus:ring-green-500 focus:outline-none"
                 aria-label="Copy all team secret keys"
               >
                 <ClipboardIcon className="w-5 h-5" />
@@ -370,6 +394,17 @@ export default function ManageTeams() {
                               </div>
                               <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                                 <select
+                                  value={member.player.jerseyNumber ?? ''}
+                                  onChange={(e) => handleJerseyNumberChange(team._id, member.player._id, e.target.value)}
+                                  className="p-1 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none w-20"
+                                  disabled={!member.isActive}
+                                >
+                                  <option value="">No Jersey</option>
+                                  {[...Array(100).keys()].map(num => (
+                                    <option key={num} value={num}>{num}</option>
+                                  ))}
+                                </select>
+                                <select
                                   value={member.role}
                                   onChange={(e) => handleChangeRole(team._id, member.player._id, e.target.value)}
                                   className="p-1 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
@@ -384,7 +419,6 @@ export default function ManageTeams() {
                                     className="mt-2 flex items-center gap-2 bg-red-600 text-white px-3 py-1 rounded-md hover:bg-red-700 transition focus:ring-2 focus:ring-red-500 focus:outline-none self-start"
                                     aria-label={`Deactivate member ${member.player?.user?.name || 'Unknown'}`}
                                     title="Deactivate Member"
-                                  // No w-full here!
                                   >
                                     <ShieldExclamationIcon className="w-4 h-4" />
                                     Deactivate

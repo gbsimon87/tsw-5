@@ -13,7 +13,7 @@ function CourtSelection({ currentPlayer, onBack, onCourtClick }) {
         <div className="font-bold text-lg text-center flex-1">
           Tap the court to record location for{' '}
           <span className="text-blue-700">
-            {currentPlayer.name} #{currentPlayer.jersey}
+            {currentPlayer.name} #{currentPlayer.jerseyNumber}
           </span>
         </div>
       </div>

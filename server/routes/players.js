@@ -312,7 +312,7 @@ router.get('/', authMiddleware, async (req, res) => {
 router.patch('/:playerId', authMiddleware, async (req, res) => {
   try {
     const { playerId } = req.params;
-    const { position, bio, dateOfBirth, nationality, injuries, playerHistory, recentInjuries } = req.body;
+    const { position, bio, dateOfBirth, nationality, injuries, playerHistory, recentInjuries, jerseyNumber } = req.body;
 
     const player = await Player.findById(playerId).populate('user').populate('teams');
     if (!player) return res.status(404).json({ error: 'Player not found' });
@@ -331,7 +331,24 @@ router.patch('/:playerId', authMiddleware, async (req, res) => {
       return res.status(403).json({ error: 'Unauthorized: Admin, manager, or own profile access required' });
     }
 
-    const updateFields = isAdminOrManager.length ? req.body : { position, bio, dateOfBirth, nationality, injuries, playerHistory, recentInjuries };
+    // Define allowed fields based on role
+    const allowedFields = isAdminOrManager.length
+      ? { position, bio, dateOfBirth, nationality, injuries, playerHistory, recentInjuries, jerseyNumber }
+      : { position, bio, dateOfBirth, nationality, injuries, playerHistory, recentInjuries };
+
+    // Validate jerseyNumber if provided
+    if (jerseyNumber !== undefined) {
+      if (jerseyNumber !== null && (isNaN(jerseyNumber) || jerseyNumber < 0)) {
+        return res.status(400).json({ error: 'Jersey number must be a non-negative number or null' });
+      }
+      allowedFields.jerseyNumber = jerseyNumber !== null ? parseInt(jerseyNumber) : null;
+    }
+
+    // Remove undefined fields to prevent overwriting with undefined
+    const updateFields = Object.fromEntries(
+      Object.entries(allowedFields).filter(([_, value]) => value !== undefined)
+    );
+
     Object.assign(player, updateFields);
     await player.save();
 

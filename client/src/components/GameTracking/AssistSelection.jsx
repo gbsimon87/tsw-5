@@ -13,7 +13,7 @@ function AssistSelection({ currentPlayer, activePlayers, onBack, onAssistSelecti
         <div className="font-bold text-lg text-center flex-1">
           Select assist for{' '}
           <span className="text-blue-700">
-            {currentPlayer.name} #{currentPlayer.jersey}
+            {currentPlayer.name} #{currentPlayer.jerseyNumber}
           </span>
         </div>
       </div>
@@ -32,7 +32,7 @@ function AssistSelection({ currentPlayer, activePlayers, onBack, onAssistSelecti
             onClick={() => onAssistSelection(player.id)}
             aria-label={`Assist by ${player.name}`}
           >
-            #{player.jersey} {player.name}
+            #{player.jerseyNumber} {player.name}
           </button>
         ))}
       </div>
