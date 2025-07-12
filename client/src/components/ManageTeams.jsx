@@ -54,11 +54,18 @@ export default function ManageTeams() {
           setTeams([]);
         }
       } catch (err) {
-        setError(
-          err.response?.status === 403
-            ? 'You are not authorized to manage teams in this league'
-            : 'Failed to fetch league'
-        );
+        const errorMessage = err.response?.status === 403
+          ? 'You are not authorized to manage teams in this league'
+          : 'Failed to fetch league';
+        toast.error(errorMessage, {
+          position: 'top-right',
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          theme: 'light',
+        });
       }
     };
     fetchLeague();
@@ -76,7 +83,16 @@ export default function ManageTeams() {
       setTeams(response.data);
     } catch (err) {
       console.error('Fetch teams error:', err.response || err);
-      setError(err.response?.data?.error || 'Failed to fetch teams');
+      const errorMessage = err.response?.data?.error || 'Failed to fetch teams';
+      toast.error(errorMessage, {
+        position: 'top-right',
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        theme: 'light',
+      });
     }
   };
 
@@ -128,6 +144,11 @@ export default function ManageTeams() {
       toast.success(`Team "${response.data.name}" created successfully!`, {
         position: "top-right",
         autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        theme: "light",
       });
       setActiveTab('view');
     } catch (err) {
@@ -138,6 +159,11 @@ export default function ManageTeams() {
       toast.error(errorMessage, {
         position: "top-right",
         autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        theme: "light",
       });
     }
   };
@@ -165,9 +191,27 @@ export default function ManageTeams() {
         { isActive: false },
         { headers: { Authorization: `Bearer ${user.token}` } }
       );
+      toast.success('Member deactivated successfully!', {
+        position: 'top-right',
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        theme: 'light',
+      });
       fetchTeams(selectedSeason);
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to deactivate member');
+      const errorMessage = err.response?.data?.error || 'Failed to deactivate member';
+      toast.error(errorMessage, {
+        position: 'top-right',
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        theme: 'light',
+      });
     }
   };
 
@@ -178,10 +222,28 @@ export default function ManageTeams() {
         { role: newRole, leagueId },
         { headers: { Authorization: `Bearer ${user.token}` } }
       );
+      toast.success('Member role updated successfully!', {
+        position: 'top-right',
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        theme: 'light',
+      });
       fetchTeams(selectedSeason);
     } catch (err) {
       console.error('Change role error:', err.response || err);
-      setError(err.response?.data?.error || 'Failed to change member role');
+      const errorMessage = err.response?.data?.error || 'Failed to change member role';
+      toast.error(errorMessage, {
+        position: 'top-right',
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        theme: 'light',
+      });
     }
   };
 
@@ -192,32 +254,37 @@ export default function ManageTeams() {
         { isActive: false, leagueId },
         { headers: { Authorization: `Bearer ${user.token}` } }
       );
+      toast.success('Team deactivated successfully!', {
+        position: 'top-right',
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        theme: 'light',
+      });
       fetchTeams(selectedSeason);
     } catch (err) {
       console.error('Deactivate team error:', err.response || err);
-      setError(err.response?.data?.error || 'Failed to deactivate team');
+      const errorMessage = err.response?.data?.error || 'Failed to deactivate team';
+      toast.error(errorMessage, {
+        position: 'top-right',
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        theme: 'light',
+      });
     }
   };
-
-  if (error) {
-    return (
-      <div className="min-h-[var(--page-height)] bg-gray-50 flex items-center justify-center">
-        <p className="text-center text-red-500 text-lg">{error}</p>
-      </div>
-    );
-  }
-
-  if (!league) {
-    return (
-      <div className="min-h-[var(--page-height)] bg-gray-50 flex items-center justify-center">
-        <p className="text-center text-gray-600 text-lg">Loading...</p>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-[var(--page-height)] bg-gray-50 py-4 px-4">
       <div className="max-w-4xl mx-auto">
+        {!league && (
+          <p className="text-center text-gray-600 text-lg mb-4">Loading...</p>
+        )}
         <AdminPanelPageHeader
           backButtonLink={`/leagues/${leagueId}`}
           backButtonText="Back to League"

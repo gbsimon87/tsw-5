@@ -55,21 +55,40 @@ router.get('/', authMiddleware, async (req, res) => {
 router.post('/', authMiddleware, checkAdminOrManager, async (req, res) => {
   try {
     const { name, leagueId, season, logo } = req.body;
+
+    // Validate required fields
     if (!name || !leagueId || !season) {
       return res.status(400).json({ error: 'name, leagueId, and season are required' });
     }
 
+    // Trim the name to remove leading/trailing whitespace
+    const trimmedName = name.trim();
+    if (!trimmedName) {
+      return res.status(400).json({ error: 'Team name cannot be empty' });
+    }
+
+    // Check if a team with the same trimmed name exists in the specified league and season
+    const existingTeam = await Team.findOne({
+      name: trimmedName,
+      league: leagueId,
+      season,
+    });
+    if (existingTeam) {
+      return res.status(400).json({ error: 'A team with this name already exists in the specified league and season' });
+    }
+
     const team = await Team.create({
-      name,
+      name: trimmedName,
       league: leagueId,
       season,
       logo,
       createdBy: req.user._id,
       isActive: true,
-      members: []
+      members: [],
+      secretKey: crypto.randomBytes(16).toString('hex'),
     });
 
-    await League.findByIdAndUpdate(leagueId, { $push: { teams: team._id } });
+    await League.findByIdAndUpdate(leagueId, { $addToSet: { teams: team._id } });
 
     res.status(201).json(team);
   } catch (err) {

@@ -91,7 +91,10 @@ export default function AdminPanel() {
         });
       }
     } else {
-      setFormData({ ...formData, [name]: value });
+      setFormData({
+        ...formData,
+        [name]: name === 'name' ? value.trim() : value
+      });
     }
   };
 

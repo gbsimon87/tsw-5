@@ -44,7 +44,7 @@ export default function UpcomingFeatures() {
     },
     {
       title: "As a league administrator, I want to prevent duplicate team names so that each team is uniquely identifiable.",
-      status: "in-progress"
+      status: "done"
     },
     {
       title: "As a league administrator, I want to set the number of fouls for a foul out in league settings so that rules match our league's requirements.",
