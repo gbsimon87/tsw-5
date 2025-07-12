@@ -72,10 +72,10 @@ export default function PlayerSelection({
     return (
       <div
         key={player.playerId}
-        className="w-full h-[100px] bg-white border border-gray-200 shadow-sm hover:shadow-md flex flex-col justify-between transition cursor-pointer rounded-md"
+        className="w-full h-[80px] bg-white border border-gray-200 shadow-sm hover:shadow-md flex flex-col justify-between transition cursor-pointer rounded-md"
         onClick={() => !isSubstitutionMode && setSelectedPlayer({ ...player, teamId })}
       >
-        <div className="flex flex-row items-center gap-3 w-full px-2 pt-2">
+        <div className="flex flex-row items-center gap-3 w-full px-2 p-2">
           {isSubstitutionMode ? (
             <input
               type="checkbox"
@@ -109,10 +109,8 @@ export default function PlayerSelection({
           </div>
         </div>
       </div>
-
     );
   };
-
 
   const team1Players = isSubstitutionMode
     ? teams?.[0]?.members?.filter(member => member?.isActive) || []
@@ -150,13 +148,14 @@ export default function PlayerSelection({
         statType,
         time: overrideMinutes && overrideSeconds ?
           parseInt(overrideMinutes, 10) * 60 + parseInt(overrideSeconds, 10) : remainingSeconds,
-        period: overridePeriod || null,
+        period: overridePeriod || clockState.period,
       }]);
       resetModal();
     }
   };
 
   const handleFollowUp = (followUpData) => {
+    console.log('selectedPlayer:', selectedPlayer);
     const statsToRecord = [{
       player: selectedPlayer,
       statType: selectedStatType,
@@ -166,7 +165,7 @@ export default function PlayerSelection({
       period: overridePeriod || clockState.period,
     }];
 
-    if (followUpData) {
+    if (followUpData && selectedPlayer.playerId) {
       const followUpConfig = getFollowUpConfig(selectedStatType, selectedPlayer, activePlayers);
       const followUpPlayer = activePlayers.find(p => p.playerId === followUpData.playerId);
       if (followUpPlayer) {
@@ -176,7 +175,7 @@ export default function PlayerSelection({
         } else if (['twoPointFGA', 'threePointFGA', 'freeThrowA'].includes(selectedStatType)) {
           followUpStatType = followUpPlayer.teamId === selectedPlayer.teamId ? 'offensiveRebound' : 'defensiveRebound';
         } else {
-          followUpStatType = 'assist'; // Default for other cases
+          followUpStatType = 'assist';
         }
         statsToRecord.push({
           player: followUpPlayer,
@@ -229,7 +228,7 @@ export default function PlayerSelection({
         return {
           question: `Who assisted on ${selectedPlayer.name}'s made shot?`,
           players: activePlayers.filter(p => p.teamId === selectedPlayer.teamId && p.playerId !== selectedPlayer.playerId),
-          allowNone: false,
+          allowNone: true, // Changed to allow "Nobody" for assists
         };
       case 'offensiveRebound':
         return {

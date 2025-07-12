@@ -65,7 +65,7 @@ export default function UpcomingFeatures() {
 
     // Difficulty 3: Moderate complexity with logic or data handling
     {
-      title: "As a scorekeeper, I want to be able to choose a 2PT field goal or a 3PT field goal and choose 'nobody' as the assist.",
+      title: "As an admin or manager, I want to be able to choose a 2PT field goal or a 3PT field goal and choose 'nobody' as the assist.",
       status: "done"
     },
     {
