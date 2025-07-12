@@ -91,20 +91,22 @@ export default function PlayerSelection({
               className="w-10 h-10 rounded-full object-cover bg-gray-200 flex-shrink-0"
             />
           )}
+
           <div className="flex flex-col flex-1 min-w-0">
             <span className="font-semibold text-sm text-gray-900 truncate">
-              {getInitialAndLastName(player.name) || 'Unknown'}
+              {getInitialAndLastName(player?.name) || 'Unknown'}
             </span>
-            <span className="text-xs text-gray-500 mt-0.5">
-              {getFirstCapitalLetter(player.position) || 'N/A'}
-              <span className="text-gray-400 px-1">|</span>
-              #{player.jerseyNumber || 'N/A'}
-            </span>
+            <div>
+              <span className="text-xs text-gray-400">{getFirstCapitalLetter(player?.position) || 'N/A'}</span>
+              <span className='text-gray-400'> | </span>
+              <span className="text-xs text-gray-500">
+                #{player?.jerseyNumber || 'N/A'}
+              </span>
+            </div>
+            <div>
+              <span className="text-xs text-gray-500">PF: {personalFoul}</span>
+            </div>
           </div>
-        </div>
-
-        <div className="text-[11px] text-blue-700 text-center py-1 border-t border-gray-100 bg-blue-50/10">
-          <span>PF: {personalFoul}</span> | <span>PTS: {points}</span> | <span>AST: {assist}</span>
         </div>
       </div>
 

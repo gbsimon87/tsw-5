@@ -1,13 +1,5 @@
 const mongoose = require('mongoose');
 
-const scoringRulesMap = {
-  basketball: { twoPointFGM: 2, threePointFGM: 3, freeThrowM: 1 },
-  hockey: { goal: 1 },
-  football: { goal: 1 },
-  baseball: { single: 1, double: 2, triple: 3, homeRun: 4 },
-  americanFootball: { touchdown: 6, fieldGoal: 3, extraPoint: 1, twoPointConversion: 2, safety: 2 }
-};
-
 const leagueSchema = new mongoose.Schema({
   name: { type: String, required: true },
   sportType: {
@@ -58,6 +50,22 @@ const leagueSchema = new mongoose.Schema({
         return 5;
       },
       required: true,
+    },
+    foulOutLimit: {
+      type: Number,
+      default: function () {
+        if (this.sportType === 'basketball') return 6;
+        return undefined;
+      },
+      validate: {
+        validator: function (value) {
+          if (this.sportType === 'basketball') {
+            return Number.isInteger(value) && value > 0;
+          }
+          return value === undefined;
+        },
+        message: 'foulOutLimit must be a positive integer for basketball leagues or undefined for other sports',
+      },
     },
     scoringRules: {
       type: Object,

@@ -52,6 +52,7 @@ export default function AdminPanel() {
       periodType: 'halves',
       periodDuration: 12,
       overtimeDuration: 5,
+      foulOutLimit: 6,
       scoringRules: scoringRulesMap['basketball'],
     },
   });
@@ -62,7 +63,19 @@ export default function AdminPanel() {
       headers: { Authorization: `Bearer ${user.token}` }
     })
       .then(response => setLeagues(response.data))
-      .catch(err => setError('Failed to fetch leagues'));
+      .catch(err => {
+        const errorMessage = err.response?.data?.error || 'Failed to fetch leagues';
+        setError(errorMessage);
+        toast.error(errorMessage, {
+          position: 'top-right',
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          theme: 'light',
+        });
+      });
   }, [user.token]);
 
   const handleInputChange = (e) => {
@@ -93,7 +106,27 @@ export default function AdminPanel() {
     } else {
       setFormData({
         ...formData,
-        [name]: name === 'name' ? value.trim() : value
+        [name]: name === 'name' ? value.trim() : value,
+        ...(name === 'sportType' && value !== 'basketball' ? {
+          settings: {
+            ...formData.settings,
+            foulOutLimit: undefined,
+            scoringRules: scoringRulesMap[value] || {},
+            periodType: value === 'hockey' ? 'periods' : 'halves',
+            periodDuration: value === 'hockey' ? 20 : value === 'basketball' ? 24 : 45,
+            overtimeDuration: value === 'football' ? 15 : 5,
+          }
+        } : {}),
+        ...(name === 'sportType' && value === 'basketball' ? {
+          settings: {
+            ...formData.settings,
+            foulOutLimit: 6,
+            scoringRules: scoringRulesMap['basketball'],
+            periodType: 'halves',
+            periodDuration: 24,
+            overtimeDuration: 5,
+          }
+        } : {}),
       });
     }
   };
@@ -115,6 +148,7 @@ export default function AdminPanel() {
           periodType: 'halves',
           periodDuration: 24,
           overtimeDuration: 5,
+          foulOutLimit: 6,
           scoringRules: scoringRulesMap['basketball'],
         },
       });
@@ -300,6 +334,20 @@ export default function AdminPanel() {
                   className="w-full p-3 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
                 />
               </div>
+              {formData.sportType === 'basketball' && (
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Foul Out Limit</label>
+                  <input
+                    type="number"
+                    name="settings.foulOutLimit"
+                    value={formData.settings.foulOutLimit || ''}
+                    onChange={handleInputChange}
+                    required
+                    min="1"
+                    className="w-full p-3 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                  />
+                </div>
+              )}
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Logo URL (optional)</label>
                 <input

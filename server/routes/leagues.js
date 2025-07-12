@@ -30,6 +30,13 @@ router.post('/', authMiddleware, async (req, res) => {
       return res.status(400).json({ error: 'A league with this name already exists' });
     }
 
+    // Validate foulOutLimit for basketball leagues
+    if (settings?.foulOutLimit !== undefined) {
+      if (!Number.isInteger(settings.foulOutLimit) || settings.foulOutLimit <= 0) {
+        return res.status(400).json({ error: 'foulOutLimit must be a positive integer for basketball leagues' });
+      }
+    }
+
     const league = await League.create({
       name: trimmedName,
       sportType,
@@ -345,6 +352,13 @@ router.patch('/:leagueId', authMiddleware, async (req, res) => {
 
     const isAdmin = league.admins.some(admin => admin._id.toString() === req.user._id.toString());
     if (!isAdmin) return res.status(403).json({ error: 'Unauthorized: Admin access required' });
+
+    // Validate foulOutLimit for basketball leagues
+    if (req.body.settings?.foulOutLimit !== undefined) {
+      if (!Number.isInteger(req.body.settings.foulOutLimit) || req.body.settings.foulOutLimit <= 0) {
+        return res.status(400).json({ error: 'foulOutLimit must be a positive integer for basketball leagues' });
+      }
+    }
 
     Object.assign(league, req.body);
     await league.save();

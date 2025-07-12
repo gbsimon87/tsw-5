@@ -48,7 +48,7 @@ export default function UpcomingFeatures() {
     },
     {
       title: "As a league administrator, I want to set the number of fouls for a foul out in league settings so that rules match our league's requirements.",
-      status: "todo"
+      status: "done"
     },
     {
       title: "As a user, I should be able to upload a profile picture.",
