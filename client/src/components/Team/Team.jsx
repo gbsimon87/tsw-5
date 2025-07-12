@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
 
@@ -82,7 +82,18 @@ export default function Team() {
               Season: {team.season}
             </p>
             <p>
-              League: {team.league?.name || 'Unknown'}
+              League:{' '}
+              {team.league?._id ? (
+                <Link
+                  to={`/leagues/public/${team.league._id}`}
+                  className="text-blue-400 hover:text-blue-300 underline"
+                  aria-label={`View league ${team.league.name || 'Unknown'}`}
+                >
+                  {team.league.name || 'Unknown'}
+                </Link>
+              ) : (
+                'Unknown'
+              )}
             </p>
             <div
               className="font-semibold"
