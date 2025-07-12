@@ -85,6 +85,14 @@ export default function UpcomingFeatures() {
       status: "todo"
     },
     {
+      title: "As an admin, I want to be able to assign positions to the players so that they can be easily identified.",
+      status: "todo"
+    },
+    {
+      title: "As a scorekeeper, I need the ability mark games as complete.",
+      status: "todo"
+    },
+    {
       title: "As an admin, I need the ability to add other administrators.",
       status: "todo"
     },

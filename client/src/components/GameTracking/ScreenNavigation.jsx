@@ -2,9 +2,14 @@ import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { UsersIcon, ArrowsRightLeftIcon, ChartBarIcon, ListBulletIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
 import Modal from 'react-modal';
+import { toast } from 'react-toastify'; // Add toast import
+import axios from 'axios';
 
-export default function ScreenNavigation({ activeScreen, onScreenChange }) {
+import { useAuth } from "../../context/AuthContext"; // Add useAuth import
+
+export default function ScreenNavigation({ activeScreen, onScreenChange, setGame, gameId }) {
   const { leagueId } = useParams();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -30,6 +35,24 @@ export default function ScreenNavigation({ activeScreen, onScreenChange }) {
 
   const handleFinishEditing = () => {
     navigate(`/leagues/${leagueId}`);
+  };
+
+  const handleMarkGameComplete = async () => {
+    try {
+      const response = await axios.patch(
+        `/api/games/${gameId}`,
+        { isCompleted: true },
+        { headers: { Authorization: `Bearer ${user.token}` } }
+      );
+      setGame(prev => ({ ...prev, isCompleted: true }));
+      toast.success('Game marked as complete!', { toastId: 'game-complete-success' });
+      navigate(`/leagues/${leagueId}`);
+    } catch (error) {
+      const errorMessage = error.response?.data?.error || 'Failed to mark game as complete';
+      toast.error(errorMessage, { toastId: 'game-complete-error' });
+      console.error('[handleMarkGameComplete]', error);
+    }
+    closeModal();
   };
 
   return (
@@ -83,6 +106,12 @@ export default function ScreenNavigation({ activeScreen, onScreenChange }) {
           Game Options
         </h3>
         <div id="options-modal-description" className="flex flex-col gap-2">
+          <button
+            onClick={handleMarkGameComplete}
+            className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+          >
+            Mark Game as Complete
+          </button>
           <button
             onClick={handleFinishEditing}
             className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"

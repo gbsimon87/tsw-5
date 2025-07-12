@@ -479,6 +479,8 @@ export default function GameTracking() {
       <ScreenNavigation
         activeScreen={screen}
         onScreenChange={handleScreenChange}
+        setGame={setGame}
+        gameId={gameId}
       />
     </div>
   );
