@@ -13,7 +13,7 @@ function StealSelection({ currentPlayer, opposingPlayers, onBack, onStealSelecti
         <div className="font-bold text-lg text-center flex-1">
           Select player who stole the ball for{' '}
           <span className="text-blue-700">
-            {currentPlayer.name} #{currentPlayer.jersey}
+            {currentPlayer.name} #{currentPlayer.jerseyNumber}
           </span>
         </div>
       </div>
@@ -32,7 +32,7 @@ function StealSelection({ currentPlayer, opposingPlayers, onBack, onStealSelecti
             onClick={() => onStealSelection(player.id)}
             aria-label={`Steal by ${player.name}`}
           >
-            #{player.jersey} {player.name}
+            #{player.jerseyNumber} {player.name}
           </button>
         ))}
       </div>

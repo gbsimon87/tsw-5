@@ -12,7 +12,7 @@ function StatSelection({ currentPlayer, statOptions, onBack, onStatClick }) {
         <div className="font-bold text-lg text-center flex-1">
           Select stat for{' '}
           <span className="text-blue-700">
-            {currentPlayer.name} #{currentPlayer.jersey}
+            {currentPlayer.name} #{currentPlayer.jerseyNumber}
           </span>
         </div>
       </div>

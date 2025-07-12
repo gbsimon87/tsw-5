@@ -21,7 +21,7 @@ function ReboundSelection({
         <div className="font-bold text-lg text-center flex-1">
           Select rebound for{' '}
           <span className="text-blue-700">
-            {currentPlayer.name} #{currentPlayer.jersey}
+            {currentPlayer.name} #{currentPlayer.jerseyNumber}
           </span>
         </div>
       </div>
@@ -43,7 +43,7 @@ function ReboundSelection({
                 onClick={() => onReboundSelection(player.id)}
                 aria-label={`Rebound by ${player.name}`}
               >
-                #{player.jersey} {player.name}
+                #{player.jerseyNumber} {player.name}
               </button>
             ))}
           </div>
@@ -58,7 +58,7 @@ function ReboundSelection({
                 onClick={() => onReboundSelection(player.id)}
                 aria-label={`Rebound by ${player.name}`}
               >
-                #{player.jersey} {player.name}
+                #{player.jerseyNumber} {player.name}
               </button>
             ))}
           </div>
