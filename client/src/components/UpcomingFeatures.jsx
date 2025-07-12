@@ -73,8 +73,12 @@ export default function UpcomingFeatures() {
       status: "todo"
     },
     {
-      title: "As a coach or scorekeeper, I want to see fouls per player and have fouled out players disabled on the subs screen so that substitutions are accurate.",
+      title: "As a scorekeeper, I need to see the shot attempts increase with the shot makes so that I can track player performance accurately.",
       status: "todo"
+    },
+    {
+      title: "As a coach or scorekeeper, I want to see fouls per player and have fouled out players disabled on the subs screen so that substitutions are accurate.",
+      status: "in-progress"
     },
     {
       title: "As a player, I want to select which stat to display on my profile chart so that I can focus on the stats that matter most to me.",
@@ -134,20 +138,6 @@ export default function UpcomingFeatures() {
     },
 
     // Difficulty 5: Highly complex features with extensive processing
-    {
-      title: "As a player, I want to see accurate heatmaps on my profile so that I can analyze my performance.",
-      status: "todo",
-      subtasks: [
-        {
-          title: "As a player, I want to select spots on the court for the heatmap so that I can track my actions precisely.",
-          status: "todo"
-        },
-        {
-          title: "As a player, I want a play-by-play heatmap option so that I can see how my performance changes throughout the game.",
-          status: "todo"
-        }
-      ]
-    },
     {
       title: "As a player, I want to see accurate heatmaps on my profile so that I can analyze my performance.",
       status: "todo",

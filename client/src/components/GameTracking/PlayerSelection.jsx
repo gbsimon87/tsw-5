@@ -54,26 +54,33 @@ export default function PlayerSelection({
   };
 
   const getPlayerStats = (playerId) => {
-    const playerStat = game?.playerStats?.find(stat => stat.playerId === playerId);
+    const playerStat = game?.playerStats?.find(stat => stat.playerId === playerId || stat.player === playerId);
     const stats = playerStat?.stats || {};
     const points = ((stats.twoPointFGM || 0) * 2) + ((stats.threePointFGM || 0) * 3) + (stats.freeThrowM || 0);
+    const totalFouls = league?.sportType === 'basketball'
+      ? (stats.personalFoul || 0) + (stats.technicalFoul || 0) + (stats.flagrantFoul || 0)
+      : (stats.personalFoul || 0);
+    const foulOutLimit = league?.sportType === 'basketball' ? (league?.settings?.foulOutLimit || 5) : Infinity;
+    const hasFouledOut = totalFouls >= foulOutLimit;
+
     return {
-      personalFoul: stats.personalFoul || 0,
+      personalFoul: totalFouls,
       points: points || 0,
       assist: stats.assist || 0,
+      hasFouledOut,
     };
   };
 
   const renderPlayerCard = (player, teamId) => {
     const isTeam1 = teamId === teams[0]?._id;
     const isChecked = (isTeam1 ? selectedPlayersTeam1 : selectedPlayersTeam2)?.includes(player?.playerId);
-    const { personalFoul, points, assist } = getPlayerStats(player?.playerId);
+    const { personalFoul, points, assist, hasFouledOut } = getPlayerStats(player?.playerId);
 
     return (
       <div
         key={player.playerId}
-        className="w-full h-[80px] bg-white border border-gray-200 shadow-sm hover:shadow-md flex flex-col justify-between transition cursor-pointer rounded-md"
-        onClick={() => !isSubstitutionMode && setSelectedPlayer({ ...player, teamId })}
+        className={`w-full h-[80px] bg-white border ${hasFouledOut ? 'border-red-500' : 'border-gray-200'} shadow-sm hover:shadow-md flex flex-col justify-between transition cursor-pointer rounded-md ${hasFouledOut ? 'opacity-50' : ''}`}
+        onClick={() => !isSubstitutionMode && !hasFouledOut && setSelectedPlayer({ ...player, teamId })}
       >
         <div className="flex flex-row items-center gap-3 w-full px-2 p-2">
           {isSubstitutionMode ? (
@@ -81,7 +88,8 @@ export default function PlayerSelection({
               type="checkbox"
               checked={isChecked}
               onChange={() => handleSelectPlayer(teamId, player.playerId)}
-              className="accent-blue-600 w-4 h-4 mt-1 rounded focus:ring-2 focus:ring-blue-400 transition"
+              disabled={hasFouledOut}
+              className="accent-blue-600 w-4 h-4 mt-1 rounded focus:ring-2 focus:ring-blue-400 transition disabled:opacity-50"
               aria-label={`Toggle active status for ${player.name || 'Unknown'}`}
             />
           ) : (
@@ -95,6 +103,7 @@ export default function PlayerSelection({
           <div className="flex flex-col flex-1 min-w-0">
             <span className="font-semibold text-sm text-gray-900 truncate">
               {getInitialAndLastName(player?.name) || 'Unknown'}
+              {hasFouledOut && <span className="text-red-500 text-xs ml-2">(Fouled Out)</span>}
             </span>
             <div>
               <span className="text-xs text-gray-400">{getFirstCapitalLetter(player?.position) || 'N/A'}</span>
@@ -104,7 +113,9 @@ export default function PlayerSelection({
               </span>
             </div>
             <div>
-              <span className="text-xs text-gray-500">PF: {personalFoul}</span>
+              <span className={`text-xs ${hasFouledOut ? 'text-red-500' : 'text-gray-500'}`}>
+                Fouls: {personalFoul}/{league?.sportType === 'basketball' ? league?.settings?.foulOutLimit || 5 : '-'}
+              </span>
             </div>
           </div>
         </div>
@@ -155,7 +166,6 @@ export default function PlayerSelection({
   };
 
   const handleFollowUp = (followUpData) => {
-    console.log('selectedPlayer:', selectedPlayer);
     const statsToRecord = [{
       player: selectedPlayer,
       statType: selectedStatType,
@@ -165,7 +175,7 @@ export default function PlayerSelection({
       period: overridePeriod || clockState.period,
     }];
 
-    if (followUpData && selectedPlayer.playerId) {
+    if (followUpData && followUpData.playerId) {
       const followUpConfig = getFollowUpConfig(selectedStatType, selectedPlayer, activePlayers);
       const followUpPlayer = activePlayers.find(p => p.playerId === followUpData.playerId);
       if (followUpPlayer) {
@@ -228,7 +238,7 @@ export default function PlayerSelection({
         return {
           question: `Who assisted on ${selectedPlayer.name}'s made shot?`,
           players: activePlayers.filter(p => p.teamId === selectedPlayer.teamId && p.playerId !== selectedPlayer.playerId),
-          allowNone: true, // Changed to allow "Nobody" for assists
+          allowNone: true,
         };
       case 'offensiveRebound':
         return {
@@ -258,11 +268,12 @@ export default function PlayerSelection({
           allowNone: false,
         };
       case 'drawnFoul':
-        return {
-          question: `Who fouled ${selectedPlayer.name}?`,
-          players: activePlayers.filter(p => p.teamId !== selectedPlayer.teamId),
-          allowNone: false,
-        };
+      return {
+        question: `Who fouled ${selectedPlayer.name}?`,
+        players: activePlayers.filter(p => p.teamId !== selectedPlayer.teamId),
+        allowNone: false,
+        extra: 'personalFoul', // Award personalFoul to the opposing player
+      };
       case 'steal':
         return {
           question: `Who turned over the ball for ${selectedPlayer.name}'s steal?`,

@@ -501,11 +501,11 @@ router.patch('/:gameId', authMiddleware, checkAdminOrManager, async (req, res) =
       teamName: populatedGame.teams.find(t => t._id.toString() === score.team.toString())?.name || 'Unknown',
     }));
     populatedGame.playerStats = populatedGame.playerStats.map(stat => ({
-      ...stat,
-      player: stat.player ? { _id: stat.player._id, name: stat.player.user?.name || 'Unknown', playerId: stat.player._id } : null,
-      team: populatedGame.teams.find(t => t._id.toString() === stat.team.toString()) || { name: 'Unknown' },
-      teamId: stat.team,
-      playerName: stat.player?.user?.name || 'Unknown',
+      playerId: stat.player?._id.toString() || stat.playerId,
+      teamId: stat.team.toString(),
+      stats: stat.stats || {},
+      playerName: stat.player?.user?.name || stat.playerName || 'Unknown',
+      teamName: populatedGame.teams.find(t => t._id.toString() === stat.team.toString())?.name || 'Unknown',
     }));
     populatedGame.gameMVP = populatedGame.gameMVP ? { _id: populatedGame.gameMVP._id, name: populatedGame.gameMVP.user?.name || 'Unknown' } : null;
 

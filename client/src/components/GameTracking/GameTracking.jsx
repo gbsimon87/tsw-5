@@ -200,12 +200,13 @@ export default function GameTracking() {
   }, [screen, selectedPlayersTeam1, selectedPlayersTeam2, league, game]);
 
   const handleStatIncrement = async (stats, clockStatePeriod = clockState.period) => {
-    // console.log('Stats input:', stats);
     const pointValues = game?.scoringRules || league?.settings?.scoringRules || {
       twoPointFGM: 2,
       threePointFGM: 3,
       freeThrowM: 1,
     };
+
+    const foulOutLimit = league?.sportType === 'basketball' ? (league?.settings?.foulOutLimit || 5) : Infinity;
 
     const newEntries = stats?.map(({ player, statType, time, period }) => {
       const teamId = game?.teams.find(team => team.members.some(m => m.playerId === player.playerId))?._id;
@@ -228,6 +229,55 @@ export default function GameTracking() {
       toast.error('No valid stats to record: Invalid player-team association', { toastId: 'invalid-stat' });
       return;
     }
+
+    // Update local game.playerStats immediately
+    setGame(prev => {
+      const updatedPlayerStats = [...(prev.playerStats || [])];
+      newEntries.forEach(({ player, statType, team }) => {
+        const playerStatIndex = updatedPlayerStats.findIndex(stat => stat.playerId === player);
+        if (playerStatIndex !== -1) {
+          updatedPlayerStats[playerStatIndex] = {
+            ...updatedPlayerStats[playerStatIndex],
+            stats: {
+              ...updatedPlayerStats[playerStatIndex].stats,
+              [statType]: ((updatedPlayerStats[playerStatIndex].stats?.[statType] || 0) + 1),
+            },
+          };
+        } else {
+          updatedPlayerStats.push({
+            playerId: player,
+            teamId: team,
+            stats: { [statType]: 1 },
+          });
+        }
+      });
+
+      const updatedScore = prev.teamScores ? [...prev.teamScores] : [
+        { teamId: prev.teams[0]?._id?.toString(), score: 0 },
+        { teamId: prev.teams[1]?._id?.toString(), score: 0 },
+      ];
+
+      newEntries.forEach(({ statType, team }) => {
+        if (pointValues[statType]) {
+          const teamIndex = updatedScore.findIndex(s => s.teamId?.toString() === team?.toString());
+          if (teamIndex !== -1) {
+            updatedScore[teamIndex] = {
+              ...updatedScore[teamIndex],
+              score: (updatedScore[teamIndex].score || 0) + pointValues[statType],
+            };
+          } else {
+            updatedScore.push({ teamId: team, score: pointValues[statType] });
+          }
+        }
+      });
+
+      return {
+        ...prev,
+        playerStats: updatedPlayerStats,
+        teamScores: updatedScore,
+        playByPlay: [...(prev.playByPlay || []), ...newEntries],
+      };
+    });
 
     setPlayByPlay(prev => [...prev, ...newEntries]);
 
@@ -253,9 +303,20 @@ export default function GameTracking() {
             updatedScore.push({ team, score: pointValues[statType] });
           }
         }
+
+        // Check for foul-out in basketball
+        if (league?.sportType === 'basketball' && ['personalFoul', 'technicalFoul', 'flagrantFoul'].includes(statType)) {
+          const totalFouls = (updatedStats[player]?.personalFoul || 0) +
+            (updatedStats[player]?.technicalFoul || 0) +
+            (updatedStats[player]?.flagrantFoul || 0);
+          if (totalFouls >= foulOutLimit) {
+            toast.warn(`${newEntries.find(e => e.player === player)?.playerName || 'Player'} has fouled out!`, {
+              toastId: `foul-out-${player}`,
+            });
+          }
+        }
       });
 
-      // console.log('Updated formData.score:', updatedScore);
       return { ...prev, playerStats: updatedStats, score: updatedScore };
     });
 
@@ -275,22 +336,24 @@ export default function GameTracking() {
         `/api/games/${gameId}`,
         {
           league: game.league,
-          playByPlay: newEntries, // Send only new entries
+          playByPlay: newEntries,
           playerStats: playerStatsPayload,
         },
         { headers: { Authorization: `Bearer ${user.token}` } }
       );
 
-      // Merge the response with the existing game state
+      // Update game state with normalized backend response
       setGame(prev => ({
         ...prev,
         teamScores: response.data.teamScores || prev.teamScores,
-        playerStats: response.data.playerStats || prev.playerStats,
+        playerStats: response.data.playerStats?.map(stat => ({
+          playerId: stat.player?._id || stat.player?.playerId || stat.playerId,
+          teamId: stat.team?._id || stat.teamId,
+          stats: stat.stats || {},
+          playerName: stat.playerName || stat.player?.name,
+        })) || prev.playerStats,
         playByPlay: response.data.playByPlay || prev.playByPlay,
       }));
-
-      // console.log('Updated game state after PATCH:', response.data);
-      // console.log('Current game state:', game);
 
       setFormData(prev => {
         const updatedScore = response?.data?.teamScores?.map(s => ({
@@ -303,15 +366,14 @@ export default function GameTracking() {
           playerStats: response?.data?.playerStats?.reduce(
             (acc, stat) => ({
               ...acc,
-              [stat.playerId]: stat.stats || {},
+              [stat.player?._id || stat.player?.playerId || stat.playerId]: stat.stats || {},
             }),
             {}
           ) || prev.playerStats,
         };
       });
-      setPlayByPlay(response?.data?.playByPlay || []);
 
-      // toast.success('Game stats updated successfully', { toastId: `save-stats-${Date.now()}` });
+      setPlayByPlay(response?.data?.playByPlay || []);
     } catch (error) {
       const errorMessage = error.response?.data?.error || 'Failed to save game stats';
       toast.error(errorMessage, { toastId: 'save-stats-error' });
