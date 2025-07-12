@@ -139,6 +139,41 @@ export default function PlayerSelection({
 
   const handleStatSelect = (statType) => {
     setSelectedStatType(statType);
+    const time = overrideMinutes && overrideSeconds
+      ? parseInt(overrideMinutes, 10) * 60 + parseInt(overrideSeconds, 10)
+      : remainingSeconds;
+    const period = overridePeriod || clockState.period;
+    const statsToRecord = [{
+      player: selectedPlayer,
+      statType,
+      time,
+      period,
+    }];
+
+    // Automatically add corresponding attempt stat for made shots
+    if (statType === 'twoPointFGM') {
+      statsToRecord.push({
+        player: selectedPlayer,
+        statType: 'twoPointFGA',
+        time,
+        period,
+      });
+    } else if (statType === 'threePointFGM') {
+      statsToRecord.push({
+        player: selectedPlayer,
+        statType: 'threePointFGA',
+        time,
+        period,
+      });
+    } else if (statType === 'freeThrowM') {
+      statsToRecord.push({
+        player: selectedPlayer,
+        statType: 'freeThrowA',
+        time,
+        period,
+      });
+    }
+
     if (['twoPointFGA', 'threePointFGA', 'freeThrowA'].includes(statType)) {
       setModalStep('followUpRebound');
     } else if (['twoPointFGM', 'threePointFGM'].includes(statType)) {
@@ -154,13 +189,7 @@ export default function PlayerSelection({
     } else if (['block', 'blockedShotAttempt'].includes(statType)) {
       setModalStep('followUpBlock');
     } else {
-      handlePlayerClick([{
-        player: selectedPlayer,
-        statType,
-        time: overrideMinutes && overrideSeconds ?
-          parseInt(overrideMinutes, 10) * 60 + parseInt(overrideSeconds, 10) : remainingSeconds,
-        period: overridePeriod || clockState.period,
-      }]);
+      handlePlayerClick(statsToRecord);
       resetModal();
     }
   };
@@ -174,6 +203,36 @@ export default function PlayerSelection({
         : remainingSeconds,
       period: overridePeriod || clockState.period,
     }];
+
+    // Add attempt stat for made shots
+    if (selectedStatType === 'twoPointFGM') {
+      statsToRecord.push({
+        player: selectedPlayer,
+        statType: 'twoPointFGA',
+        time: overrideMinutes && overrideSeconds
+          ? parseInt(overrideMinutes, 10) * 60 + parseInt(overrideSeconds, 10)
+          : remainingSeconds,
+        period: overridePeriod || clockState.period,
+      });
+    } else if (selectedStatType === 'threePointFGM') {
+      statsToRecord.push({
+        player: selectedPlayer,
+        statType: 'threePointFGA',
+        time: overrideMinutes && overrideSeconds
+          ? parseInt(overrideMinutes, 10) * 60 + parseInt(overrideSeconds, 10)
+          : remainingSeconds,
+        period: overridePeriod || clockState.period,
+      });
+    } else if (selectedStatType === 'freeThrowM') {
+      statsToRecord.push({
+        player: selectedPlayer,
+        statType: 'freeThrowA',
+        time: overrideMinutes && overrideSeconds
+          ? parseInt(overrideMinutes, 10) * 60 + parseInt(overrideSeconds, 10)
+          : remainingSeconds,
+        period: overridePeriod || clockState.period,
+      });
+    }
 
     if (followUpData && followUpData.playerId) {
       const followUpConfig = getFollowUpConfig(selectedStatType, selectedPlayer, activePlayers);
@@ -268,12 +327,12 @@ export default function PlayerSelection({
           allowNone: false,
         };
       case 'drawnFoul':
-      return {
-        question: `Who fouled ${selectedPlayer.name}?`,
-        players: activePlayers.filter(p => p.teamId !== selectedPlayer.teamId),
-        allowNone: false,
-        extra: 'personalFoul', // Award personalFoul to the opposing player
-      };
+        return {
+          question: `Who fouled ${selectedPlayer.name}?`,
+          players: activePlayers.filter(p => p.teamId !== selectedPlayer.teamId),
+          allowNone: false,
+          extra: 'personalFoul', // Award personalFoul to the opposing player
+        };
       case 'steal':
         return {
           question: `Who turned over the ball for ${selectedPlayer.name}'s steal?`,
