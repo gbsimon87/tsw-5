@@ -74,7 +74,7 @@ export default function UpcomingFeatures() {
     },
     {
       title: "As a scorekeeper, I need to see the shot attempts increase with the shot makes so that I can track player performance accurately.",
-      status: "in-progress"
+      status: "done"
     },
     {
       title: "As a coach or scorekeeper, I want to see fouls per player and have fouled out players disabled on the subs screen so that substitutions are accurate.",
