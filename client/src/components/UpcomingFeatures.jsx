@@ -77,6 +77,10 @@ export default function UpcomingFeatures() {
       status: "done"
     },
     {
+      title: "As a member of a team, I want to see the upcoming games and recent games from the team page so that I can stay informed about my team's schedule.",
+      status: "done"
+    },
+    {
       title: "As a coach or scorekeeper, I want to see fouls per player and have fouled out players disabled on the subs screen so that substitutions are accurate.",
       status: "done"
     },

@@ -8,6 +8,7 @@ const Team = require('../models/Team');
 const authMiddleware = require('../middleware/authMiddleware');
 const checkAdminOrManager = require('../middleware/adminOrManagerMiddleware');
 
+// Get the next game for the authenticated user
 router.get('/next-game', authMiddleware, async (req, res) => {
   try {
     // Find Player documents for the user

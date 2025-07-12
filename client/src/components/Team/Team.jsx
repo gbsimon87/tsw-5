@@ -9,6 +9,8 @@ export default function Team() {
   const [team, setTeam] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [upcomingGames, setUpcomingGames] = useState([]);
+  const [previousGames, setPreviousGames] = useState([]);
 
   useEffect(() => {
     if (!user?.token || !teamId) {
@@ -24,15 +26,23 @@ export default function Team() {
       setError(null);
       try {
         console.log(`Fetching team with ID: ${teamId}`);
-        const response = await axios.get(`/api/teams/${teamId}`, {
-          headers: { Authorization: `Bearer ${user.token}` },
-        });
-        console.log('Team response:', response.data);
-        setTeam(response.data || null);
+        const [teamResponse, gamesResponse] = await Promise.all([
+          axios.get(`/api/teams/${teamId}`, {
+            headers: { Authorization: `Bearer ${user.token}` },
+          }),
+          axios.get(`/api/teams/${teamId}/games`, {
+            headers: { Authorization: `Bearer ${user.token}` },
+          }),
+        ]);
+        console.log('Team response:', teamResponse.data);
+        console.log('Games response:', gamesResponse.data);
+        setTeam(teamResponse.data || null);
+        setUpcomingGames(gamesResponse.data.upcomingGames || []);
+        setPreviousGames(gamesResponse.data.previousGames || []);
       } catch (err) {
         console.error('Fetch team error:', err.response?.status, err.response?.data, err.message);
         setTeam(null);
-        setError(err.response?.data?.error || 'Failed to fetch team');
+        setError(err.response?.data?.error || 'Failed to fetch team or games');
       } finally {
         setLoading(false);
       }
@@ -68,9 +78,12 @@ export default function Team() {
           />
           <div>
             <h2 className="text-xl font-bold">{team.name}</h2>
-            <div>
-              Season: {team.season} | League: {team.league?.name || 'Unknown'}
-            </div>
+            <p>
+              Season: {team.season}
+            </p>
+            <p>
+              League: {team.league?.name || 'Unknown'}
+            </p>
             <div
               className="font-semibold"
             >
@@ -153,17 +166,15 @@ export default function Team() {
                       className={isGreyRow ? 'bg-gray-50 hover:bg-gray-100' : 'bg-white hover:bg-gray-50'}
                     >
                       <td
-                        className={`sticky left-0 border-b border-gray-100 px-2 py-2 font-medium whitespace-normal z-10 ${
-                          isGreyRow ? 'bg-gray-50 text-gray-900' : 'bg-white text-gray-900'
-                        }`}
+                        className={`sticky left-0 border-b border-gray-100 px-2 py-2 font-medium whitespace-normal z-10 ${isGreyRow ? 'bg-gray-50 text-gray-900' : 'bg-white text-gray-900'
+                          }`}
                         style={{ maxWidth: 150 }}
                       >
                         {index + 1}
                       </td>
                       <td
-                        className={`border-b border-gray-100 px-2 py-2 font-medium text-gray-900 ${
-                          isGreyRow ? 'bg-gray-50' : 'bg-white'
-                        }`}
+                        className={`border-b border-gray-100 px-2 py-2 font-medium text-gray-900 ${isGreyRow ? 'bg-gray-50' : 'bg-white'
+                          }`}
                       >
                         {member.player.user?.name || 'Unknown'}
                       </td>
@@ -178,9 +189,8 @@ export default function Team() {
                         {member.role}
                       </td>
                       <td
-                        className={`border-b border-gray-100 px-3 py-2 text-center text-sm ${
-                          member.isActive ? 'text-green-600' : 'text-red-600'
-                        }`}
+                        className={`border-b border-gray-100 px-3 py-2 text-center text-sm ${member.isActive ? 'text-green-600' : 'text-red-600'
+                          }`}
                       >
                         {member.isActive ? 'Active' : 'Inactive'}
                       </td>
@@ -190,6 +200,79 @@ export default function Team() {
               )}
             </tbody>
           </table>
+        </div>
+        {/* New sections for games */}
+        <div className="mb-8">
+          <h3 className="text-lg font-bold mb-2">Upcoming Games</h3>
+          {upcomingGames.length === 0 ? (
+            <div className="text-gray-400">No upcoming games scheduled.</div>
+          ) : (
+            <table className="min-w-full text-sm">
+              <thead className="bg-gray-50 text-gray-700">
+                <tr>
+                  <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold">Date</th>
+                  <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold">Opponent</th>
+                  <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold">Score</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {upcomingGames.map((game, index) => {
+                  const isGreyRow = index % 2 !== 0;
+                  return (
+                    <tr key={game._id} className={isGreyRow ? 'bg-gray-50' : 'bg-white'}>
+                      <td className="border-b border-gray-100 px-3 py-2 text-gray-900">
+                        {new Date(game.date).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric',
+                        })}
+                      </td>
+                      <td className="border-b border-gray-100 px-3 py-2 text-gray-900">{game.opponentName}</td>
+                      <td className="border-b border-gray-100 px-3 py-2 text-gray-900">
+                        {game.teamScore === 'TBD' ? 'TBD' : `${game.teamScore} - ${game.opponentScore}`}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
+        </div>
+        <div className="mb-8">
+          <h3 className="text-lg font-bold mb-2">Recent Games</h3>
+          {previousGames.length === 0 ? (
+            <div className="text-gray-400">No recent games played.</div>
+          ) : (
+            <table className="min-w-full text-sm">
+              <thead className="bg-gray-50 text-gray-700">
+                <tr>
+                  <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold">Date</th>
+                  <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold">Opponent</th>
+                  <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold">Score</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {previousGames.map((game, index) => {
+                  const isGreyRow = index % 2 !== 0;
+                  return (
+                    <tr key={game._id} className={isGreyRow ? 'bg-gray-50' : 'bg-white'}>
+                      <td className="border-b border-gray-100 px-3 py-2 text-gray-900">
+                        {new Date(game.date).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric',
+                        })}
+                      </td>
+                      <td className="border-b border-gray-100 px-3 py-2 text-gray-900">{game.opponentName}</td>
+                      <td className="border-b border-gray-100 px-3 py-2 text-gray-900">
+                        {game.teamScore} - {game.opponentScore}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
     </div>

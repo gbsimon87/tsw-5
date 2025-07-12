@@ -1,4 +1,5 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const { isValidObjectId } = require('mongoose');
 const router = express.Router();
 const Team = require('../models/Team');
@@ -320,6 +321,70 @@ router.get('/my-teams', authMiddleware, async (req, res) => {
   } catch (error) {
     console.error('Get my teams error:', error);
     res.status(400).json({ error: 'Failed to fetch user teams' });
+  }
+});
+
+// Get upcoming and previous games for a team
+router.get('/:teamId/games', authMiddleware, async (req, res) => {
+  try {
+    const { teamId } = req.params;
+    const { season } = req.query;
+
+    // Validate teamId
+    if (!mongoose.Types.ObjectId.isValid(teamId)) {
+      return res.status(400).json({ error: 'Invalid team ID' });
+    }
+
+    // Find the team to get season if not provided
+    const team = await Team.findById(teamId).select('season league');
+    if (!team) {
+      return res.status(404).json({ error: 'Team not found' });
+    }
+
+    // Ensure user is a member of the team
+    const players = await Player.find({ user: req.user._id }).select('_id');
+    const playerIds = players.map(player => player._id);
+    if (!(await Team.findOne({ _id: teamId, 'members.player': { $in: playerIds } }))) {
+      return res.status(403).json({ error: 'User is not a member of this team' });
+    }
+
+    const query = { teams: teamId, season: season || team.season };
+
+    // Fetch upcoming games (isCompleted: false)
+    const upcomingGames = await Game.find({ ...query, isCompleted: false })
+      .sort({ date: 1 }) // Earliest first
+      .populate('teams', 'name')
+      .lean();
+
+    // Fetch last 3 previous games (isCompleted: true)
+    const previousGames = await Game.find({ ...query, isCompleted: true })
+      .sort({ date: -1 }) // Most recent first
+      .limit(3)
+      .populate('teams', 'name')
+      .lean();
+
+    // Format games
+    const formatGame = (game, teamId) => {
+      const opponent = game.teams.find(t => t._id.toString() !== teamId.toString());
+      const teamScoreObj = game.teamScores.find(s => s.team.toString() === teamId.toString());
+      const opponentScoreObj = game.teamScores.find(s => s.team.toString() !== teamId.toString());
+      return {
+        _id: game._id,
+        date: game.date,
+        opponentName: opponent?.name || 'Unknown',
+        teamScore: teamScoreObj?.score ?? (game.isCompleted ? 0 : 'TBD'),
+        opponentScore: opponentScoreObj?.score ?? (game.isCompleted ? 0 : 'TBD'),
+      };
+    };
+
+    const formattedUpcomingGames = upcomingGames.map(game => formatGame(game, teamId));
+    const formattedPreviousGames = previousGames.map(game => formatGame(game, teamId));
+
+    res.set('Cache-Control', 'no-store');
+    res.json({ upcomingGames: formattedUpcomingGames, previousGames: formattedPreviousGames });
+  } catch (err) {
+    console.error('Get team games error:', err);
+    res.status(500).json({ error: 'Failed to fetch team games' });
   }
 });
 
