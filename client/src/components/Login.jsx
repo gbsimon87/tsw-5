@@ -40,7 +40,7 @@ export default function Login() {
       <div className="bg-white p-8 rounded-lg w-full max-w-md">
         <h1 className="text-2xl font-bold mb-6 text-center">Login</h1>
         {error && <p className="text-red-500 mb-4 text-center">{error}</p>}
-        <h2 className="text-lg font-semibold mb-4">Email/Password Login</h2>
+        {/* <h2 className="text-lg font-semibold mb-4">Email/Password Login</h2>
         <form onSubmit={handleEmailLogin} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700">Email:</label>
@@ -70,7 +70,7 @@ export default function Login() {
           >
             Login
           </button>
-        </form>
+        </form> */}
         <h2 className="text-lg font-semibold mt-6 mb-4">Google Login</h2>
         <div className="flex justify-center">
           <GoogleLogin
@@ -78,12 +78,12 @@ export default function Login() {
             onError={() => setError('Google Login Failed')}
           />
         </div>
-        <p className="mt-4 text-center">
+        {/* <p className="mt-4 text-center">
           Don't have an account?{' '}
           <Link to="/register" className="text-blue-500 hover:underline">
             Register
           </Link>
-        </p>
+        </p> */}
       </div>
     </div>
   );

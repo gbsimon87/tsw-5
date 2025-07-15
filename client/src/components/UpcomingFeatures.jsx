@@ -98,7 +98,7 @@ export default function UpcomingFeatures() {
     },
     {
       title: "As a scorekeeper, I need the ability mark games as complete.",
-      status: "todo"
+      status: "done"
     },
     {
       title: "As an admin, I need the ability to add other administrators.",
@@ -109,7 +109,7 @@ export default function UpcomingFeatures() {
       status: "todo"
     },
     {
-      title: "As a user, I should be able to request to join a league.",
+      title: "As a user, I should be able to request to join a league from the Discover Leagues section.",
       status: "todo"
     },
     {
