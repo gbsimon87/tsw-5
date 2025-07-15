@@ -19,7 +19,7 @@ const envFile =
 require('dotenv').config({ path: path.resolve(__dirname, envFile) });
 
 const SMALL_MODE = false;
-const CLEAR_DATABASE = true;
+const CLEAR_DATABASE = false;
 
 // Configuration for seeding
 const config = {
