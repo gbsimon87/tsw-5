@@ -50,25 +50,25 @@ const PublicFacingLeaguePage = () => {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Team</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">W</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">L</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">PCT</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Team</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">W</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">L</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">PCT</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {league.standings.map((team) => (
                   <tr key={team._id}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    <td className="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900">
                       {team.name || 'Unnamed Team'}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">
                       {team.wins || 0}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">
                       {team.losses || 0}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">
                       {(team.pct ? (team.pct * 100).toFixed(1) : 0)}%
                     </td>
                   </tr>
@@ -141,9 +141,9 @@ const PublicFacingLeaguePage = () => {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Score</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Score</th>
+                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -153,10 +153,10 @@ const PublicFacingLeaguePage = () => {
                   .sort((a, b) => new Date(b.date) - new Date(a.date))
                   .map((game) => (
                     <tr key={game._id || game.date}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">
                         {new Date(game.date).toLocaleDateString()}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">
                         {game.teamScores
                           .map((ts) => {
                             const team = game.teams.find((t) => t._id === ts.team);
@@ -164,14 +164,14 @@ const PublicFacingLeaguePage = () => {
                           })
                           .join(' - ')}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">
                         {game.isCompleted ? 'Completed' : 'Scheduled'}
                       </td>
                     </tr>
                   ))
               ) : (
                 <tr>
-                  <td colSpan="3" className="px-6 py-4 text-center text-sm text-gray-500">
+                  <td colSpan="3" className="px-4 py-2 text-center text-sm text-gray-500">
                     No games found
                   </td>
                 </tr>
@@ -182,28 +182,39 @@ const PublicFacingLeaguePage = () => {
       </div>
 
       {/* League Leaders */}
-      <div className="bg-white p-4">
-        <h2 className="text-2xl font-semibold text-gray-800 mb-4">League Leaders</h2>
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Player</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Team</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Points</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {league?.leagueLeaders?.map((leader) => (
-                <tr key={leader?._id}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{leader?.name}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{leader?.team}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{leader?.points}</td>
+      <div className="bg-white shadow-md rounded-lg p-4">
+        <h2 className="text-2xl font-semibold text-gray-800 mb-4">League Leaders - Points</h2>
+        {console.log('League Leaders in component:', league?.leagueLeaders)}
+        {!league || league?.leagueLeaders?.length === 0 ? (
+          <div className="text-gray-500 text-left">No league leaders available</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Player</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Team</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Points</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {league?.leagueLeaders?.map((leader) => (
+                  <tr key={leader._id}>
+                    <td className="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {leader.name || 'Unknown Player'}
+                    </td>
+                    <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">
+                      {leader.team || 'Unknown Team'}
+                    </td>
+                    <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">
+                      {leader.points || 0}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );

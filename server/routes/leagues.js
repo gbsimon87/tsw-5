@@ -177,7 +177,7 @@ router.get('/public', async (req, res) => {
   }
 });
 
-// GET league details by ID with teams, games, and standings
+// GET league details with teams, games, standings, and league leaders
 router.get('/public/:leagueId', async (req, res) => {
   try {
     const { leagueId } = req.params;
@@ -225,7 +225,7 @@ router.get('/public/:leagueId', async (req, res) => {
         path: 'teams',
         select: 'name logo _id'
       })
-      .select('teams date location status teamScores isCompleted -_id')
+      .select('teams date location status teamScores isCompleted playerStats -_id')
       .lean();
 
     // Debug: Log games and team data
@@ -266,11 +266,57 @@ router.get('/public/:leagueId', async (req, res) => {
       };
     }).sort((a, b) => b.pct - a.pct || b.wins - a.wins || a.losses - b.losses);
 
-    // Combine league data with games and standings
+    // Calculate league leaders (top 5 players by points)
+    const playerPointsMap = {};
+    games
+      .filter((game) => game.isCompleted)
+      .forEach((game) => {
+        game.playerStats.forEach((stat) => {
+          const playerId = stat.player.toString();
+          const points = Object.entries(stat.stats).reduce((total, [statType, value]) => {
+            return total + (league.settings.scoringRules[statType] || 0) * (value || 0);
+          }, 0);
+          if (!playerPointsMap[playerId]) {
+            playerPointsMap[playerId] = {
+              player: stat.player,
+              teamId: stat.team,
+              points: 0
+            };
+          }
+          playerPointsMap[playerId].points += points;
+        });
+      });
+
+    const leagueLeaders = await Player.find({ _id: { $in: Object.keys(playerPointsMap) } })
+      .populate('user', 'name')
+      .lean()
+      .then((players) =>
+        players
+          .map((player) => {
+            const playerId = player._id.toString();
+            const team = league.teams.find((t) =>
+              t.members.some((m) => m?.player?._id?.toString() === playerId)
+            );
+            return {
+              _id: player._id,
+              name: player.user?.name || 'Unknown Player',
+              team: team ? team.name : 'Unknown Team',
+              points: playerPointsMap[playerId].points || 0
+            };
+          })
+          .sort((a, b) => b.points - a.points)
+          .slice(0, 5)
+      );
+
+    // Debug: Log league leaders
+    console.log('League leaders:', leagueLeaders);
+
+    // Combine league data with games, standings, and league leaders
     const response = {
       ...league,
       games,
-      standings
+      standings,
+      leagueLeaders
     };
 
     res.set('Cache-Control', 'no-store');
@@ -351,7 +397,7 @@ router.patch('/:leagueId', authMiddleware, async (req, res) => {
     const league = await League.findById(req.params.leagueId);
     if (!league) return res.status(404).json({ error: 'League not found' });
 
-    const isAdmin = league.admins.some(admin => admin._id.toString() === req.user._id.toString());
+    const isAdmin = league.admins.some(admin => admin?._id?.toString() === req.user?._id?.toString());
     if (!isAdmin) return res.status(403).json({ error: 'Unauthorized: Admin access required' });
 
     // Validate foulOutLimit for basketball leagues
