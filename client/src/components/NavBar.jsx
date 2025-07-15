@@ -41,7 +41,7 @@ function NavBar() {
       ]
       : [
         { name: 'Login', to: '/login', current: false },
-        { name: 'Register', to: '/register', current: false },
+        // { name: 'Register', to: '/register', current: false },
       ]),
     { name: 'Upcoming Features', to: '/upcoming-features', current: false },
     { name: 'About', to: '/about', current: false },
