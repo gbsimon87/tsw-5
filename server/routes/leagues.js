@@ -177,7 +177,7 @@ router.get('/public', async (req, res) => {
   }
 });
 
-// Get a specific public league by ID
+// GET league details by ID with teams, games, and standings
 router.get('/public/:leagueId', async (req, res) => {
   try {
     const { leagueId } = req.params;
@@ -195,7 +195,7 @@ router.get('/public/:leagueId', async (req, res) => {
     })
       .populate({
         path: 'teams',
-        match: { isActive: true }, // Relaxed season filter
+        match: { isActive: true },
         populate: {
           path: 'members.player',
           model: 'Player',
@@ -223,19 +223,54 @@ router.get('/public/:leagueId', async (req, res) => {
     })
       .populate({
         path: 'teams',
-        select: 'name logo _id' // Include _id for debugging
+        select: 'name logo _id'
       })
-      .select('teams date location status teamScores -_id')
+      .select('teams date location status teamScores isCompleted -_id')
       .lean();
 
     // Debug: Log games and team data
     console.log(`Found ${games.length} games for league ${leagueId}, season: ${league.season || 'none'}`);
     console.log('Sample game teams:', games.length > 0 ? games[0].teams : 'No games');
 
-    // Combine league data with games
+    // Calculate team standings
+    const standings = league.teams.map((team) => {
+      const teamGames = games.filter(
+        (game) => game.isCompleted && game.teams.some((t) => t._id.toString() === team._id.toString())
+      );
+      const wins = teamGames.filter((game) => {
+        const teamScore = game.teamScores.find(
+          (ts) => ts.team.toString() === team._id.toString()
+        )?.score || 0;
+        const opponentScore = game.teamScores.find(
+          (ts) => ts.team.toString() !== team._id.toString()
+        )?.score || 0;
+        return teamScore > opponentScore;
+      }).length;
+      const losses = teamGames.filter((game) => {
+        const teamScore = game.teamScores.find(
+          (ts) => ts.team.toString() === team._id.toString()
+        )?.score || 0;
+        const opponentScore = game.teamScores.find(
+          (ts) => ts.team.toString() !== team._id.toString()
+        )?.score || 0;
+        return teamScore < opponentScore;
+      }).length;
+      const totalGames = wins + losses;
+      const pct = totalGames > 0 ? wins / totalGames : 0;
+      return {
+        _id: team._id,
+        name: team.name || 'Unnamed Team',
+        wins,
+        losses,
+        pct
+      };
+    }).sort((a, b) => b.pct - a.pct || b.wins - a.wins || a.losses - b.losses);
+
+    // Combine league data with games and standings
     const response = {
       ...league,
-      games
+      games,
+      standings
     };
 
     res.set('Cache-Control', 'no-store');

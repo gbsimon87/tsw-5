@@ -12,6 +12,7 @@ const PublicFacingLeaguePage = () => {
     const fetchLeague = async () => {
       try {
         const response = await axios.get(`/api/leagues/public/${leagueId}`);
+        console.log('API Response:', response.data); // Debug standings
         setLeague(response.data);
         setLoading(false);
       } catch (err) {
@@ -39,9 +40,10 @@ const PublicFacingLeaguePage = () => {
       </div>
 
       {/* Team Standings */}
-      <div className="bg-white p-4">
+      <div className="bg-white shadow-md rounded-lg p-4">
         <h2 className="text-2xl font-semibold text-gray-800 mb-4">Team Standings</h2>
-        {league?.standings?.length === 0 ? (
+        {console.log('Standings in component:', league?.standings)}
+        {!league || league.standings?.length === 0 ? (
           <div className="text-gray-500 text-left">No standings available</div>
         ) : (
           <div className="overflow-x-auto">
@@ -49,18 +51,26 @@ const PublicFacingLeaguePage = () => {
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Team</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Wins</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Losses</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">W</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">L</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">PCT</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {league?.standings?.map((team) => (
-                  <tr key={team?._id}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{team?.name}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{team?.wins}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{team?.losses}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{(team?.pct * 100).toFixed(1)}%</td>
+                {league.standings.map((team) => (
+                  <tr key={team._id}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {team.name || 'Unnamed Team'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {team.wins || 0}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {team.losses || 0}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {(team.pct ? (team.pct * 100).toFixed(1) : 0)}%
+                    </td>
                   </tr>
                 ))}
               </tbody>
