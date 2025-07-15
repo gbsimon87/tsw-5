@@ -180,24 +180,32 @@ router.get('/public', async (req, res) => {
 // Get a specific public league by ID
 router.get('/public/:leagueId', async (req, res) => {
   try {
+    const { leagueId } = req.params;
+
+    // Validate leagueId
+    if (!leagueId.match(/^[0-9a-fA-F]{24}$/)) {
+      return res.status(400).json({ error: 'Invalid league ID' });
+    }
+
+    // Fetch league with populated teams
     const league = await League.findOne({
-      _id: req.params.leagueId,
+      _id: leagueId,
       isActive: true,
-      visibility: 'public',
+      visibility: 'public'
     })
       .populate({
         path: 'teams',
-        match: { isActive: true, season: { $eq: '$season' } },
+        match: { isActive: true }, // Relaxed season filter
         populate: {
           path: 'members.player',
           model: 'Player',
           match: { isActive: true },
-          select: 'user stats jerseyNumber position',
+          select: 'user jerseyNumber position -_id',
           populate: {
             path: 'user',
-            select: 'firstName lastName',
-          },
-        },
+            select: 'name email -_id'
+          }
+        }
       })
       .lean();
 
@@ -205,78 +213,36 @@ router.get('/public/:leagueId', async (req, res) => {
       return res.status(404).json({ error: 'League not found or not public' });
     }
 
+    // Debug: Log teams found
+    console.log(`Found ${league.teams.length} teams for league ${leagueId}, season: ${league.season || 'none'}`);
+
     // Fetch games for the league's active season
     const games = await Game.find({
-      league: req.params.leagueId,
-      season: league.season,
+      league: leagueId,
+      season: league.season
     })
-      .populate('teams', 'name logo')
-      .populate('playerStats.player', 'user stats')
-      .populate('playerStats.team', 'name')
+      .populate({
+        path: 'teams',
+        select: 'name logo _id' // Include _id for debugging
+      })
+      .select('teams date location status teamScores -_id')
       .lean();
 
-    // Calculate team standings
-    const standings = league.teams.map((team) => {
-      const teamGames = games.filter((game) =>
-        game.teams.some((t) => t._id.toString() === team._id.toString())
-      );
-      const wins = teamGames.filter((game) => {
-        const teamScore = game.teamScores.find(
-          (ts) => ts.team._id.toString() === team._id.toString()
-        )?.score || 0;
-        const opponentScore = game.teamScores.find(
-          (ts) => ts.team._id.toString() !== team._id.toString()
-        )?.score || 0;
-        return teamScore > opponentScore && game.isCompleted;
-      }).length;
-      const losses = teamGames.filter((game) => {
-        const teamScore = game.teamScores.find(
-          (ts) => ts.team._id.toString() === team._id.toString()
-        )?.score || 0;
-        const opponentScore = game.teamScores.find(
-          (ts) => ts.team._id.toString() !== team._id.toString()
-        )?.score || 0;
-        return teamScore < opponentScore && game.isCompleted;
-      }).length;
-      return { _id: team._id, name: team.name, wins, losses };
-    }).sort((a, b) => b.wins - a.wins || a.losses - b.losses);
+    // Debug: Log games and team data
+    console.log(`Found ${games.length} games for league ${leagueId}, season: ${league.season || 'none'}`);
+    console.log('Sample game teams:', games.length > 0 ? games[0].teams : 'No games');
 
-    // Calculate league leaders (top 5 players by points)
-    const players = league.teams.flatMap((team) => team.members.map((m) => m.player));
-    const leagueLeaders = await Player.find({ _id: { $in: players } })
-      .populate('user', 'firstName lastName')
-      .lean()
-      .then((players) => {
-        return players
-          .map((player) => {
-            const points = league.settings.scoringRules
-              ? Object.entries(league.settings.scoringRules).reduce((total, [statType, value]) => {
-                  return total + (player.stats[statType] || 0) * value;
-                }, 0)
-              : 0;
-            return {
-              _id: player._id,
-              name: `${player.user.firstName} ${player.user.lastName}`,
-              team: league.teams.find((t) =>
-                t.members.some((m) => m.player._id.toString() === player._id.toString())
-              )?.name || 'Unknown',
-              points,
-            };
-          })
-          .sort((a, b) => b.points - a.points)
-          .slice(0, 5);
-      });
+    // Combine league data with games
+    const response = {
+      ...league,
+      games
+    };
 
     res.set('Cache-Control', 'no-store');
-    res.json({
-      ...league,
-      standings,
-      games,
-      leagueLeaders,
-    });
+    res.json(response);
   } catch (error) {
-    console.error('Get public league error:', error);
-    res.status(500).json({ error: 'Failed to fetch league data' });
+    console.error('Error fetching league data:', error);
+    res.status(500).json({ error: 'Server error while fetching league data' });
   }
 });
 

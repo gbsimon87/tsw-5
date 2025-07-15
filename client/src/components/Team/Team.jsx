@@ -14,7 +14,6 @@ export default function Team() {
 
   useEffect(() => {
     if (!user?.token || !teamId) {
-      console.log('Missing user token or teamId:', { userToken: !!user?.token, teamId });
       setLoading(false);
       setTeam(null);
       setError('Missing authentication or team ID');
@@ -25,7 +24,6 @@ export default function Team() {
       setLoading(true);
       setError(null);
       try {
-        console.log(`Fetching team with ID: ${teamId}`);
         const [teamResponse, gamesResponse] = await Promise.all([
           axios.get(`/api/teams/${teamId}`, {
             headers: { Authorization: `Bearer ${user.token}` },
@@ -34,15 +32,13 @@ export default function Team() {
             headers: { Authorization: `Bearer ${user.token}` },
           }),
         ]);
-        console.log('Team response:', teamResponse.data);
-        console.log('Games response:', gamesResponse.data);
         setTeam(teamResponse.data || null);
-        setUpcomingGames(gamesResponse.data.upcomingGames || []);
-        setPreviousGames(gamesResponse.data.previousGames || []);
+        setUpcomingGames(gamesResponse?.data?.upcomingGames || []);
+        setPreviousGames(gamesResponse?.data?.previousGames || []);
       } catch (err) {
-        console.error('Fetch team error:', err.response?.status, err.response?.data, err.message);
+        console.error('Fetch team error:', err?.response?.status, err.response?.data, err.message);
         setTeam(null);
-        setError(err.response?.data?.error || 'Failed to fetch team or games');
+        setError(err?.response?.data?.error || 'Failed to fetch team or games');
       } finally {
         setLoading(false);
       }
@@ -72,24 +68,24 @@ export default function Team() {
       <div className="mb-8">
         <div className="flex items-center gap-6 mb-4">
           <img
-            src={team.logo || '/team-logo.png'}
-            alt={`${team.name} Logo`}
+            src={team?.logo || '/team-logo.png'}
+            alt={`${team?.name} Logo`}
             className="w-16 h-16 rounded-full border"
           />
           <div>
-            <h2 className="text-xl font-bold">{team.name}</h2>
+            <h2 className="text-xl font-bold">{team?.name}</h2>
             <p>
-              Season: {team.season}
+              Season: {team?.season}
             </p>
             <p>
               League:{' '}
-              {team.league?._id ? (
+              {team?.league?._id ? (
                 <Link
-                  to={`/leagues/public/${team.league._id}`}
+                  to={`/leagues/public/${team?.league?._id}`}
                   className="text-blue-400 hover:text-blue-300 underline"
-                  aria-label={`View league ${team.league.name || 'Unknown'}`}
+                  aria-label={`View league ${team?.league?.name || 'Unknown'}`}
                 >
-                  {team.league.name || 'Unknown'}
+                  {team?.league?.name || 'Unknown'}
                 </Link>
               ) : (
                 'Unknown'
@@ -98,7 +94,7 @@ export default function Team() {
             <div
               className="font-semibold"
             >
-              {team.isActive ? 'Active' : 'Inactive'}
+              {team?.isActive ? 'Active' : 'Inactive'}
             </div>
           </div>
         </div>
@@ -106,16 +102,16 @@ export default function Team() {
           <h3 className="text-lg font-bold mb-2">Record</h3>
           <div className="flex gap-8">
             <div>
-              Wins: <span className="font-semibold">{team.record?.wins || 0}</span>
+              Wins: <span className="font-semibold">{team?.record?.wins || 0}</span>
             </div>
             <div>
-              Losses: <span className="font-semibold">{team.record?.losses || 0}</span>
+              Losses: <span className="font-semibold">{team?.record?.losses || 0}</span>
             </div>
             <div>
               Rank:{' '}
               <span className="font-semibold">
-                {team.ranking?.rank
-                  ? `${team.ranking.rank} / ${team.ranking.totalTeams}`
+                {team?.ranking?.rank
+                  ? `${team?.ranking?.rank} / ${team?.ranking?.totalTeams}`
                   : 'Unranked'}
               </span>
             </div>
@@ -159,7 +155,7 @@ export default function Team() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {team.members.length === 0 ? (
+              {team?.members?.length === 0 ? (
                 <tr>
                   <td
                     colSpan={5}
@@ -169,11 +165,11 @@ export default function Team() {
                   </td>
                 </tr>
               ) : (
-                team.members.map((member, index) => {
+                team?.members?.map((member, index) => {
                   const isGreyRow = index % 2 !== 0;
                   return (
                     <tr
-                      key={member.player._id}
+                      key={member?.player?._id}
                       className={isGreyRow ? 'bg-gray-50 hover:bg-gray-100' : 'bg-white hover:bg-gray-50'}
                     >
                       <td
@@ -187,23 +183,23 @@ export default function Team() {
                         className={`border-b border-gray-100 px-2 py-2 font-medium text-gray-900 ${isGreyRow ? 'bg-gray-50' : 'bg-white'
                           }`}
                       >
-                        {member.player.user?.name || 'Unknown'}
+                        {member?.player?.user?.name || 'Unknown'}
                       </td>
                       <td
                         className="border-b border-gray-100 px-3 py-2 text-center text-sm text-gray-700"
                       >
-                        {member.player.position || 'N/A'}
+                        {member?.player?.position || 'N/A'}
                       </td>
                       <td
                         className="border-b border-gray-100 px-3 py-2 text-center text-sm text-gray-700"
                       >
-                        {member.role}
+                        {member?.role}
                       </td>
                       <td
                         className={`border-b border-gray-100 px-3 py-2 text-center text-sm ${member.isActive ? 'text-green-600' : 'text-red-600'
                           }`}
                       >
-                        {member.isActive ? 'Active' : 'Inactive'}
+                        {member?.isActive ? 'Active' : 'Inactive'}
                       </td>
                     </tr>
                   );
@@ -215,7 +211,7 @@ export default function Team() {
         {/* New sections for games */}
         <div className="mb-8">
           <h3 className="text-lg font-bold mb-2">Upcoming Games</h3>
-          {upcomingGames.length === 0 ? (
+          {upcomingGames?.length === 0 ? (
             <div className="text-gray-400">No upcoming games scheduled.</div>
           ) : (
             <table className="min-w-full text-sm">
@@ -227,20 +223,20 @@ export default function Team() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {upcomingGames.map((game, index) => {
+                {upcomingGames?.map((game, index) => {
                   const isGreyRow = index % 2 !== 0;
                   return (
-                    <tr key={game._id} className={isGreyRow ? 'bg-gray-50' : 'bg-white'}>
+                    <tr key={game?._id} className={isGreyRow ? 'bg-gray-50' : 'bg-white'}>
                       <td className="border-b border-gray-100 px-3 py-2 text-gray-900">
-                        {new Date(game.date).toLocaleDateString('en-US', {
+                        {new Date(game?.date).toLocaleDateString('en-US', {
                           month: 'short',
                           day: 'numeric',
                           year: 'numeric',
                         })}
                       </td>
-                      <td className="border-b border-gray-100 px-3 py-2 text-gray-900">{game.opponentName}</td>
+                      <td className="border-b border-gray-100 px-3 py-2 text-gray-900">{game?.opponentName}</td>
                       <td className="border-b border-gray-100 px-3 py-2 text-gray-900">
-                        {game.teamScore === 'TBD' ? 'TBD' : `${game.teamScore} - ${game.opponentScore}`}
+                        {game?.teamScore === 'TBD' ? 'TBD' : `${game?.teamScore} - ${game?.opponentScore}`}
                       </td>
                     </tr>
                   );
@@ -251,7 +247,7 @@ export default function Team() {
         </div>
         <div className="mb-8">
           <h3 className="text-lg font-bold mb-2">Recent Games</h3>
-          {previousGames.length === 0 ? (
+          {previousGames?.length === 0 ? (
             <div className="text-gray-400">No recent games played.</div>
           ) : (
             <table className="min-w-full text-sm">
@@ -263,12 +259,12 @@ export default function Team() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {previousGames.map((game, index) => {
+                {previousGames?.map((game, index) => {
                   const isGreyRow = index % 2 !== 0;
                   return (
-                    <tr key={game._id} className={isGreyRow ? 'bg-gray-50' : 'bg-white'}>
+                    <tr key={game?._id} className={isGreyRow ? 'bg-gray-50' : 'bg-white'}>
                       <td className="border-b border-gray-100 px-3 py-2 text-gray-900">
-                        {new Date(game.date).toLocaleDateString('en-US', {
+                        {new Date(game?.date).toLocaleDateString('en-US', {
                           month: 'short',
                           day: 'numeric',
                           year: 'numeric',
@@ -276,7 +272,7 @@ export default function Team() {
                       </td>
                       <td className="border-b border-gray-100 px-3 py-2 text-gray-900">{game.opponentName}</td>
                       <td className="border-b border-gray-100 px-3 py-2 text-gray-900">
-                        {game.teamScore} - {game.opponentScore}
+                        {game?.teamScore} - {game?.opponentScore}
                       </td>
                     </tr>
                   );

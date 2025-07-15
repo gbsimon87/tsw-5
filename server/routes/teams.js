@@ -1,6 +1,6 @@
 const express = require('express');
 const mongoose = require('mongoose');
-const { isValidObjectId } = require('mongoose');
+const crypto = require('crypto');
 const router = express.Router();
 const Team = require('../models/Team');
 const Player = require('../models/Player');
@@ -335,7 +335,7 @@ router.get('/:teamId/games', authMiddleware, async (req, res) => {
       return res.status(400).json({ error: 'Invalid team ID' });
     }
 
-    // Find the team to get season if not provided
+    // Find the team to get season and league
     const team = await Team.findById(teamId).select('season league');
     if (!team) {
       return res.status(404).json({ error: 'Team not found' });
@@ -348,7 +348,17 @@ router.get('/:teamId/games', authMiddleware, async (req, res) => {
       return res.status(403).json({ error: 'User is not a member of this team' });
     }
 
-    const query = { teams: teamId, season: season || team.season };
+    // Default to league's active season if not provided
+    let querySeason = season;
+    if (!querySeason) {
+      const league = await League.findById(team.league).select('season');
+      if (!league) {
+        return res.status(404).json({ error: 'League not found' });
+      }
+      querySeason = league.season || 'Season 1'; // Fallback if league.season is empty
+    }
+
+    const query = { teams: teamId, season: querySeason };
 
     // Fetch upcoming games (isCompleted: false)
     const upcomingGames = await Game.find({ ...query, isCompleted: false })
@@ -388,7 +398,6 @@ router.get('/:teamId/games', authMiddleware, async (req, res) => {
   }
 });
 
-// Route to get a single team by ID, with user validation and record/ranking
 // Route to get a single team by ID, with user validation and record/ranking
 router.get('/:teamId', authMiddleware, async (req, res) => {
   try {
@@ -527,7 +536,7 @@ router.get('/:teamId', authMiddleware, async (req, res) => {
       return res.status(400).json({ error: 'Invalid team ID' });
     }
     console.error('Get team error:', err.message, err.stack);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to fetch team',
       details: err.message,
       teamId: req.params.teamId,

@@ -436,7 +436,7 @@ export default function ManageTeams() {
                     </div>
                     <div className="mt-4">
                       <h4 className="text-lg font-medium mb-2">Members</h4>
-                      {team.members.length === 0 ? (
+                      {team?.members?.length === 0 ? (
                         <p className="text-gray-600">No members in this team.</p>
                       ) : (
                         <ul className="space-y-2">

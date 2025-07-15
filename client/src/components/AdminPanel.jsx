@@ -106,7 +106,7 @@ export default function AdminPanel() {
     } else {
       setFormData({
         ...formData,
-        [name]: name === 'name' ? value.trim() : value,
+        [name]: value, // Remove trim() to allow spaces
         ...(name === 'sportType' && value !== 'basketball' ? {
           settings: {
             ...formData.settings,
@@ -134,7 +134,11 @@ export default function AdminPanel() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('/api/leagues', formData, {
+      const trimmedFormData = {
+        ...formData,
+        name: formData.name.trim(), // Trim only on submit
+      };
+      const response = await axios.post('/api/leagues', trimmedFormData, {
         headers: { Authorization: `Bearer ${user.token}` }
       });
       setLeagues([...leagues, response.data]);

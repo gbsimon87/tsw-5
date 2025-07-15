@@ -3,7 +3,13 @@ const path = require('path');
 const connectDB = require('./config/db');
 
 const envFile = process.env.NODE_ENV === 'production' ? '.env.production' : '.env.development';
-require('dotenv').config({ path: path.resolve(__dirname, '..', envFile) });
+const envPath = path.resolve(__dirname, envFile); // Load from server folder
+
+try {
+  require('dotenv').config({ path: envPath });
+} catch (err) {
+  console.error('Failed to load .env file:', err);
+}
 
 const app = express();
 app.use(express.json());
