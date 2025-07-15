@@ -69,6 +69,10 @@ export default function UpcomingFeatures() {
       status: "done"
     },
     {
+      title: "As a scorekeeper, I should be able to add ringer players to a game so that they can participate without being on a team.",
+      status: "todo"
+    },
+    {
       title: "As a member of a team, I want to have a clear view of which of my teams are active and which are inactive.",
       status: "todo"
     },

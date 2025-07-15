@@ -18,7 +18,7 @@ const envFile =
 
 require('dotenv').config({ path: path.resolve(__dirname, envFile) });
 
-const SMALL_MODE = true;
+const SMALL_MODE = false;
 const CLEAR_DATABASE = true;
 
 // Configuration for seeding
@@ -530,34 +530,66 @@ async function seedGames(leagues, teams, players) {
         }
         const playerStats = Object.values(playerStatsMap);
 
+        // Randomly determine if the game is completed (70% chance)
+        const isCompleted = Math.random() < 0.7;
+
+        // Generate realistic scores if completed
+        const team1Score = isCompleted ? faker.number.int({ min: 40, max: 120 }) : 0;
+        const team2Score = isCompleted ? faker.number.int({ min: 40, max: 120 }) : 0;
+
+        // Avoid tie too often unless allowed
+        if (isCompleted && team1Score === team2Score) {
+          team2Score += 1;
+        }
+
         const game = new Game({
           league: league._id,
           season: 'Season 1',
           teams: [team1._id, team2._id],
           teamScores: [
-            { team: team1._id, score: 0 },
-            { team: team2._id, score: 0 },
+            { team: team1._id, score: team1Score },
+            { team: team2._id, score: team2Score },
           ],
-          // date: generateUniqueDate('2025-07-01', '2025-12-31'),
           date: generateUniqueDate(tomorrow, twoMonthsAhead),
           location: faker.location.city(),
           venue: `${faker.company.name()} Arena`,
           venueCapacity: faker.number.int({ min: 5000, max: 20000 }),
-          playerStats,
-          playByPlay,
-          highlights: [faker.lorem.sentence(), faker.lorem.sentence()],
-          matchReport: faker.lorem.paragraph(),
-          isCompleted: false,
+          playerStats: isCompleted ? playerStats : [], // Only populate if the game was played
+          playByPlay: isCompleted ? playByPlay : [],
+          highlights: isCompleted
+            ? [faker.lorem.sentence(), faker.lorem.sentence()]
+            : [],
+          matchReport: isCompleted ? faker.lorem.paragraph() : '',
+          isCompleted,
           matchType: 'league',
-          weatherConditions: faker.helpers.arrayElement(['Clear', 'Rainy', 'Cloudy', 'Windy']),
+          weatherConditions: faker.helpers.arrayElement([
+            'Clear',
+            'Rainy',
+            'Cloudy',
+            'Windy',
+          ]),
           referee: faker.person.fullName(),
-          gameDuration: league.settings.periodDuration * (league.settings.periodType === 'quarters' ? 4 : league.settings.periodType === 'periods' ? 3 : 2),
+          gameDuration:
+            league.settings.periodDuration *
+            (league.settings.periodType === 'quarters'
+              ? 4
+              : league.settings.periodType === 'periods'
+                ? 3
+                : 2),
           eventType: 'regular',
           attendance: faker.number.int({ min: 1000, max: 15000 }),
-          previousMatchupScore: `${faker.number.int({ min: 0, max: 100 })}-${faker.number.int({ min: 0, max: 100 })}`,
-          fanRating: faker.number.int({ min: 1, max: 5 }),
-          mediaLinks: [{ url: '', type: '' }],
-          gameMVP: allPlayers.length > 0 ? faker.helpers.arrayElement(allPlayers).player : null,
+          previousMatchupScore: `${faker.number.int({
+            min: 40,
+            max: 120,
+          })}-${faker.number.int({ min: 40, max: 120 })}`,
+          fanRating: isCompleted
+            ? faker.number.int({ min: 1, max: 5 })
+            : null,
+          mediaLinks: [],
+          gameMVP:
+            isCompleted && allPlayers.length > 0
+              ? faker.helpers.arrayElement(allPlayers).player
+              : null,
         });
 
         await game.save(); // Pre-save hook updates playerStats and teamScores

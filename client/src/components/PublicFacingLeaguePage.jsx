@@ -12,7 +12,7 @@ const PublicFacingLeaguePage = () => {
     const fetchLeague = async () => {
       try {
         const response = await axios.get(`/api/leagues/public/${leagueId}`);
-        console.log('API Response:', response.data); // Debug standings
+        // console.log('API Response:', response.data);
         setLeague(response.data);
         setLoading(false);
       } catch (err) {
@@ -23,27 +23,39 @@ const PublicFacingLeaguePage = () => {
     fetchLeague();
   }, [leagueId]);
 
-  if (loading) return <div className="text-center text-gray-500 py-10">Loading...</div>;
-  if (error) return <div className="text-center text-red-500 py-10">{error}</div>;
-  if (!league) return null;
+  if (loading) {
+    return (
+      <div className="container mx-auto p-4 pt-0 px-0 md:px-6 max-w-7xl">
+        <div className="bg-white p-4">
+          <div className="text-center text-gray-500 py-10">Loading...</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto p-4 pt-0 px-0 md:px-6 max-w-7xl">
       {/* League Header */}
       <div className="bg-white p-4">
-        <h1 className="text-3xl font-bold text-gray-800">{league.name}</h1>
-        <p className="text-lg text-gray-600">
-          Sport: {league?.sportType?.charAt(0)?.toUpperCase() + league?.sportType?.slice(1)}
-        </p>
-        {league?.season && <p className="text-md text-gray-500">Season: {league?.season}</p>}
-        {league?.location && <p className="text-md text-gray-500">Location: {league?.location}</p>}
+        {error || !league ? (
+          <div className="text-gray-500 text-left">Unable to load league details</div>
+        ) : (
+          <>
+            <h1 className="text-3xl font-bold text-gray-800">{league.name || 'Unknown League'}</h1>
+            <p className="text-lg text-gray-600">
+              Sport: {league.sportType ? league.sportType.charAt(0).toUpperCase() + league.sportType.slice(1) : 'Unknown'}
+            </p>
+            {league.season && <p className="text-md text-gray-500">Season: {league.season}</p>}
+            {league.location && <p className="text-md text-gray-500">Location: {league.location}</p>}
+          </>
+        )}
       </div>
 
       {/* Team Standings */}
       <div className="bg-white shadow-md rounded-lg p-4">
         <h2 className="text-2xl font-semibold text-gray-800 mb-4">Team Standings</h2>
         {console.log('Standings in component:', league?.standings)}
-        {!league || league.standings?.length === 0 ? (
+        {error || !league || league.standings?.length === 0 ? (
           <div className="text-gray-500 text-left">No standings available</div>
         ) : (
           <div className="overflow-x-auto">
@@ -82,9 +94,9 @@ const PublicFacingLeaguePage = () => {
       {/* Team Rosters */}
       <div className="bg-white p-4">
         <h2 className="text-2xl font-semibold text-gray-800 mb-4">Team Rosters</h2>
-        {!league ? (
-          <p className="text-gray-600">Loading league data...</p>
-        ) : league.teams?.length > 0 ? (
+        {error || !league || league.teams?.length === 0 ? (
+          <p className="text-gray-600">No teams found</p>
+        ) : (
           <ul className="space-y-4">
             {league.teams.map((team) => (
               <li
@@ -108,7 +120,7 @@ const PublicFacingLeaguePage = () => {
                   <h3 className="text-xl font-medium text-gray-700">
                     {team.name || 'Unnamed Team'}
                   </h3>
-                  {console.log('Team data:', { id: team._id, name: team.name, logo: team.logo })} {/* Debug team data */}
+                  {console.log('Team data:', { id: team._id, name: team.name, logo: team.logo })}
                   {team.members.filter((m) => m.isActive).length > 0 ? (
                     <ul className="mt-2 space-y-1">
                       {team.members
@@ -129,27 +141,27 @@ const PublicFacingLeaguePage = () => {
               </li>
             ))}
           </ul>
-        ) : (
-          <p className="text-gray-600">No teams found</p>
         )}
       </div>
 
       {/* Games */}
       <div className="bg-white p-4">
         <h2 className="text-2xl font-semibold text-gray-800 mb-4">Games</h2>
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Score</th>
-                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {console.log('Games in component:', league?.games)}
-              {league?.games?.length > 0 ? (
-                league.games
+        {console.log('Games in component:', league?.games)}
+        {error || !league || league.games?.length === 0 ? (
+          <div className="text-gray-500 text-left">No games found</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Score</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {league.games
                   .sort((a, b) => new Date(b.date) - new Date(a.date))
                   .map((game) => (
                     <tr key={game._id || game.date}>
@@ -168,24 +180,18 @@ const PublicFacingLeaguePage = () => {
                         {game.isCompleted ? 'Completed' : 'Scheduled'}
                       </td>
                     </tr>
-                  ))
-              ) : (
-                <tr>
-                  <td colSpan="3" className="px-4 py-2 text-center text-sm text-gray-500">
-                    No games found
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+                  ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       {/* League Leaders */}
       <div className="bg-white shadow-md rounded-lg p-4">
         <h2 className="text-2xl font-semibold text-gray-800 mb-4">League Leaders - Points</h2>
         {console.log('League Leaders in component:', league?.leagueLeaders)}
-        {!league || league?.leagueLeaders?.length === 0 ? (
+        {error || !league || league.leagueLeaders?.length === 0 ? (
           <div className="text-gray-500 text-left">No league leaders available</div>
         ) : (
           <div className="overflow-x-auto">
@@ -198,7 +204,7 @@ const PublicFacingLeaguePage = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {league?.leagueLeaders?.map((leader) => (
+                {league.leagueLeaders.map((leader) => (
                   <tr key={leader._id}>
                     <td className="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900">
                       {leader.name || 'Unknown Player'}
