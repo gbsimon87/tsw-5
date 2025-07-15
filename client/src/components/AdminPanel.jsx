@@ -252,7 +252,7 @@ export default function AdminPanel() {
           </section>
 
           {/* Create League Card */}
-          <section
+          {/* <section
             aria-labelledby="create-league"
             className="bg-gradient-to-br from-green-50 to-blue-100 border border-green-200 shadow-lg rounded-2xl p-8"
           >
@@ -400,7 +400,7 @@ export default function AdminPanel() {
                 Create League
               </button>
             </form>
-          </section>
+          </section> */}
         </div>
       </div>
     </div>
