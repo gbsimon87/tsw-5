@@ -14,34 +14,6 @@ const PerformanceStats = forwardRef(({ player, canvasRef }, ref) => {
             <dt className="text-slate-500 font-medium min-w-[120px]">Total Points:</dt>
             <dd className="text-slate-800 font-semibold">{player.stats?.totalPoints || 0}</dd>
           </div>
-          <div className="flex items-center gap-3">
-            <dt>
-              <StarIcon className="w-6 h-6 text-amber-500" aria-hidden="true" />
-            </dt>
-            <dt className="text-slate-500 font-medium min-w-[120px]">Performance Rating:</dt>
-            <dd className="text-slate-800 font-semibold">{player.performanceRating || 0}</dd>
-          </div>
-          <div className="flex items-center gap-3">
-            <dt>
-              <StarIcon className="w-6 h-6 text-amber-500" aria-hidden="true" />
-            </dt>
-            <dt className="text-slate-500 font-medium min-w-[120px]">Career Avg Points:</dt>
-            <dd className="text-slate-800 font-semibold">{player.careerAvgPoints || 0}</dd>
-          </div>
-          <div className="flex items-center gap-3">
-            <dt>
-              <StarIcon className="w-6 h-6 text-amber-500" aria-hidden="true" />
-            </dt>
-            <dt className="text-slate-500 font-medium min-w-[120px]">Career Avg Rebounds:</dt>
-            <dd className="text-slate-800 font-semibold">{player.careerRebounds || 0}</dd>
-          </div>
-          <div className="flex items-center gap-3">
-            <dt>
-              <StarIcon className="w-6 h-6 text-amber-500" aria-hidden="true" />
-            </dt>
-            <dt className="text-slate-500 font-medium min-w-[120px]">Career Avg Steals:</dt>
-            <dd className="text-slate-800 font-semibold">{player.careerSteals || 0}</dd>
-          </div>
           {player.stats?.seasonStats?.length > 0 && (
             <>
               <div className="flex items-center gap-3">
@@ -51,21 +23,6 @@ const PerformanceStats = forwardRef(({ player, canvasRef }, ref) => {
                 <dt className="text-slate-500 font-medium min-w-[120px]">Current Season Points:</dt>
                 <dd className="text-slate-800 font-semibold">
                   {player.stats.seasonStats[player.stats.seasonStats.length - 1]?.avgPoints.toFixed(1) || 0}
-                  {player.careerAvgPoints > 0 && (
-                    <span
-                      className={
-                        player.stats.seasonStats[player.stats.seasonStats.length - 1]?.avgPoints >
-                        player.careerAvgPoints
-                          ? 'text-green-600 ml-2'
-                          : 'text-red-600 ml-2'
-                      }
-                    >
-                      {player.stats.seasonStats[player.stats.seasonStats.length - 1]?.avgPoints >
-                      player.careerAvgPoints
-                        ? '↑'
-                        : '↓'}
-                    </span>
-                  )}
                 </dd>
               </div>
               <div className="flex items-center gap-3">
@@ -75,21 +32,6 @@ const PerformanceStats = forwardRef(({ player, canvasRef }, ref) => {
                 <dt className="text-slate-500 font-medium min-w-[120px]">Current Season Rebounds:</dt>
                 <dd className="text-slate-800 font-semibold">
                   {player.stats.seasonStats[player.stats.seasonStats.length - 1]?.avgRebounds.toFixed(1) || 0}
-                  {player.careerRebounds > 0 && (
-                    <span
-                      className={
-                        player.stats.seasonStats[player.stats.seasonStats.length - 1]?.avgRebounds >
-                        player.careerRebounds
-                          ? 'text-green-600 ml-2'
-                          : 'text-red-600 ml-2'
-                      }
-                    >
-                      {player.stats.seasonStats[player.stats.seasonStats.length - 1]?.avgRebounds >
-                      player.careerRebounds
-                        ? '↑'
-                        : '↓'}
-                    </span>
-                  )}
                 </dd>
               </div>
               <div className="flex items-center gap-3">
@@ -99,21 +41,6 @@ const PerformanceStats = forwardRef(({ player, canvasRef }, ref) => {
                 <dt className="text-slate-500 font-medium min-w-[120px]">Current Season Steals:</dt>
                 <dd className="text-slate-800 font-semibold">
                   {player.stats.seasonStats[player.stats.seasonStats.length - 1]?.avgSteals.toFixed(1) || 0}
-                  {player.careerSteals > 0 && (
-                    <span
-                      className={
-                        player.stats.seasonStats[player.stats.seasonStats.length - 1]?.avgSteals >
-                        player.careerSteals
-                          ? 'text-green-600 ml-2'
-                          : 'text-red-600 ml-2'
-                      }
-                    >
-                      {player.stats.seasonStats[player.stats.seasonStats.length - 1]?.avgSteals >
-                      player.careerSteals
-                        ? '↑'
-                        : '↓'}
-                    </span>
-                  )}
                 </dd>
               </div>
             </>

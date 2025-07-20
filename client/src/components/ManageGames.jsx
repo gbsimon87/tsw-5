@@ -40,11 +40,9 @@ export default function ManageGames() {
     teams: ['', ''],
     location: '',
     venue: '',
-    venueCapacity: '',
     score: { team1: 0, team2: 0 },
     matchType: 'league',
     eventType: 'regular',
-    attendance: '',
     periodType: '',
     periodDuration: '',
     overtimeDuration: '',
@@ -174,8 +172,6 @@ const handleSubmit = async (e) => {
       league: leagueId,
       season: league?.seasons.find(s => s.isActive)?.name || 'Season 1',
       teams: formData.teams.filter(id => id),
-      venueCapacity: parseInt(formData.venueCapacity) || 0,
-      attendance: parseInt(formData.attendance) || 0,
       isCompleted: formData.eventType === 'final' || formData.score.team1 > 0 || formData.score.team2 > 0,
       periodType: formData.periodType,
       periodDuration: parseInt(formData.periodDuration),
@@ -227,11 +223,9 @@ const handleSubmit = async (e) => {
       teams: ['', ''],
       location: '',
       venue: '',
-      venueCapacity: '',
       score: { team1: 0, team2: 0 },
       matchType: 'league',
       eventType: 'regular',
-      attendance: '',
     });
     setEditingGameId(null);
     setError(null);
@@ -423,20 +417,6 @@ const handleDeleteGame = async (gameId) => {
                 </div>
                 <div className="flex flex-col">
                   <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                    <UsersIcon className="w-5 h-5 text-gray-500" />
-                    Venue Capacity (optional):
-                  </label>
-                  <input
-                    type="number"
-                    name="venueCapacity"
-                    value={formData.venueCapacity}
-                    onChange={handleInputChange}
-                    min="0"
-                    className="mt-1 w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                  />
-                </div>
-                <div className="flex flex-col">
-                  <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
                     <FlagIcon className="w-5 h-5 text-gray-500" />
                     Match Type (optional):
                   </label>
@@ -526,11 +506,9 @@ const handleDeleteGame = async (gameId) => {
                         teams: ['', ''],
                         location: '',
                         venue: '',
-                        venueCapacity: '',
                         score: { team1: 0, team2: 0 },
                         matchType: 'league',
                         eventType: 'regular',
-                        attendance: '',
                       });
                       setEditingGameId(null);
                       setActiveTab('create');

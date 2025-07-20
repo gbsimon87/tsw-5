@@ -192,13 +192,18 @@ function DiscoverLeagues({ leagues }) {
           <article
             key={league._id}
             className="bg-gradient-to-br from-blue-100 to-slate-100 glass rounded-xl shadow p-5 border border-white/20 flex flex-col items-center transition-all hover:shadow-xl hover:cursor-pointer"
-            onClick={() => {navigate(`/leagues/public/${league._id}`)}}
+            onClick={() => { navigate(`/leagues/public/${league._id}`) }}
           >
-            <img
-              src={league.logo || '/league-logo.png'}
-              alt={`${league.name} Logo`}
-              className="w-16 h-16 rounded-full mb-3 object-cover"
-            />
+            {console.log(league)}
+            {league.logo ? (
+              <img
+                src={league.logo}
+                alt={`${league.name} Logo`}
+                className="w-16 h-16 rounded-full mb-3 object-cover"
+              />
+            ) : (
+              <div className="w-16 h-16 bg-gray-300 rounded-full mb-3" />
+            )}
             <h3 className="text-lg font-bold text-gray-900 mb-1 text-center">{league.name}</h3>
           </article>
         ))

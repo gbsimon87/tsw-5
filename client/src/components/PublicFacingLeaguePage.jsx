@@ -188,7 +188,7 @@ const PublicFacingLeaguePage = () => {
       </div>
 
       {/* League Leaders */}
-      <div className="bg-white shadow-md rounded-lg p-4">
+      <div className="bg-white p-4">
         <h2 className="text-2xl font-semibold text-gray-800 mb-4">League Leaders - Points</h2>
         {console.log('League Leaders in component:', league?.leagueLeaders)}
         {error || !league || league.leagueLeaders?.length === 0 ? (
