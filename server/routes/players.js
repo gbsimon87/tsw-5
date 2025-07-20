@@ -12,7 +12,7 @@ const { initializeStats } = require('../middleware/statsUtils');
 // Create a player (admin/manager only)
 router.post('/', authMiddleware, checkAdminOrManager, async (req, res) => {
   try {
-    const { userId, position, bio, dateOfBirth, nationality } = req.body;
+    const { userId, position, bio } = req.body;
     if (!userId) {
       return res.status(400).json({ error: 'userId is required' });
     }
@@ -27,19 +27,7 @@ router.post('/', authMiddleware, checkAdminOrManager, async (req, res) => {
       stats: {}, // Initialized as empty; populated when joining teams or games
       position,
       bio,
-      dateOfBirth,
-      nationality,
       teams: [],
-      gamesPlayed: 0,
-      totalGamesWon: 0,
-      highestScore: 0,
-      careerAvgPoints: 0,
-      careerRebounds: 0,
-      careerSteals: 0,
-      playerRank: 0,
-      injuries: [],
-      playerHistory: [],
-      recentInjuries: []
     });
 
     res.status(201).json(player);
@@ -56,7 +44,7 @@ router.get('/', authMiddleware, async (req, res) => {
     const query = leagueId ? { league: leagueId } : { user: userId } || {};
     // Find Player documents for the user
     const players = await Player.find({ user: userId })
-      .select('_id careerAvgPoints careerRebounds careerSteals performanceRating')
+      .select('_id')
       .lean();
 
     // Aggregate stats for each player
@@ -64,7 +52,6 @@ router.get('/', authMiddleware, async (req, res) => {
       // Get all games for the player in their teams' leagues
       const playerTeams = await Team.find({ 'members.player': player._id }).select('league season').lean();
       const leagueIds = playerTeams.map(t => t.league);
-      const seasons = [...new Set(playerTeams.map(t => t.season))]; // Unique seasons
 
       // Aggregate total points, season stats, and game-by-game stats
       const statsAggregation = await Game.aggregate([
@@ -269,10 +256,7 @@ router.get('/', authMiddleware, async (req, res) => {
           points: g.points || 0,
           rebounds: g.rebounds || 0,
           steals: g.steals || 0,
-        }))),
-        hotStreak: recentGames.length > 0 && player.careerAvgPoints > 0
-          ? recentGames[0].avgPoints > player.careerAvgPoints
-          : false,
+        })))
       };
     }
     res.json(players);
@@ -312,7 +296,7 @@ router.get('/', authMiddleware, async (req, res) => {
 router.patch('/:playerId', authMiddleware, async (req, res) => {
   try {
     const { playerId } = req.params;
-    const { position, bio, dateOfBirth, nationality, injuries, playerHistory, recentInjuries, jerseyNumber } = req.body;
+    const { position, bio, jerseyNumber } = req.body;
 
     const player = await Player.findById(playerId).populate('user').populate('teams');
     if (!player) return res.status(404).json({ error: 'Player not found' });
@@ -333,8 +317,8 @@ router.patch('/:playerId', authMiddleware, async (req, res) => {
 
     // Define allowed fields based on role
     const allowedFields = isAdminOrManager.length
-      ? { position, bio, dateOfBirth, nationality, injuries, playerHistory, recentInjuries, jerseyNumber }
-      : { position, bio, dateOfBirth, nationality, injuries, playerHistory, recentInjuries };
+      ? { position, bio, jerseyNumber }
+      : { position, bio };
 
     // Validate jerseyNumber if provided
     if (jerseyNumber !== undefined) {

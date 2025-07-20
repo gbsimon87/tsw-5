@@ -28,23 +28,10 @@ const gameSchema = new mongoose.Schema({
     time: { type: Number, required: true },
     timestamp: { type: Date, default: Date.now }
   }],
-  highlights: [{ type: String }],
-  matchReport: { type: String },
   isCompleted: { type: Boolean, default: false },
   matchType: { type: String, enum: ['friendly', 'tournament', 'league'], default: 'league' },
-  weatherConditions: { type: String },
-  referee: { type: String },
-  // gameDuration: { type: Number, required: true },
   eventType: { type: String, enum: ['regular', 'playoff', 'final'], default: 'regular' },
-  attendance: { type: Number },
   venue: { type: String },
-  previousMatchupScore: { type: String },
-  fanRating: { type: Number, default: 0 },
-  mediaLinks: [{
-    url: { type: String },
-    type: { type: String }
-  }],
-  venueCapacity: { type: Number },
   gameMVP: { type: mongoose.Schema.Types.ObjectId, ref: 'Player' },
 }, { timestamps: true });
 

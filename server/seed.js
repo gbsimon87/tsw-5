@@ -282,7 +282,7 @@ async function seedLeagues(admins) {
           teams: [],
           establishedYear: faker.number.int({ min: 2000, max: 2025 }),
           isActive: true,
-          logo: `https://source.unsplash.com/200x200/?${sportType},logo`,
+          logo: ``,
           seasons: [
             {
               name: 'Season 1',
@@ -553,22 +553,10 @@ async function seedGames(leagues, teams, players) {
           date: generateUniqueDate(tomorrow, twoMonthsAhead),
           location: faker.location.city(),
           venue: `${faker.company.name()} Arena`,
-          venueCapacity: faker.number.int({ min: 5000, max: 20000 }),
           playerStats: isCompleted ? playerStats : [], // Only populate if the game was played
           playByPlay: isCompleted ? playByPlay : [],
-          highlights: isCompleted
-            ? [faker.lorem.sentence(), faker.lorem.sentence()]
-            : [],
-          matchReport: isCompleted ? faker.lorem.paragraph() : '',
           isCompleted,
           matchType: 'league',
-          weatherConditions: faker.helpers.arrayElement([
-            'Clear',
-            'Rainy',
-            'Cloudy',
-            'Windy',
-          ]),
-          referee: faker.person.fullName(),
           gameDuration:
             league.settings.periodDuration *
             (league.settings.periodType === 'quarters'
@@ -577,15 +565,6 @@ async function seedGames(leagues, teams, players) {
                 ? 3
                 : 2),
           eventType: 'regular',
-          attendance: faker.number.int({ min: 1000, max: 15000 }),
-          previousMatchupScore: `${faker.number.int({
-            min: 40,
-            max: 120,
-          })}-${faker.number.int({ min: 40, max: 120 })}`,
-          fanRating: isCompleted
-            ? faker.number.int({ min: 1, max: 5 })
-            : null,
-          mediaLinks: [],
           gameMVP:
             isCompleted && allPlayers.length > 0
               ? faker.helpers.arrayElement(allPlayers).player
@@ -608,44 +587,12 @@ async function seedGames(leagues, teams, players) {
           Object.entries(stat.stats).forEach(([key, value]) => {
             player.stats[league.sportType][key] = (player.stats[league.sportType][key] || 0) + value;
           });
-          player.gamesPlayed = (player.gamesPlayed || 0) + 1;
-
-          // Update career stats
-          const careerStats = {};
-          statTypes.forEach(statType => {
-            const value = stat.stats[statType] || 0;
-            if (statType.includes('point') || statType === 'goals' || statType === 'touchdowns') {
-              careerStats.careerAvgPoints = ((player.careerAvgPoints * (player.gamesPlayed - 1)) + value) / player.gamesPlayed;
-            }
-            if (statType.includes('rebound')) {
-              careerStats.careerRebounds = ((player.careerRebounds * (player.gamesPlayed - 1)) + value) / player.gamesPlayed;
-            }
-            if (statType === 'steal' || statType === 'tackles') {
-              careerStats.careerSteals = ((player.careerSteals * (player.gamesPlayed - 1)) + value) / player.gamesPlayed;
-            }
-            if (value > player.highestScore) {
-              careerStats.highestScore = value;
-            }
-          });
-
-          // Update totalGamesWon
-          const teamScore = game.teamScores.find(ts => ts.team.toString() === stat.team.toString()).score;
-          const opponentScore = game.teamScores.find(ts => ts.team.toString() !== stat.team.toString()).score;
-          if (teamScore > opponentScore) {
-            careerStats.totalGamesWon = (player.totalGamesWon || 0) + 1;
-          }
 
           playerUpdates.push({
             updateOne: {
               filter: { _id: player._id },
               update: {
                 stats: player.stats,
-                gamesPlayed: player.gamesPlayed,
-                careerAvgPoints: careerStats.careerAvgPoints || player.careerAvgPoints || 0,
-                careerRebounds: careerStats.careerRebounds || player.careerRebounds || 0,
-                careerSteals: careerStats.careerSteals || player.careerSteals || 0,
-                highestScore: careerStats.highestScore || player.highestScore || 0,
-                totalGamesWon: careerStats.totalGamesWon || player.totalGamesWon || 0,
               },
             },
           });
@@ -681,32 +628,8 @@ async function seedPlayers(members) {
         stats: {},
         jerseyNumber: faker.number.int({ min: 1, max: 99 }),
         position: faker.helpers.arrayElement(['Guard', 'Forward', 'Center', 'Midfielder', 'Defender', 'Pitcher', 'Goalkeeper']),
-        gamesPlayed: 0,
-        performanceRating: 0,
         bio: faker.lorem.sentence(),
-        dateOfBirth: faker.date.birthdate({ min: 18, max: 40, mode: 'age' }),
-        nationality: faker.location.country(),
-        injuries: faker.number.int({ min: 0, max: 1 }) === 1 ? [faker.lorem.word()] : [],
-        totalGamesWon: 0,
-        highestScore: 0,
-        careerAvgPoints: 0,
-        careerRebounds: 0,
-        careerSteals: 0,
-        favoriteTeam: null,
-        playerHistory: [
-          {
-            event: 'Joined',
-            description: `Joined the platform`,
-            date: new Date(),
-          }
-        ],
-        isActive: true,
-        playerRank: 0,
-        recentInjuries: faker.number.int({ min: 0, max: 1 }) === 1 ? [{
-          injuryDate: faker.date.recent({ days: 30 }),
-          injuryType: faker.lorem.word(),
-          recoveryStatus: faker.helpers.arrayElement(['Recovering', 'Recovered']),
-        }] : [],
+        isActive: true
       });
       await player.save();
       players.push(player);

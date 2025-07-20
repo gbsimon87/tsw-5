@@ -52,8 +52,6 @@ router.get('/next-game', authMiddleware, async (req, res) => {
       opponentTeam: opponentTeam ? { name: opponentTeam.name, logo: opponentTeam.logo } : null,
       matchType: nextGame.matchType,
       eventType: nextGame.eventType,
-      previousMatchupScore: nextGame.previousMatchupScore || 'N/A',
-      weatherConditions: nextGame.weatherConditions || 'N/A',
     };
 
     res.json(gameDetails);
@@ -124,16 +122,7 @@ router.get('/:gameId', authMiddleware, async (req, res) => {
       isCompleted: game.isCompleted,
       matchType: game.matchType,
       eventType: game.eventType,
-      referee: game.referee,
-      weatherConditions: game.weatherConditions,
-      attendance: game.attendance,
       venue: game.venue,
-      venueCapacity: game.venueCapacity,
-      previousMatchupScore: game.previousMatchupScore,
-      fanRating: game.fanRating,
-      highlights: game.highlights || [],
-      matchReport: game.matchReport || '',
-      mediaLinks: game.mediaLinks || [],
 
       // Game Settings
       periodType: game.periodType,
@@ -255,7 +244,7 @@ router.get('/', authMiddleware, async (req, res) => {
 // Create a game (admin/manager only)
 router.post('/', authMiddleware, checkAdminOrManager, async (req, res) => {
   try {
-    const { league, season, date, teams, location, venue, venueCapacity, playerStats, matchType, eventType, gameDuration, weatherConditions, referee, attendance, previousMatchupScore, fanRating, highlights, matchReport, mediaLinks, gameMVP } = req.body;
+    const { league, season, date, teams, location, venue, playerStats, matchType, eventType, gameDuration, gameMVP } = req.body;
 
     // Validate required fields
     if (!league || !date || !teams || teams.length !== 2 || teams[0] === teams[1]) {
@@ -296,9 +285,6 @@ router.post('/', authMiddleware, checkAdminOrManager, async (req, res) => {
       }
     }
 
-    // Filter out invalid mediaLinks
-    const validMediaLinks = mediaLinks ? mediaLinks.filter(link => link.url.trim() && link.type.trim()) : [];
-
     const gameData = {
       league,
       season,
@@ -307,19 +293,10 @@ router.post('/', authMiddleware, checkAdminOrManager, async (req, res) => {
       teamScores: teams.map(team => ({ team, score: 0 })), // Initial scores, updated by pre-save hook
       location,
       venue,
-      venueCapacity,
       playerStats: playerStats || [],
       matchType: matchType || 'league',
       eventType: eventType || 'regular',
       gameDuration,
-      weatherConditions,
-      referee,
-      attendance,
-      previousMatchupScore,
-      fanRating,
-      highlights: highlights ? highlights.filter(h => h.trim()) : [],
-      matchReport,
-      mediaLinks: validMediaLinks,
       isCompleted: eventType === 'final' || (playerStats && playerStats.length > 0),
     };
 
@@ -340,7 +317,6 @@ router.post('/', authMiddleware, checkAdminOrManager, async (req, res) => {
           Object.entries(stat.stats).forEach(([key, value]) => {
             player.stats[leagueDoc.sportType][key] = (player.stats[leagueDoc.sportType][key] || 0) + (value || 0);
           });
-          player.gamesPlayed = (player.gamesPlayed || 0) + 1;
           await player.save();
         }
       }
@@ -380,7 +356,7 @@ router.post('/', authMiddleware, checkAdminOrManager, async (req, res) => {
 router.patch('/:gameId', authMiddleware, checkAdminOrManager, async (req, res) => {
   try {
     const { gameId } = req.params;
-    const { teams, date, location, venue, venueCapacity, playerStats, playByPlay, matchType, eventType, gameDuration, weatherConditions, referee, attendance, previousMatchupScore, fanRating, highlights, matchReport, mediaLinks, gameMVP, season } = req.body;
+    const { teams, date, location, venue, playerStats, playByPlay, matchType, eventType, gameDuration, gameMVP, season } = req.body;
 
     const game = await Game.findById(gameId).populate('league');
     if (!game) return res.status(404).json({ error: 'Game not found' });
@@ -445,28 +421,17 @@ router.patch('/:gameId', authMiddleware, checkAdminOrManager, async (req, res) =
       }
     }
 
-    const validMediaLinks = mediaLinks ? mediaLinks.filter(link => link.url.trim() && link.type.trim()) : [];
-
     const updateData = {
       teams: teams || game.teams,
       date: date || game.date,
       season: season || game.season,
       location: location !== undefined ? location : game.location,
       venue: venue !== undefined ? venue : game.venue,
-      venueCapacity: venueCapacity !== undefined ? venueCapacity : game.venueCapacity,
       playerStats: playerStats || game.playerStats,
       playByPlay: playByPlay ? [...game.playByPlay, ...playByPlay] : game.playByPlay,
       matchType: matchType || game.matchType,
       eventType: eventType || game.eventType,
       gameDuration: gameDuration !== undefined ? gameDuration : game.gameDuration,
-      weatherConditions: weatherConditions !== undefined ? game.weatherConditions : game.weatherConditions,
-      referee: referee !== undefined ? referee : game.referee,
-      attendance: attendance !== undefined ? attendance : game.attendance,
-      previousMatchupScore: previousMatchupScore !== undefined ? previousMatchupScore : game.previousMatchupScore,
-      fanRating: fanRating !== undefined ? fanRating : game.fanRating,
-      highlights: highlights ? highlights.filter(h => h.trim()) : game.highlights,
-      matchReport: matchReport !== undefined ? matchReport : game.matchReport,
-      mediaLinks: validMediaLinks.length > 0 ? validMediaLinks : game.mediaLinks,
       isCompleted: eventType === 'final' || (playerStats && playerStats.length > 0),
     };
 
@@ -524,7 +489,7 @@ router.delete('/:gameId', authMiddleware, checkAdminOrManager, async (req, res) 
     const game = await Game.findById(gameId).populate('league');
     if (!game) return res.status(404).json({ error: 'Game not found' });
 
-    // Adjust Player.stats and gamesPlayed
+    // Adjust Player.stats
     if (game.playerStats && game.playerStats.length > 0) {
       const leagueDoc = game.league;
       for (const stat of game.playerStats) {
@@ -537,7 +502,6 @@ router.delete('/:gameId', authMiddleware, checkAdminOrManager, async (req, res) 
                 0
               ); // Prevent negative stats
             });
-            player.gamesPlayed = Math.max((player.gamesPlayed || 0) - 1, 0); // Decrement gamesPlayed
             await player.save();
           }
         }
