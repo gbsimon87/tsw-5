@@ -7,7 +7,6 @@ import Login from './components/Login';
 import Register from './components/Register';
 import MySporty from './components/MySporty/MySporty';
 import AdminPanel from './components/AdminPanel';
-import ManageLeague from './components/ManageLeague';
 import ManageLeagueEdit from './components/ManageLeagueEdit';
 import ManageGames from './components/ManageGames';
 import GameTracking from './components/GameTracking/GameTracking';
@@ -78,14 +77,6 @@ function AppContent() {
           />
           <Route
             path="/leagues/:leagueId"
-            element={
-              <ProtectedRoute>
-                <ManageLeague />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/leagues/:leagueId/edit"
             element={
               <ProtectedRoute>
                 <ManageLeagueEdit />

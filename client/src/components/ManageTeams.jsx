@@ -392,7 +392,7 @@ export default function ManageTeams() {
                           <img
                             src={team.logo}
                             alt={team.name}
-                            className="w-12 h-12 rounded-full shadow border-2 border-gray-200 bg-white"
+                            className="w-12 h-12 rounded-full shadow object-cover border-2 border-gray-200 bg-white"
                           />
                         ) : (
                           <div className="w-12 h-12 rounded-full bg-gray-100 border-2 border-gray-200 flex items-center justify-center shadow">

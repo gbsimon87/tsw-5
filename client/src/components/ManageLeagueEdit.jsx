@@ -1,28 +1,25 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
   FlagIcon,
   PlusIcon,
   TrashIcon,
-  CheckCircleIcon,
   TrophyIcon,
   EyeIcon,
   MapPinIcon,
   ClockIcon,
-  StarIcon,
   CalendarIcon,
   Cog6ToothIcon,
   KeyIcon,
   ClipboardDocumentIcon,
   UsersIcon,
-  XMarkIcon,
-  ListBulletIcon
+  ListBulletIcon,
+  CalendarDaysIcon,
+  PencilSquareIcon
 } from '@heroicons/react/24/outline';
 
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
-import AdminPanelPageHeader from './AdminPanelPageHeader';
-
 
 const scoringRulesMap = {
   basketball: { twoPointFGM: 2, threePointFGM: 3, freeThrowM: 1 },
@@ -88,25 +85,6 @@ export default function ManageLeagueEdit() {
   });
   const [carryOverTeams, setCarryOverTeams] = useState([]);
   const [previousSeasonTeams, setPreviousSeasonTeams] = useState([]);
-  const [activeTab, setActiveTab] = useState(null);
-
-  const tabs = [
-    {
-      id: 'save',
-      label: 'Save Changes',
-      icon: CheckCircleIcon,
-      onClick: () => {
-        document.getElementById('leagueForm')?.requestSubmit(); // trigger form submit
-      },
-      alwaysActive: true
-    },
-    {
-      id: 'cancel',
-      label: 'Cancel',
-      icon: XMarkIcon,
-      onClick: () => navigate(`/leagues/${leagueId}`)
-    }
-  ];
 
   useEffect(() => {
     const fetchLeague = async () => {
@@ -309,24 +287,41 @@ export default function ManageLeagueEdit() {
   return (
     <div className="min-h-[var(--page-height)] bg-gray-50 py-4 px-4">
       <div className="max-w-4xl mx-auto">
-        {/* Header with actions */}
-        <AdminPanelPageHeader
-          backButtonLink={`/leagues/${leagueId}`}
-          backButtonText="Back to League"
-          pageTitle="Edit League"
-          subHeader={formData.name}
-          tabs={tabs}
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-        />
-
 
         {/* League Details */}
         <section className="bg-white shadow-xl rounded-2xl p-8 border border-gray-200 mb-8">
-          <header className="flex items-center gap-3 mb-4">
-            <StarIcon className="w-6 h-6 text-yellow-400" />
-            <h2 className="text-2xl font-semibold text-gray-800">Edit League Details</h2>
-          </header>
+          <header className="flex flex-col mb-8 gap-4">
+          <h1 className="text-2xl font-bold text-gray-800">
+            {league.name}
+          </h1>
+          <div className="flex flex-wrap gap-3">
+            <Link
+              to={`/leagues/${leagueId}`}
+              className="flex items-center gap-2 px-4 py-1.5 rounded-lg font-semibold transition focus:ring-2 focus:ring-blue-500 focus:outline-none bg-blue-600 text-white"
+              aria-label="Edit League"
+            >
+              <PencilSquareIcon className="w-5 h-5" />
+              Edit League
+            </Link>
+            <Link
+              to={`/leagues/${leagueId}/teams`}
+              className="flex items-center gap-2 bg-white text-blue-700 border border-blue-600 px-3 py-1.5 text-sm rounded-lg font-semibold shadow hover:bg-blue-50 transition focus:ring-2 focus:ring-blue-500 focus:outline-none sm:px-5 sm:py-2 sm:text-base"
+              aria-label="Manage Teams"
+            >
+              <UsersIcon className="w-5 h-5" />
+              Manage Teams
+            </Link>
+            <Link
+              to={`/leagues/${leagueId}/games`}
+              className="flex items-center gap-2 bg-white text-blue-700 border border-blue-600 px-3 py-1.5 text-sm rounded-lg font-semibold shadow hover:bg-blue-50 transition focus:ring-2 focus:ring-blue-500 focus:outline-none sm:px-5 sm:py-2 sm:text-base"
+              aria-label="Manage Games"
+            >
+              <CalendarDaysIcon className="w-5 h-5" />
+              Manage Games
+            </Link>
+          </div>
+        </header>
+
           {error && <p className="text-red-500 mb-4 text-center">{error}</p>}
           <form id="leagueForm" onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
