@@ -12,7 +12,6 @@ const PublicFacingLeaguePage = () => {
     const fetchLeague = async () => {
       try {
         const response = await axios.get(`/api/leagues/public/${leagueId}`);
-        // console.log('API Response:', response.data);
         setLeague(response.data);
         setLoading(false);
       } catch (err) {
@@ -54,7 +53,6 @@ const PublicFacingLeaguePage = () => {
       {/* Team Standings */}
       <div className="bg-white shadow-md rounded-lg p-4">
         <h2 className="text-2xl font-semibold text-gray-800 mb-4">Team Standings</h2>
-        {console.log('Standings in component:', league?.standings)}
         {error || !league || league.standings?.length === 0 ? (
           <div className="text-gray-500 text-left">No standings available</div>
         ) : (
@@ -120,7 +118,6 @@ const PublicFacingLeaguePage = () => {
                   <h3 className="text-xl font-medium text-gray-700">
                     {team.name || 'Unnamed Team'}
                   </h3>
-                  {console.log('Team data:', { id: team._id, name: team.name, logo: team.logo })}
                   {team.members.filter((m) => m.isActive).length > 0 ? (
                     <ul className="mt-2 space-y-1">
                       {team.members
@@ -147,7 +144,6 @@ const PublicFacingLeaguePage = () => {
       {/* Games */}
       <div className="bg-white p-4">
         <h2 className="text-2xl font-semibold text-gray-800 mb-4">Games</h2>
-        {console.log('Games in component:', league?.games)}
         {error || !league || league.games?.length === 0 ? (
           <div className="text-gray-500 text-left">No games found</div>
         ) : (
@@ -190,7 +186,6 @@ const PublicFacingLeaguePage = () => {
       {/* League Leaders */}
       <div className="bg-white p-4">
         <h2 className="text-2xl font-semibold text-gray-800 mb-4">League Leaders - Points</h2>
-        {console.log('League Leaders in component:', league?.leagueLeaders)}
         {error || !league || league.leagueLeaders?.length === 0 ? (
           <div className="text-gray-500 text-left">No league leaders available</div>
         ) : (

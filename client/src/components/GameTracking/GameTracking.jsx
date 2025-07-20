@@ -47,7 +47,6 @@ export default function GameTracking() {
   const [playerStats, setPlayerStats] = useState([]);
   const [formData, setFormData] = useState({
     score: [],
-    gameMVP: '',
     playerStats: {},
   });
   const [playByPlay, setPlayByPlay] = useState([]);
@@ -103,7 +102,6 @@ export default function GameTracking() {
 
         setFormData({
           score: initialScore,
-          gameMVP: gameData?.gameMVP?._id || '',
           playerStats: gameData?.playerStats?.reduce(
             (acc, stat) => ({
               ...acc,

@@ -2,9 +2,6 @@ function ModalGameFinish({ game, handleFinishGame }) {
     const { closeModal } = useModal();
     const [localSelectedStatus, setLocalSelectedStatus] = useState(game?.status || 'in-progress');
 
-    // Debug log to verify props
-    // console.log('ModalGameFinish props:', { game, status: game?.status, localSelectedStatus });
-
     if (!game) {
       return <div className="text-red-600">Error: Game data not available</div>;
     }
@@ -21,7 +18,6 @@ function ModalGameFinish({ game, handleFinishGame }) {
                 value={status}
                 checked={localSelectedStatus === status}
                 onChange={(e) => {
-                  // console.log('Radio selected:', e.target.value);
                   setLocalSelectedStatus(e.target.value);
                 }}
                 className="h-4 w-4 text-blue-600 focus:ring-blue-500"
@@ -34,7 +30,6 @@ function ModalGameFinish({ game, handleFinishGame }) {
         <div className="flex justify-end gap-2">
           <button
             onClick={() => {
-              // console.log('Cancel clicked');
               closeModal();
             }}
             className="px-4 py-2 bg-gray-200 text-gray-900 rounded-xl hover:bg-gray-300 transition"
@@ -45,7 +40,6 @@ function ModalGameFinish({ game, handleFinishGame }) {
           </button>
           <button
             onClick={() => {
-              // console.log('Confirm clicked with status:', localSelectedStatus);
               handleFinishGame(localSelectedStatus);
             }}
             className="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-800 transition"

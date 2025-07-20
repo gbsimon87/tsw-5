@@ -194,7 +194,6 @@ function DiscoverLeagues({ leagues }) {
             className="bg-gradient-to-br from-blue-100 to-slate-100 glass rounded-xl shadow p-5 border border-white/20 flex flex-col items-center transition-all hover:shadow-xl hover:cursor-pointer"
             onClick={() => { navigate(`/leagues/public/${league._id}`) }}
           >
-            {console.log(league)}
             {league.logo ? (
               <img
                 src={league.logo}

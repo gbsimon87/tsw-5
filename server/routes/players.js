@@ -12,7 +12,7 @@ const { initializeStats } = require('../middleware/statsUtils');
 // Create a player (admin/manager only)
 router.post('/', authMiddleware, checkAdminOrManager, async (req, res) => {
   try {
-    const { userId, position, bio } = req.body;
+    const { userId, position } = req.body;
     if (!userId) {
       return res.status(400).json({ error: 'userId is required' });
     }
@@ -26,7 +26,6 @@ router.post('/', authMiddleware, checkAdminOrManager, async (req, res) => {
       user: userId,
       stats: {}, // Initialized as empty; populated when joining teams or games
       position,
-      bio,
       teams: [],
     });
 
@@ -296,7 +295,7 @@ router.get('/', authMiddleware, async (req, res) => {
 router.patch('/:playerId', authMiddleware, async (req, res) => {
   try {
     const { playerId } = req.params;
-    const { position, bio, jerseyNumber } = req.body;
+    const { position, jerseyNumber } = req.body;
 
     const player = await Player.findById(playerId).populate('user').populate('teams');
     if (!player) return res.status(404).json({ error: 'Player not found' });
@@ -317,8 +316,8 @@ router.patch('/:playerId', authMiddleware, async (req, res) => {
 
     // Define allowed fields based on role
     const allowedFields = isAdminOrManager.length
-      ? { position, bio, jerseyNumber }
-      : { position, bio };
+      ? { position, jerseyNumber }
+      : { position };
 
     // Validate jerseyNumber if provided
     if (jerseyNumber !== undefined) {

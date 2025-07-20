@@ -213,9 +213,6 @@ router.get('/public/:leagueId', async (req, res) => {
       return res.status(404).json({ error: 'League not found or not public' });
     }
 
-    // Debug: Log teams found
-    console.log(`Found ${league.teams.length} teams for league ${leagueId}, season: ${league.season || 'none'}`);
-
     // Fetch games for the league's active season
     const games = await Game.find({
       league: leagueId,
@@ -227,10 +224,6 @@ router.get('/public/:leagueId', async (req, res) => {
       })
       .select('teams date location status teamScores isCompleted playerStats -_id')
       .lean();
-
-    // Debug: Log games and team data
-    console.log(`Found ${games.length} games for league ${leagueId}, season: ${league.season || 'none'}`);
-    console.log('Sample game teams:', games.length > 0 ? games[0].teams : 'No games');
 
     // Calculate team standings
     const standings = league.teams.map((team) => {
@@ -307,9 +300,6 @@ router.get('/public/:leagueId', async (req, res) => {
           .sort((a, b) => b.points - a.points)
           .slice(0, 5)
       );
-
-    // Debug: Log league leaders
-    console.log('League leaders:', leagueLeaders);
 
     // Combine league data with games, standings, and league leaders
     const response = {

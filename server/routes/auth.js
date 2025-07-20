@@ -53,7 +53,6 @@ router.post('/register', async (req, res) => {
         givenName: user.givenName,
         familyName: user.familyName,
         picture: user.picture,
-        locale: user.locale,
         emailVerified: user.emailVerified
       }
     });
@@ -95,7 +94,6 @@ router.post('/login', async (req, res) => {
         givenName: user.givenName,
         familyName: user.familyName,
         picture: user.picture,
-        locale: user.locale,
         emailVerified: user.emailVerified
       }
     });
@@ -114,7 +112,7 @@ router.post('/google', async (req, res) => {
       audience: process.env.GOOGLE_CLIENT_ID,
     });
     const payload = ticket.getPayload();
-    const { sub: googleId, email, name, given_name, family_name, picture, locale, email_verified } = payload;
+    const { sub: googleId, email, name, given_name, family_name, picture, email_verified } = payload;
 
     let user = await User.findOne({ googleId });
     if (!user) {
@@ -125,7 +123,6 @@ router.post('/google', async (req, res) => {
         givenName: given_name,
         familyName: family_name,
         picture,
-        locale,
         emailVerified: email_verified
       });
       await user.save();
@@ -135,7 +132,6 @@ router.post('/google', async (req, res) => {
       user.givenName = given_name;
       user.familyName = family_name;
       user.picture = picture;
-      user.locale = locale;
       user.emailVerified = email_verified;
       await user.save();
     }
@@ -154,7 +150,6 @@ router.post('/google', async (req, res) => {
         givenName: user.givenName,
         familyName: user.familyName,
         picture: user.picture,
-        locale: user.locale,
         emailVerified: user.emailVerified
       }
     });
@@ -180,7 +175,6 @@ router.get('/me', async (req, res) => {
       givenName: user.givenName,
       familyName: user.familyName,
       picture: user.picture,
-      locale: user.locale,
       emailVerified: user.emailVerified
     });
   } catch (error) {

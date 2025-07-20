@@ -608,12 +608,6 @@ const handleDeleteGame = async (gameId) => {
                             <span>Score: {game.score.team1} - {game.score.team2}</span>
                           </div>
                         )}
-                        {game.gameMVP && (
-                          <div className="flex items-center gap-2">
-                            <StarIcon className="w-4 h-4 text-yellow-500" />
-                            <span>MVP: {game.gameMVP.name || 'Unknown'}</span>
-                          </div>
-                        )}
                       </div>
                       <div className="flex flex-col gap-2">
                         <button

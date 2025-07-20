@@ -10,6 +10,7 @@ const gameSchema = new mongoose.Schema({
   }],
   date: { type: Date, required: true },
   location: { type: String },
+  venue: { type: String },
   periodType: { type: String },         // e.g., 'halves', 'quarters'
   periodDuration: { type: Number },     // e.g., 45
   overtimeDuration: { type: Number },   // e.g., 5
@@ -31,8 +32,6 @@ const gameSchema = new mongoose.Schema({
   isCompleted: { type: Boolean, default: false },
   matchType: { type: String, enum: ['friendly', 'tournament', 'league'], default: 'league' },
   eventType: { type: String, enum: ['regular', 'playoff', 'final'], default: 'regular' },
-  venue: { type: String },
-  gameMVP: { type: mongoose.Schema.Types.ObjectId, ref: 'Player' },
 }, { timestamps: true });
 
 // Validate teams and playerStats

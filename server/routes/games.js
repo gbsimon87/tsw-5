@@ -94,15 +94,6 @@ router.get('/:gameId', authMiddleware, async (req, res) => {
           select: 'name',
         },
       })
-      .populate({
-        path: 'gameMVP',
-        select: 'name jerseyNumber user',
-        populate: {
-          path: 'user',
-          model: 'User',
-          select: 'name',
-        },
-      })
       .lean();
 
     if (!game) {
@@ -173,16 +164,7 @@ router.get('/:gameId', authMiddleware, async (req, res) => {
         period: entry.period,
         time: entry.time,
         timestamp: entry.timestamp,
-      })),
-
-      // MVP
-      gameMVP: game.gameMVP
-        ? {
-            playerId: game.gameMVP._id,
-            name: game.gameMVP.user?.name || 'Unknown',
-            jerseyNumber: game.gameMVP.jerseyNumber || null,
-          }
-        : null,
+      }))
     };
 
     res.set('Cache-Control', 'no-store');
@@ -212,10 +194,6 @@ router.get('/', authMiddleware, async (req, res) => {
         path: 'playerStats.player',
         populate: { path: 'user', model: 'User', select: 'name' }
       })
-      .populate({
-        path: 'gameMVP',
-        populate: { path: 'user', model: 'User', select: 'name' }
-      })
       .lean();
 
     const populatedGames = games.map(game => ({
@@ -229,8 +207,7 @@ router.get('/', authMiddleware, async (req, res) => {
         ...stat,
         player: stat.player ? { _id: stat.player._id, name: stat.player.user?.name || 'Unknown' } : null,
         team: game.teams.find(t => t._id.toString() === stat.team.toString()) || { name: 'Unknown' }
-      })) : [],
-      gameMVP: game.gameMVP ? { _id: game.gameMVP._id, name: game.gameMVP.user?.name || 'Unknown' } : null,
+      })) : []
     }));
 
     res.set('Cache-Control', 'no-store');
@@ -244,7 +221,7 @@ router.get('/', authMiddleware, async (req, res) => {
 // Create a game (admin/manager only)
 router.post('/', authMiddleware, checkAdminOrManager, async (req, res) => {
   try {
-    const { league, season, date, teams, location, venue, playerStats, matchType, eventType, gameDuration, gameMVP } = req.body;
+    const { league, season, date, teams, location, venue, playerStats, matchType, eventType, gameDuration } = req.body;
 
     // Validate required fields
     if (!league || !date || !teams || teams.length !== 2 || teams[0] === teams[1]) {
@@ -300,10 +277,6 @@ router.post('/', authMiddleware, checkAdminOrManager, async (req, res) => {
       isCompleted: eventType === 'final' || (playerStats && playerStats.length > 0),
     };
 
-    if (gameMVP && mongoose.Types.ObjectId.isValid(gameMVP)) {
-      gameData.gameMVP = gameMVP;
-    }
-
     const game = await Game.create(gameData);
 
     // Update Player.stats for career stats
@@ -328,10 +301,6 @@ router.post('/', authMiddleware, checkAdminOrManager, async (req, res) => {
         path: 'playerStats.player',
         populate: { path: 'user', model: 'User', select: 'name' }
       })
-      .populate({
-        path: 'gameMVP',
-        populate: { path: 'user', model: 'User', select: 'name' }
-      })
       .lean();
 
     populatedGame.teamScores = populatedGame.teamScores.map(score => ({
@@ -343,7 +312,6 @@ router.post('/', authMiddleware, checkAdminOrManager, async (req, res) => {
       player: stat.player ? { _id: stat.player._id, name: stat.player.user?.name || 'Unknown' } : null,
       team: populatedGame.teams.find(t => t._id.toString() === stat.team.toString()) || { name: 'Unknown' }
     }));
-    populatedGame.gameMVP = populatedGame.gameMVP ? { _id: populatedGame.gameMVP._id, name: populatedGame.gameMVP.user?.name || 'Unknown' } : null;
 
     res.status(201).json(populatedGame);
   } catch (err) {
@@ -356,7 +324,7 @@ router.post('/', authMiddleware, checkAdminOrManager, async (req, res) => {
 router.patch('/:gameId', authMiddleware, checkAdminOrManager, async (req, res) => {
   try {
     const { gameId } = req.params;
-    const { teams, date, location, venue, playerStats, playByPlay, matchType, eventType, gameDuration, gameMVP, season } = req.body;
+    const { teams, date, location, venue, playerStats, playByPlay, matchType, eventType, gameDuration, season } = req.body;
 
     const game = await Game.findById(gameId).populate('league');
     if (!game) return res.status(404).json({ error: 'Game not found' });
@@ -435,12 +403,6 @@ router.patch('/:gameId', authMiddleware, checkAdminOrManager, async (req, res) =
       isCompleted: eventType === 'final' || (playerStats && playerStats.length > 0),
     };
 
-    if (gameMVP && mongoose.Types.ObjectId.isValid(gameMVP)) {
-      updateData.gameMVP = gameMVP;
-    } else if (gameMVP === null || gameMVP === '') {
-      updateData.gameMVP = null;
-    }
-
     // If teams are updated, reset teamScores
     if (teams) {
       updateData.teamScores = teams.map(team => ({ team, score: 0 }));
@@ -453,10 +415,6 @@ router.patch('/:gameId', authMiddleware, checkAdminOrManager, async (req, res) =
       .populate('teams', 'name')
       .populate({
         path: 'playerStats.player',
-        populate: { path: 'user', model: 'User', select: 'name' }
-      })
-      .populate({
-        path: 'gameMVP',
         populate: { path: 'user', model: 'User', select: 'name' }
       })
       .lean();
@@ -473,7 +431,6 @@ router.patch('/:gameId', authMiddleware, checkAdminOrManager, async (req, res) =
       playerName: stat.player?.user?.name || stat.playerName || 'Unknown',
       teamName: populatedGame.teams.find(t => t._id.toString() === stat.team.toString())?.name || 'Unknown',
     }));
-    populatedGame.gameMVP = populatedGame.gameMVP ? { _id: populatedGame.gameMVP._id, name: populatedGame.gameMVP.user?.name || 'Unknown' } : null;
 
     res.json(populatedGame);
   } catch (err) {

@@ -29,9 +29,6 @@ router.get('/', authMiddleware, async (req, res) => {
         }
       });
 
-    // Log the raw teams data for debugging
-    // console.log('Fetched teams:', JSON.stringify(teams, null, 2));
-
     // Ensure members is an array and player.user is populated
     const formattedTeams = teams.map(team => ({
       ...team.toObject(),
@@ -413,7 +410,6 @@ router.get('/:teamId', authMiddleware, async (req, res) => {
     // Find Player documents for the authenticated user
     const players = await Player.find({ user: req.user._id }).select('_id');
     const playerIds = players.map((player) => player._id);
-    // console.log(`User ${req.user._id} has player IDs:`, playerIds);
 
     // Find the team, ensuring the user is a member and the team is active
     const team = await Team.findOne({
