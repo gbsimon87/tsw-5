@@ -32,9 +32,19 @@ const gameSchema = new mongoose.Schema({
   isCompleted: { type: Boolean, default: false },
   matchType: { type: String, enum: ['friendly', 'tournament', 'league'], default: 'league' },
   eventType: { type: String, enum: ['regular', 'playoff', 'final'], default: 'regular' },
+  videoUrl: {
+    type: String,
+    validate: {
+      validator: function (v) {
+        if (!v) return true; // Allow empty (optional field)
+        return /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+$/.test(v);
+      },
+      message: 'Invalid YouTube URL',
+    },
+  },
 }, { timestamps: true });
 
-// Validate teams and playerStats
+// Validate teams, playerStats, and videoUrl
 gameSchema.pre('save', async function (next) {
   try {
     // Ensure exactly two teams

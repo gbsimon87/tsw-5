@@ -64,7 +64,7 @@ export default function UpcomingFeatures() {
     },
     {
       title: "As an admin, I want to be able to add a video URL when I edit the game information.",
-      status: "todo"
+      status: "done"
     },
     {
       title: "As a user, I want to be able to see the videos for a given game.",

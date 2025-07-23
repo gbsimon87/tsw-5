@@ -6,6 +6,7 @@ import axios from 'axios';
 import Modal from 'react-modal';
 import {
   CalendarIcon,
+  VideoCameraIcon,
   ChartBarIcon,
   DocumentChartBarIcon,
   PlusIcon,
@@ -45,6 +46,7 @@ export default function ManageGames() {
     periodDuration: '',
     overtimeDuration: '',
     scoringRules: {},
+    videoUrl: '',
   });
   const [editingGameId, setEditingGameId] = useState(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -56,6 +58,7 @@ export default function ManageGames() {
     venue: '',
     matchType: 'league',
     eventType: 'regular',
+    videoUrl: '',
   });
   const [editError, setEditError] = useState(null);
 
@@ -131,6 +134,7 @@ export default function ManageGames() {
     fetchData();
   }, [leagueId, user.token, user._id]);
 
+  // Update handleInputChange to handle videoUrl
   const handleInputChange = (e) => {
     const { name, value } = e.target;
 
@@ -156,17 +160,34 @@ export default function ManageGames() {
     }
   };
 
+  // Update handleEditInputChange to handle videoUrl
   const handleEditInputChange = (e) => {
     const { name, value } = e.target;
     setEditFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  // Update handleSubmit to include videoUrl in payload
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       if (formData.teams[0] === formData.teams[1]) {
         setError('Home and Away teams must be different');
         toast.error('Home and Away teams must be different', {
+          position: 'top-right',
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          theme: 'light',
+        });
+        return;
+      }
+
+      // Basic client-side validation for videoUrl
+      if (formData.videoUrl && !/^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+$/.test(formData.videoUrl)) {
+        setError('Invalid YouTube URL');
+        toast.error('Invalid YouTube URL', {
           position: 'top-right',
           autoClose: 3000,
           hideProgressBar: false,
@@ -190,6 +211,7 @@ export default function ManageGames() {
         periodDuration: parseInt(formData.periodDuration),
         overtimeDuration: parseInt(formData.overtimeDuration),
         scoringRules: formData.scoringRules,
+        videoUrl: formData.videoUrl || undefined, // Include videoUrl
       };
 
       if (editingGameId) {
@@ -243,6 +265,7 @@ export default function ManageGames() {
         periodDuration: '',
         overtimeDuration: '',
         scoringRules: {},
+        videoUrl: '', // Reset videoUrl
       });
       setEditingGameId(null);
       setError(null);
@@ -251,6 +274,132 @@ export default function ManageGames() {
       console.error('Save game error:', err.response?.data || err.message);
       const errorMessage = err.response?.data?.error || 'Failed to save game';
       setError(errorMessage);
+      toast.error(errorMessage, {
+        position: 'top-right',
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        theme: 'light',
+      });
+    }
+  };
+
+  // Update handleEditGame to include videoUrl
+  const handleEditGame = (game) => {
+    const gameDate = new Date(game.date);
+    if (isNaN(gameDate.getTime())) {
+      toast.error('Invalid game date', {
+        position: 'top-right',
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        theme: 'light',
+      });
+      return;
+    }
+    setEditingGame(game);
+    setEditFormData({
+      date: gameDate.toISOString().split('T')[0],
+      time: gameDate.toTimeString().slice(0, 5),
+      location: game.location || '',
+      venue: game.venue || '',
+      matchType: game.matchType || 'league',
+      eventType: game.eventType || 'regular',
+      videoUrl: game.videoUrl || '', // Include videoUrl
+    });
+    setEditError(null);
+    setIsEditModalOpen(true);
+  };
+
+  // Update handleEditSubmit to include videoUrl in payload
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      if (!editFormData.date || !editFormData.time) {
+        setEditError('Date and Time are required');
+        toast.error('Date and Time are required', {
+          position: 'top-right',
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          theme: 'light',
+        });
+        return;
+      }
+
+      // Basic client-side validation for videoUrl
+      if (editFormData.videoUrl && !/^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+$/.test(editFormData.videoUrl)) {
+        setEditError('Invalid YouTube URL');
+        toast.error('Invalid YouTube URL', {
+          position: 'top-right',
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          theme: 'light',
+        });
+        return;
+      }
+
+      const dateTime = new Date(`${editFormData.date}T${editFormData.time}`).toISOString();
+      const payload = {
+        date: dateTime,
+        location: editFormData.location,
+        venue: editFormData.venue,
+        matchType: editFormData.matchType,
+        eventType: editFormData.eventType,
+        teams: editingGame.teams.map(t => t._id || t), // Include teams to avoid server validation errors
+        season: editingGame.season,
+        videoUrl: editFormData.videoUrl || undefined, // Include videoUrl
+      };
+
+      await axios.patch(`/api/games/${editingGame._id}`, payload, {
+        headers: { Authorization: `Bearer ${user.token}` },
+      });
+
+      const activeSeason = league?.seasons.find(s => s.isActive)?.name || 'Season 1';
+      const gamesResponse = await axios.get(`/api/games?leagueId=${leagueId}&season=${activeSeason}&t=${Date.now()}`, {
+        headers: {
+          Authorization: `Bearer ${user.token}`,
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache',
+        },
+      });
+      setGames(gamesResponse.data || []);
+
+      toast.success('Game updated successfully!', {
+        position: 'top-right',
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        theme: 'light',
+      });
+
+      setIsEditModalOpen(false);
+      setEditingGame(null);
+      setEditFormData({
+        date: '',
+        time: '',
+        location: '',
+        venue: '',
+        matchType: 'league',
+        eventType: 'regular',
+        videoUrl: '', // Reset videoUrl
+      });
+      setEditError(null);
+    } catch (err) {
+      console.error('Edit game error:', err.response?.data || err.message);
+      const errorMessage = err.response?.data?.error || 'Failed to update game';
+      setEditError(errorMessage);
       toast.error(errorMessage, {
         position: 'top-right',
         autoClose: 3000,
@@ -288,112 +437,6 @@ export default function ManageGames() {
       console.error('Delete game error:', err.response?.data || err.message);
       const errorMessage = err.response?.data?.error || 'Failed to delete game';
       setError(errorMessage);
-      toast.error(errorMessage, {
-        position: 'top-right',
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        theme: 'light',
-      });
-    }
-  };
-
-  const handleEditGame = (game) => {
-    const gameDate = new Date(game.date);
-    if (isNaN(gameDate.getTime())) {
-      toast.error('Invalid game date', {
-        position: 'top-right',
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        theme: 'light',
-      });
-      return;
-    }
-    setEditingGame(game);
-    setEditFormData({
-      date: gameDate.toISOString().split('T')[0],
-      time: gameDate.toTimeString().slice(0, 5),
-      location: game.location || '',
-      venue: game.venue || '',
-      matchType: game.matchType || 'league',
-      eventType: game.eventType || 'regular',
-    });
-    setEditError(null);
-    setIsEditModalOpen(true);
-  };
-
-  const handleEditSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      if (!editFormData.date || !editFormData.time) {
-        setEditError('Date and Time are required');
-        toast.error('Date and Time are required', {
-          position: 'top-right',
-          autoClose: 3000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          theme: 'light',
-        });
-        return;
-      }
-
-      const dateTime = new Date(`${editFormData.date}T${editFormData.time}`).toISOString();
-      const payload = {
-        date: dateTime,
-        location: editFormData.location,
-        venue: editFormData.venue,
-        matchType: editFormData.matchType,
-        eventType: editFormData.eventType,
-        teams: editingGame.teams.map(t => t._id || t), // Include teams to avoid server validation errors
-        season: editingGame.season,
-      };
-
-      await axios.patch(`/api/games/${editingGame._id}`, payload, {
-        headers: { Authorization: `Bearer ${user.token}` },
-      });
-
-      const activeSeason = league?.seasons.find(s => s.isActive)?.name || 'Season 1';
-      const gamesResponse = await axios.get(`/api/games?leagueId=${leagueId}&season=${activeSeason}&t=${Date.now()}`, {
-        headers: {
-          Authorization: `Bearer ${user.token}`,
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache',
-        },
-      });
-      setGames(gamesResponse.data || []);
-
-      toast.success('Game updated successfully!', {
-        position: 'top-right',
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        theme: 'light',
-      });
-
-      setIsEditModalOpen(false);
-      setEditingGame(null);
-      setEditFormData({
-        date: '',
-        time: '',
-        location: '',
-        venue: '',
-        matchType: 'league',
-        eventType: 'regular',
-      });
-      setEditError(null);
-    } catch (err) {
-      console.error('Edit game error:', err.response?.data || err.message);
-      const errorMessage = err.response?.data?.error || 'Failed to update game';
-      setEditError(errorMessage);
       toast.error(errorMessage, {
         position: 'top-right',
         autoClose: 3000,
@@ -553,6 +596,20 @@ export default function ManageGames() {
                 </div>
                 <div className="flex flex-col">
                   <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                    <VideoCameraIcon className="w-5 h-5 text-gray-500" />
+                    YouTube Video URL (optional):
+                  </label>
+                  <input
+                    type="url"
+                    name="videoUrl"
+                    value={formData.videoUrl}
+                    onChange={handleInputChange}
+                    placeholder="https://www.youtube.com/watch?v=..."
+                    className="mt-1 w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  />
+                </div>
+                <div className="flex flex-col">
+                  <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
                     <FlagIcon className="w-5 h-5 text-gray-500" />
                     Match Type (optional):
                   </label>
@@ -648,8 +705,10 @@ export default function ManageGames() {
                         periodDuration: '',
                         overtimeDuration: '',
                         scoringRules: {},
+                        videoUrl: '',
                       });
                       setEditingGameId(null);
+                      setError(null);
                       setActiveTab('create');
                     }}
                     className="flex-1 flex items-center gap-2 justify-center bg-gray-300 text-gray-800 px-5 py-2 rounded-lg font-semibold shadow hover:bg-gray-400 transition focus:ring-2 focus:ring-gray-500 focus:outline-none"
@@ -851,6 +910,20 @@ export default function ManageGames() {
                 name="venue"
                 value={editFormData.venue}
                 onChange={handleEditInputChange}
+                className="mt-1 w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              />
+            </div>
+            <div className="flex flex-col">
+              <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                <VideoCameraIcon className="w-5 h-5 text-gray-500" />
+                YouTube Video URL (optional):
+              </label>
+              <input
+                type="url"
+                name="videoUrl"
+                value={editFormData.videoUrl}
+                onChange={handleEditInputChange}
+                placeholder="https://www.youtube.com/watch?v=..."
                 className="mt-1 w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
               />
             </div>
