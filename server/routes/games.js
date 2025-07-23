@@ -130,7 +130,7 @@ router.get('/:gameId', authMiddleware, async (req, res) => {
         createdBy: team.createdBy,
         members: team.members.map((member) => ({
           playerId: member.player?._id,
-          name: member.player?.user?.name || 'Unknown',
+          name: member.player?.name || member.player?.user?.name || 'Unknown',
           jerseyNumber: member.player?.jerseyNumber || null,
           position: member.player?.position || null,
           role: member.role,
@@ -148,7 +148,7 @@ router.get('/:gameId', authMiddleware, async (req, res) => {
       // Player Stats
       playerStats: game.playerStats.map((stat) => ({
         playerId: stat.player?._id,
-        playerName: stat.player?.user?.name || 'Unknown',
+        playerName: stat.player?.name || stat.player?.user?.name || 'Unknown',
         jerseyNumber: stat.player?.jerseyNumber || null,
         teamId: stat.team,
         teamName: getTeamName(stat.team),
@@ -330,6 +330,7 @@ router.patch('/:gameId', authMiddleware, checkAdminOrManager, async (req, res) =
     if (!game) return res.status(404).json({ error: 'Game not found' });
     if (!game.league) return res.status(400).json({ error: 'Game is missing league reference' });
 
+    // Validate teams
     if (teams && (teams.length !== 2 || teams[0] === teams[1])) {
       return res.status(400).json({ error: 'Exactly two unique teams required' });
     }
@@ -359,10 +360,22 @@ router.patch('/:gameId', authMiddleware, checkAdminOrManager, async (req, res) =
           return res.status(400).json({ error: 'PlayByPlay team must match one of the game teams' });
         }
         if (!leagueDoc.settings.statTypes.includes(play.statType)) {
-          return res.status(400).json({ error: 'Invalid stat type in playByPlay' });
+          return res.status(400).json({ error: `Invalid stat type '${play.statType}' in playByPlay` });
         }
-        if (!play.playerName || !play.period || typeof play.time !== 'number' || play.time < 0) {
-          return res.status(400).json({ error: 'PlayByPlay requires valid playerName, period, and time' });
+        if (!play.period || typeof play.time !== 'number' || play.time < 0) {
+          return res.status(400).json({ error: 'PlayByPlay requires valid period and time' });
+        }
+        // Validate player and set playerName
+        const player = await Player.findById(play.player);
+        if (!player) {
+          return res.status(400).json({ error: `Player ID ${play.player} not found in playByPlay` });
+        }
+        if (!player.teams.includes(play.team)) {
+          return res.status(400).json({ error: `Player ID ${play.player} is not a member of team ${play.team}` });
+        }
+        play.playerName = player.isRinger ? player.name : (await mongoose.model('User').findById(player.user))?.name || 'Unknown';
+        if (!play.playerName) {
+          return res.status(400).json({ error: `PlayerName could not be resolved for player ID ${play.player}` });
         }
       }
     }
@@ -371,11 +384,12 @@ router.patch('/:gameId', authMiddleware, checkAdminOrManager, async (req, res) =
     let newPlayerIds = [];
     if (playerStats && Array.isArray(playerStats)) {
       const leagueDoc = await League.findById(game.league);
+      const validTeamIds = (teams || game.teams).map(id => id.toString());
       for (const stat of playerStats) {
         if (!mongoose.Types.ObjectId.isValid(stat.player) || !mongoose.Types.ObjectId.isValid(stat.team)) {
           return res.status(400).json({ error: 'Invalid player or team ID in playerStats' });
         }
-        if (!(teams || game.teams).map(id => id.toString()).includes(stat.team.toString())) {
+        if (!validTeamIds.includes(stat.team.toString())) {
           return res.status(400).json({ error: 'playerStats team must match one of the game teams' });
         }
         if (!Object.keys(stat.stats).every(key => leagueDoc.settings.statTypes.includes(key))) {
@@ -383,12 +397,17 @@ router.patch('/:gameId', authMiddleware, checkAdminOrManager, async (req, res) =
         }
         const team = await Team.findById(stat.team);
         if (!team.members.some(m => m.player.toString() === stat.player.toString())) {
-          return res.status(400).json({ error: 'Player is not a member of the specified team' });
+          return res.status(400).json({ error: `Player ID ${stat.player} is not a member of team ${stat.team}` });
+        }
+        const player = await Player.findById(stat.player);
+        if (!player) {
+          return res.status(400).json({ error: `Player ID ${stat.player} not found in playerStats` });
         }
         newPlayerIds.push(stat.player.toString());
       }
     }
 
+    // Prepare update data
     const updateData = {
       teams: teams || game.teams,
       date: date || game.date,
@@ -408,9 +427,11 @@ router.patch('/:gameId', authMiddleware, checkAdminOrManager, async (req, res) =
       updateData.teamScores = teams.map(team => ({ team, score: 0 }));
     }
 
+    // Update game
     Object.assign(game, updateData);
-    await game.save();
+    await game.save(); // Triggers pre-save hook to aggregate playerStats and calculate teamScores
 
+    // Populate response
     const populatedGame = await Game.findById(gameId)
       .populate('teams', 'name')
       .populate({
@@ -419,16 +440,19 @@ router.patch('/:gameId', authMiddleware, checkAdminOrManager, async (req, res) =
       })
       .lean();
 
+    // Format teamScores
     populatedGame.teamScores = populatedGame.teamScores.map(score => ({
       team: populatedGame.teams.find(t => t._id.toString() === score.team.toString()) || { name: 'Unknown' },
       score: score.score,
       teamName: populatedGame.teams.find(t => t._id.toString() === score.team.toString())?.name || 'Unknown',
     }));
+
+    // Format playerStats with ringer support
     populatedGame.playerStats = populatedGame.playerStats.map(stat => ({
       playerId: stat.player?._id.toString() || stat.playerId,
       teamId: stat.team.toString(),
       stats: stat.stats || {},
-      playerName: stat.player?.user?.name || stat.playerName || 'Unknown',
+      playerName: stat.player?.isRinger ? stat.player.name : stat.player?.user?.name || stat.playerName || 'Unknown',
       teamName: populatedGame.teams.find(t => t._id.toString() === stat.team.toString())?.name || 'Unknown',
     }));
 

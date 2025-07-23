@@ -342,6 +342,47 @@ router.patch('/:playerId', authMiddleware, async (req, res) => {
   }
 });
 
+// Add ringer player to a team
+router.post('/:teamId/players/ringer', authMiddleware, checkAdminOrManager, async (req, res) => {
+  const { name, jerseyNumber, position, leagueId } = req.body;
+  try {
+    const team = await Team.findById(req.params.teamId);
+    if (!team) return res.status(404).json({ message: 'Team not found' });
+    if (team.league.toString() !== leagueId) {
+      return res.status(400).json({ message: 'Team does not belong to specified league' });
+    }
+
+    // Check for existing ringer with same name and team
+    const existingPlayer = await Player.findOne({
+      name,
+      isRinger: true,
+      teams: team._id,
+    });
+    if (existingPlayer) {
+      return res.status(400).json({ message: 'Ringer with this name already exists on the team' });
+    }
+
+    // Create ringer player
+    const player = new Player({
+      isRinger: true,
+      name,
+      teams: [team._id],
+      jerseyNumber,
+      position,
+      stats: {},
+    });
+    await player.save();
+
+    // Add to team
+    team.members.push({ player: player._id, role: 'player', isActive: true });
+    await team.save();
+
+    res.status(201).json({ message: 'Ringer player added successfully', player });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 // Delete a player (admin/manager only)
 router.delete('/:playerId', authMiddleware, checkAdminOrManager, async (req, res) => {
   try {

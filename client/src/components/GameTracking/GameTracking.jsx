@@ -36,6 +36,8 @@ const getPeriodInfo = (settings) => {
 export default function GameTracking() {
   const { leagueId, gameId } = useParams();
   const { user } = useAuth();
+  const [isRingerModalOpen, setIsRingerModalOpen] = useState(false);
+  const [isLeagueAdmin, setIsLeagueAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [game, setGame] = useState(null);
   const [league, setLeague] = useState(null);
@@ -70,8 +72,24 @@ export default function GameTracking() {
         const leagueData = leagueRes.data;
         if (!gameData || !leagueData) throw new Error('Game or league data not found');
 
+        console.log({ user, gameData, leagueData });
+
         setGame(gameData);
         setLeague(leagueData);
+
+        if (!leagueData?.admins || !Array.isArray(leagueData.admins) || !user?._id) {
+          console.warn('Missing or invalid league.admins or user._id', { leagueData, user });
+          setIsLeagueAdmin(false);
+        } else {
+          const isAdmin = leagueData.admins.some(admin => {
+            if (!admin?._id) {
+              console.warn('Invalid admin object', { admin });
+              return false;
+            }
+            return admin._id === user._id;
+          });
+          setIsLeagueAdmin(isAdmin);
+        }
 
         const startersCount = startingNumberOfPlayersBySport[leagueData?.sportType] || 5;
         setStartersCount(startersCount);
@@ -196,6 +214,40 @@ export default function GameTracking() {
       setStep('rosters');
     }
   }, [screen, selectedPlayersTeam1, selectedPlayersTeam2, league, game]);
+
+  const handleRingerAdded = (newPlayer) => {
+    setGame(prev => {
+      const updatedTeams = prev.teams.map(team => {
+        if (team._id === newPlayer.teams[0]) {
+          return {
+            ...team,
+            members: [
+              ...team.members,
+              {
+                playerId: newPlayer._id,
+                player: {
+                  ...newPlayer,
+                  user: null,
+                  isRinger: true,
+                },
+                role: 'player',
+                isActive: true,
+              },
+            ],
+          };
+        }
+        return team;
+      });
+      return { ...prev, teams: updatedTeams };
+    });
+    if (newPlayer.teams[0] === game?.teams[0]?._id) {
+      setActivePlayersTeam1(prev => [...prev, newPlayer._id]);
+      setSelectedPlayersTeam1(prev => [...prev, newPlayer._id]);
+    } else if (newPlayer.teams[0] === game?.teams[1]?._id) {
+      setActivePlayersTeam2(prev => [...prev, newPlayer._id]);
+      setSelectedPlayersTeam2(prev => [...prev, newPlayer._id]);
+    }
+  };
 
   const handleStatIncrement = async (stats, clockStatePeriod = clockState.period) => {
     const pointValues = game?.scoringRules || league?.settings?.scoringRules || {
@@ -410,7 +462,7 @@ export default function GameTracking() {
       case 'subs':
         return (
           <PlayerSelection
-            teams={game?.teams}
+            teams={game?.teams || []}
             game={game}
             league={league}
             activePlayersTeam1={activePlayersTeam1}
@@ -424,6 +476,16 @@ export default function GameTracking() {
             setSelectedPlayersTeam2={setSelectedPlayersTeam2}
             clockState={clockState}
             remainingSeconds={clockState.seconds}
+            isLeagueAdmin={isLeagueAdmin}
+            isRingerModalOpen={isRingerModalOpen}
+            onOpenRingerModal={() => {
+              setIsRingerModalOpen(true);
+            }}
+            onCloseRingerModal={() => {
+              setIsRingerModalOpen(false);
+            }}
+            onRingerAdded={handleRingerAdded}
+            userToken={user?.token}
           />
         );
       case 'playByPlay':
@@ -449,7 +511,7 @@ export default function GameTracking() {
       default:
         return null;
     }
-  }, [screen, game, league, boxScoreTab, filteredPlayers, startersCount, activePlayersTeam1, activePlayersTeam2, selectedPlayersTeam1, selectedPlayersTeam2, playByPlay, clockState.seconds]);
+  }, [screen, game, league, boxScoreTab, filteredPlayers, startersCount, activePlayersTeam1, activePlayersTeam2, selectedPlayersTeam1, selectedPlayersTeam2, playByPlay, clockState.seconds, isRingerModalOpen]);
 
   if (loading) return <div>Loading Game Tracking...</div>;
 

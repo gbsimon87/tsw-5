@@ -18,7 +18,7 @@ const envFile =
 
 require('dotenv').config({ path: path.resolve(__dirname, envFile) });
 
-const SMALL_MODE = true;
+const SMALL_MODE = false;
 const CLEAR_DATABASE = true;
 
 // Configuration for seeding
@@ -271,7 +271,8 @@ async function seedLeagues(admins) {
 
         const league = new League({
           name: `${faker.company.name()} ${sportType.charAt(0).toUpperCase() + sportType.slice(1)} League`,
-          sportType,
+          // sportType,
+          sportType: 'basketball',
           season: 'Season 1',
           // visibility: faker.helpers.arrayElement(['public', 'private']),
           visibility: 'public',
