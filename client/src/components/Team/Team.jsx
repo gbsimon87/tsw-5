@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import axios from 'axios';
+import Modal from 'react-modal';
 import { useAuth } from '../../context/AuthContext';
 
 export default function Team() {
@@ -11,6 +12,35 @@ export default function Team() {
   const [error, setError] = useState(null);
   const [upcomingGames, setUpcomingGames] = useState([]);
   const [previousGames, setPreviousGames] = useState([]);
+  const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
+  const [selectedVideoUrl, setSelectedVideoUrl] = useState(null);
+
+  // Function to transform YouTube URL to embeddable format
+  const getYouTubeEmbedUrl = (url) => {
+    if (!url) return null;
+    // Handle youtube.com/watch?v= format
+    const youtubeRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+    const match = url.match(youtubeRegex);
+    if (match && match[1]) {
+      return `https://www.youtube.com/embed/${match[1]}`;
+    }
+    return null; // Invalid URL
+  };
+
+  // Open video modal
+  const openVideoModal = (videoUrl) => {
+    const embedUrl = getYouTubeEmbedUrl(videoUrl);
+    if (embedUrl) {
+      setSelectedVideoUrl(embedUrl);
+      setIsVideoModalOpen(true);
+    }
+  };
+
+  // Close video modal
+  const closeVideoModal = () => {
+    setIsVideoModalOpen(false);
+    setSelectedVideoUrl(null);
+  };
 
   useEffect(() => {
     if (!user?.token || !teamId) {
@@ -24,15 +54,18 @@ export default function Team() {
       setLoading(true);
       setError(null);
       try {
-        const [teamResponse, gamesResponse] = await Promise.all([
-          axios.get(`/api/teams/${teamId}`, {
-            headers: { Authorization: `Bearer ${user.token}` },
-          }),
-          axios.get(`/api/teams/${teamId}/games`, {
-            headers: { Authorization: `Bearer ${user.token}` },
-          }),
-        ]);
-        setTeam(teamResponse.data || null);
+        // Fetch team data first to get team.season
+        const teamResponse = await axios.get(`/api/teams/${teamId}`, {
+          headers: { Authorization: `Bearer ${user.token}` },
+        });
+        const teamData = teamResponse.data || null;
+        setTeam(teamData);
+
+        // Fetch games using team.season
+        const gamesResponse = await axios.get(`/api/teams/${teamId}/games?season=${teamData?.season}`, {
+          headers: { Authorization: `Bearer ${user.token}` },
+        });
+
         setUpcomingGames(gamesResponse?.data?.upcomingGames || []);
         setPreviousGames(gamesResponse?.data?.previousGames || []);
       } catch (err) {
@@ -245,6 +278,8 @@ export default function Team() {
             </table>
           )}
         </div>
+
+        {/* RECENT GAMES TABLE */}
         <div className="mb-8">
           <h3 className="text-lg font-bold mb-2">Recent Games</h3>
           {previousGames?.length === 0 ? (
@@ -256,6 +291,7 @@ export default function Team() {
                   <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold">Date</th>
                   <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold">Opponent</th>
                   <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold">Score</th>
+                  <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold">Video</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -274,6 +310,19 @@ export default function Team() {
                       <td className="border-b border-gray-100 px-3 py-2 text-gray-900">
                         {game?.teamScore} - {game?.opponentScore}
                       </td>
+                      <td className="border-b border-gray-100 px-3 py-2 text-gray-900">
+                        {game.videoUrl ? (
+                          <button
+                            onClick={() => openVideoModal(game.videoUrl)}
+                            className="text-blue-400 hover:text-blue-300 underline"
+                            aria-label={`Watch video for game on ${new Date(game.date).toLocaleDateString()}`}
+                          >
+                            Watch Video
+                          </button>
+                        ) : (
+                          'No Video'
+                        )}
+                      </td>
                     </tr>
                   );
                 })}
@@ -281,6 +330,43 @@ export default function Team() {
             </table>
           )}
         </div>
+
+        {/* Video Modal */}
+        <Modal
+          isOpen={isVideoModalOpen}
+          onRequestClose={closeVideoModal}
+          className="bg-white p-4 rounded shadow-lg max-w-3xl w-full mx-auto my-8"
+          overlayClassName="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000]"
+          shouldCloseOnOverlayClick={true}
+          contentLabel="Game Video Modal"
+          aria={{
+            labelledby: 'video-modal-title',
+            describedby: 'video-modal-description',
+          }}
+        >
+          <h3 id="video-modal-title" className="text-lg font-bold mb-2">Game Video</h3>
+          <div id="video-modal-description" className="relative" style={{ paddingBottom: '56.25%' /* 16:9 aspect ratio */ }}>
+            {selectedVideoUrl ? (
+              <iframe
+                src={selectedVideoUrl}
+                title="Game Video"
+                className="absolute top-0 left-0 w-full h-full"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            ) : (
+              <p className="text-red-500">Invalid video URL</p>
+            )}
+          </div>
+          <div className="flex justify-end mt-4">
+            <button
+              onClick={closeVideoModal}
+              className="px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300"
+            >
+              Close
+            </button>
+          </div>
+        </Modal>
       </div>
     </div>
   );

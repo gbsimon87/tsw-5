@@ -198,6 +198,8 @@ router.get('/', authMiddleware, async (req, res) => {
 
     const populatedGames = games.map(game => ({
       ...game,
+      isCompleted: game.isCompleted || false,
+      videoUrl: game.videoUrl || null,
       teams: Array.isArray(game.teams) ? game.teams : [],
       teamScores: Array.isArray(game.teamScores) ? game.teamScores.map(score => ({
         team: game.teams.find(t => t._id.toString() === score.team.toString()) || { name: 'Unknown' },
@@ -221,7 +223,7 @@ router.get('/', authMiddleware, async (req, res) => {
 // Create a game (admin/manager only)
 router.post('/', authMiddleware, checkAdminOrManager, async (req, res) => {
   try {
-    const { league, season, date, teams, location, venue, playerStats, matchType, eventType, gameDuration } = req.body;
+    const { league, season, date, teams, location, venue, playerStats, matchType, eventType, gameDuration, videoUrl } = req.body;
 
     // Validate required fields
     if (!league || !date || !teams || teams.length !== 2 || teams[0] === teams[1]) {
@@ -274,6 +276,7 @@ router.post('/', authMiddleware, checkAdminOrManager, async (req, res) => {
       matchType: matchType || 'league',
       eventType: eventType || 'regular',
       gameDuration,
+      videoUrl: videoUrl || null,
       isCompleted: eventType === 'final' || (playerStats && playerStats.length > 0),
     };
 
@@ -324,7 +327,7 @@ router.post('/', authMiddleware, checkAdminOrManager, async (req, res) => {
 router.patch('/:gameId', authMiddleware, checkAdminOrManager, async (req, res) => {
   try {
     const { gameId } = req.params;
-    const { teams, date, location, venue, playerStats, playByPlay, matchType, eventType, gameDuration, season } = req.body;
+    const { teams, date, location, venue, playerStats, playByPlay, matchType, eventType, gameDuration, season, videoUrl, isCompleted } = req.body;
 
     const game = await Game.findById(gameId).populate('league');
     if (!game) return res.status(404).json({ error: 'Game not found' });
@@ -419,7 +422,8 @@ router.patch('/:gameId', authMiddleware, checkAdminOrManager, async (req, res) =
       matchType: matchType || game.matchType,
       eventType: eventType || game.eventType,
       gameDuration: gameDuration !== undefined ? gameDuration : game.gameDuration,
-      isCompleted: eventType === 'final' || (playerStats && playerStats.length > 0),
+      isCompleted: isCompleted !== undefined ? isCompleted : (eventType === 'final' || (playerStats && playerStats.length > 0)),
+      videoUrl: videoUrl !== undefined ? videoUrl : game.videoUrl,
     };
 
     // If teams are updated, reset teamScores

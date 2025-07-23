@@ -346,15 +346,8 @@ router.get('/:teamId/games', authMiddleware, async (req, res) => {
       return res.status(403).json({ error: 'User is not a member of this team' });
     }
 
-    // Default to league's active season if not provided
-    let querySeason = season;
-    if (!querySeason) {
-      const league = await League.findById(team.league).select('season');
-      if (!league) {
-        return res.status(404).json({ error: 'League not found' });
-      }
-      querySeason = league.season || 'Season 1'; // Fallback if league.season is empty
-    }
+    // Use the team's season instead of the league's season
+    const querySeason = team.season;
 
     const query = { teams: teamId, season: querySeason };
 
@@ -364,10 +357,10 @@ router.get('/:teamId/games', authMiddleware, async (req, res) => {
       .populate('teams', 'name')
       .lean();
 
-    // Fetch last 3 previous games (isCompleted: true)
+    // Fetch previously completed games (isCompleted: true)
     const previousGames = await Game.find({ ...query, isCompleted: true })
       .sort({ date: -1 }) // Most recent first
-      .limit(3)
+      // .limit(3)
       .populate('teams', 'name')
       .lean();
 
@@ -382,6 +375,7 @@ router.get('/:teamId/games', authMiddleware, async (req, res) => {
         opponentName: opponent?.name || 'Unknown',
         teamScore: teamScoreObj?.score ?? (game.isCompleted ? 0 : 'TBD'),
         opponentScore: opponentScoreObj?.score ?? (game.isCompleted ? 0 : 'TBD'),
+        videoUrl: game.videoUrl || null, // Include videoUrl
       };
     };
 
