@@ -183,7 +183,7 @@ const PublicFacingLeaguePage = () => {
         )}
       </div>
 
-      {/* League Leaders */}
+      {/* League Leaders - Points */}
       <div className="bg-white p-4">
         <h2 className="text-2xl font-semibold text-gray-800 mb-4">League Leaders - Points</h2>
         {error || !league || league.leagueLeaders?.length === 0 ? (
@@ -209,6 +209,76 @@ const PublicFacingLeaguePage = () => {
                     </td>
                     <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">
                       {leader.points || 0}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* League Leaders - Assists */}
+      <div className="bg-white p-4 mt-4">
+        <h2 className="text-2xl font-semibold text-gray-800 mb-4">League Leaders - Assists</h2>
+        {error || !league || !league.leagueAssistLeaders || league.leagueAssistLeaders.length === 0 ? (
+          <div className="text-gray-500 text-left">No assist leaders available</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Player</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Team</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Assists</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {league.leagueAssistLeaders.map((leader) => (
+                  <tr key={leader._id}>
+                    <td className="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {leader.name || 'Unknown Player'}
+                    </td>
+                    <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">
+                      {leader.team || 'Unknown Team'}
+                    </td>
+                    <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">
+                      {leader.assists || 0}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* League Leaders - Rebounds */}
+      <div className="bg-white p-4 mt-4">
+        <h2 className="text-2xl font-semibold text-gray-800 mb-4">League Leaders - Rebounds</h2>
+        {error || !league || !league.leagueReboundLeaders || league.leagueReboundLeaders.length === 0 ? (
+          <div className="text-gray-500 text-left">No rebound leaders available</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Player</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Team</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rebounds</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {league.leagueReboundLeaders.map((leader) => (
+                  <tr key={leader._id}>
+                    <td className="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {leader.name || 'Unknown Player'}
+                    </td>
+                    <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">
+                      {leader.team || 'Unknown Team'}
+                    </td>
+                    <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">
+                      {leader.rebounds || 0}
                     </td>
                   </tr>
                 ))}
