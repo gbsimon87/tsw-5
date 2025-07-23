@@ -39,6 +39,10 @@ export default function UpcomingFeatures() {
       status: "todo"
     },
     {
+      title: "As a player, I want to confirm my attendance for an upcoming game.",
+      status: "todo"
+    },
+    {
       title: "As a league administrator, I want to prevent duplicate league names that I am the admin of.",
       status: "done"
     },

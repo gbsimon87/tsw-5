@@ -182,7 +182,7 @@ export default function AdminPanel() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-900 via-blue-700 to-slate-800 py-10 px-4">
+    <div className="min-h-[var(--page-height)] flex items-center justify-center bg-gradient-to-br from-blue-900 via-blue-700 to-slate-800 py-10 px-4">
       <div className="w-full max-w-3xl">
         <header className="mb-10">
           <h1 className="text-3xl font-extrabold mb-2 text-center text-white drop-shadow">
