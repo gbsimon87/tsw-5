@@ -6,6 +6,7 @@ import axios from 'axios';
 import {
   CalendarIcon,
   ChartBarIcon,
+  DocumentChartBarIcon,
   PlusIcon,
   PencilIcon,
   TrashIcon,
@@ -14,10 +15,6 @@ import {
   MapPinIcon,
   ClockIcon,
   FlagIcon,
-  FilmIcon,
-  DocumentTextIcon,
-  UserIcon,
-  CloudIcon,
   TrophyIcon,
   UserGroupIcon
 } from '@heroicons/react/24/outline';
@@ -246,7 +243,7 @@ const handleSubmit = async (e) => {
   }
 };
 
-  const handleEditGame = (game) => {
+  const handleTrackGame = (game) => {
     navigate(`/leagues/${leagueId}/games/${game._id}/tracking`);
   };
 
@@ -315,7 +312,7 @@ const handleDeleteGame = async (gameId) => {
 
         {/* Create Game Form */}
         {activeTab === 'create' && (
-          <section className="bg-white shadow-xl rounded-2xl p-8 border border-gray-200 mb-8">
+          <section className="bg-white shadow-xl rounded-2xl p-4 border border-gray-200 mb-8">
             <div className="flex items-center gap-3 mb-4">
               <PlusIcon className="w-6 h-6 text-blue-500" />
               <h2 className="text-2xl font-semibold text-gray-800">
@@ -532,7 +529,7 @@ const handleDeleteGame = async (gameId) => {
               <h2 className="text-2xl font-semibold text-gray-800">Current Season Games</h2>
             </div>
             {games.length > 0 ? (
-              <div className="space-y-2">
+              <div className="grid gap-2 md:grid-cols-2">
                 {games.map(game => {
                   const isValidGame = game && Array.isArray(game.teams) && game.teams.length >= 2 && game.date;
                   if (!isValidGame) {
@@ -574,9 +571,9 @@ const handleDeleteGame = async (gameId) => {
                     );
                   }
                   return (
-                    <div key={game._id} className="flex gap-2 items-center justify-between bg-white p-3 rounded-md border border-gray-200">
+                    <div key={game._id} className="flex flex-col gap-2 justify-between bg-white p-3 rounded-md border border-gray-200">
                       <div className="space-y-1 text-gray-700">
-                        <div className="flex items-center gap-8">
+                        <div className="flex items-center gap-2">
                           <UserGroupIcon className="w-4 h-4 text-gray-500" />
                           <span>{(game.teams[0]?.name || 'TBD')} vs {(game.teams[1]?.name || 'TBD')}</span>
                         </div>
@@ -609,14 +606,14 @@ const handleDeleteGame = async (gameId) => {
                           </div>
                         )}
                       </div>
-                      <div className="flex flex-col gap-2">
+                      <div className="flex gap-8">
                         <button
-                          onClick={() => handleEditGame(game)}
+                          onClick={() => handleTrackGame(game)}
                           className="flex items-center gap-2 bg-blue-600 text-white px-3 py-1 rounded-md hover:bg-blue-700 transition focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                          aria-label="Edit Game"
+                          aria-label="Track Game"
                         >
-                          <PencilIcon className="w-4 h-4" />
-                          Edit
+                          <DocumentChartBarIcon className="w-4 h-4" />
+                          Track
                         </button>
                         <button
                           onClick={() => handleDeleteGame(game._id)}

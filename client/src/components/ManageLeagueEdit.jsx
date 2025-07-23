@@ -297,27 +297,27 @@ export default function ManageLeagueEdit() {
           <div className="flex flex-wrap gap-3">
             <Link
               to={`/leagues/${leagueId}`}
-              className="flex items-center gap-2 px-4 py-1.5 rounded-lg font-semibold transition focus:ring-2 focus:ring-blue-500 focus:outline-none bg-blue-600 text-white"
+              className="flex flex-1 items-center gap-2 px-4 py-1.5 rounded-lg font-semibold transition focus:ring-2 focus:ring-blue-500 focus:outline-none bg-blue-600 text-white"
               aria-label="Edit League"
             >
               <PencilSquareIcon className="w-5 h-5" />
-              Edit League
+              League
             </Link>
             <Link
               to={`/leagues/${leagueId}/teams`}
-              className="flex items-center gap-2 bg-white text-blue-700 border border-blue-600 px-3 py-1.5 text-sm rounded-lg font-semibold shadow hover:bg-blue-50 transition focus:ring-2 focus:ring-blue-500 focus:outline-none sm:px-5 sm:py-2 sm:text-base"
+              className="flex flex-1 items-center gap-2 bg-white text-blue-700 border border-blue-600 px-3 py-1.5 text-sm rounded-lg font-semibold shadow hover:bg-blue-50 transition focus:ring-2 focus:ring-blue-500 focus:outline-none sm:px-5 sm:py-2 sm:text-base"
               aria-label="Manage Teams"
             >
               <UsersIcon className="w-5 h-5" />
-              Manage Teams
+              Teams
             </Link>
             <Link
               to={`/leagues/${leagueId}/games`}
-              className="flex items-center gap-2 bg-white text-blue-700 border border-blue-600 px-3 py-1.5 text-sm rounded-lg font-semibold shadow hover:bg-blue-50 transition focus:ring-2 focus:ring-blue-500 focus:outline-none sm:px-5 sm:py-2 sm:text-base"
+              className="flex flex-1 items-center gap-2 bg-white text-blue-700 border border-blue-600 px-3 py-1.5 text-sm rounded-lg font-semibold shadow hover:bg-blue-50 transition focus:ring-2 focus:ring-blue-500 focus:outline-none sm:px-5 sm:py-2 sm:text-base"
               aria-label="Manage Games"
             >
               <CalendarDaysIcon className="w-5 h-5" />
-              Manage Games
+             Games
             </Link>
           </div>
         </header>

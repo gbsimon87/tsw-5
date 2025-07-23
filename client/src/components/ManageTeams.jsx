@@ -412,7 +412,6 @@ export default function ManageTeams() {
                           className="bg-red-600 hover:bg-red-700 focus:ring-red-500 mt-2 flex items-center gap-2 text-white px-3 py-1 rounded-md transition focus:ring-2 focus:outline-none self-start"
                           aria-label={`Deactivate team ${team.name}`}
                           title="Deactivate Team"
-                        // No w-full here!
                         >
                           <TrashIcon className="w-4 h-4" />
                           Deactivate
@@ -439,9 +438,13 @@ export default function ManageTeams() {
                       {team?.members?.length === 0 ? (
                         <p className="text-gray-600">No members in this team.</p>
                       ) : (
-                        <ul className="space-y-2">
-                          {team.members.map((member) => (
-                            <li key={member.player._id} className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between py-2">
+                        <ul className="space-y-4">
+                          {team.members.map((member, idx) => (
+                            <li
+                              key={member.player._id}
+                              className={`flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between py-4 mb-4 ${idx !== team.members.length - 1 ? 'border-b border-gray-200' : ''
+                                }`}
+                            >
                               <div className="flex items-center gap-4">
                                 {member.player?.user?.picture ? (
                                   <img
@@ -454,7 +457,7 @@ export default function ManageTeams() {
                                     <UserCircleIcon className="w-6 h-6 text-gray-400" aria-hidden="true" />
                                   </div>
                                 )}
-                                <span className={`text-base ${member.isActive ? 'text-gray-800' : 'text-gray-400 italic'}`}>
+                                <span className={`text-base ${member.isActive ? 'font-bold text-gray-800' : 'text-gray-400 italic'}`}>
                                   {member.player?.user?.name || 'Unknown'}
                                   {!member.isActive && <span className="ml-2">(Inactive)</span>}
                                 </span>
