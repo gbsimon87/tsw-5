@@ -416,7 +416,7 @@ router.get('/:teamId/leaderboard', authMiddleware, async (req, res) => {
 
     const querySeason = season || team.season;
 
-    // Aggregate player points
+    // Aggregate player points and games played
     const leaderboard = await Game.aggregate([
       {
         $match: {
@@ -456,11 +456,12 @@ router.get('/:teamId/leaderboard', authMiddleware, async (req, res) => {
           jerseyNumber: '$playerDetails.jerseyNumber',
           points: {
             $sum: [
-              { $multiply: ['$playerStats.stats.twoPointFGM', 2] },
-              { $multiply: ['$playerStats.stats.threePointFGM', 3] },
-              '$playerStats.stats.freeThrowM',
+              { $multiply: [{ $ifNull: ['$playerStats.stats.twoPointFGM', 0] }, 2] },
+              { $multiply: [{ $ifNull: ['$playerStats.stats.threePointFGM', 0] }, 3] },
+              { $ifNull: ['$playerStats.stats.freeThrowM', 0] },
             ],
           },
+          gameId: '$_id', // Track game for counting games played
         },
       },
       {
@@ -469,14 +470,39 @@ router.get('/:teamId/leaderboard', authMiddleware, async (req, res) => {
           playerName: { $first: '$playerName' },
           jerseyNumber: { $first: '$jerseyNumber' },
           totalPoints: { $sum: '$points' },
+          gamesPlayed: { $addToSet: '$gameId' }, // Collect unique game IDs
+        },
+      },
+      {
+        $project: {
+          _id: 1,
+          playerName: 1,
+          jerseyNumber: 1,
+          totalPoints: 1,
+          gamesPlayed: { $size: '$gamesPlayed' }, // Count unique games
+          pointsPerGame: {
+            $cond: {
+              if: { $eq: [{ $size: '$gamesPlayed' }, 0] },
+              then: 0,
+              else: {
+                $divide: ['$totalPoints', { $size: '$gamesPlayed' }],
+              },
+            },
+          },
         },
       },
       { $sort: { totalPoints: -1 } },
       { $limit: 5 },
     ]);
 
+    // Round pointsPerGame to 1 decimal place
+    const formattedLeaderboard = leaderboard.map(player => ({
+      ...player,
+      pointsPerGame: player.gamesPlayed === 0 ? 0 : Math.round(player.pointsPerGame * 10) / 10,
+    }));
+
     res.set('Cache-Control', 'no-store');
-    res.json(leaderboard);
+    res.json(formattedLeaderboard);
   } catch (err) {
     console.error('Get team leaderboard error:', err);
     res.status(500).json({ error: 'Failed to fetch leaderboard' });

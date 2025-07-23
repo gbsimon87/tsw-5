@@ -12,9 +12,9 @@ export default function Team() {
   const [error, setError] = useState(null);
   const [upcomingGames, setUpcomingGames] = useState([]);
   const [previousGames, setPreviousGames] = useState([]);
+  const [leaderboard, setLeaderboard] = useState([]);
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
   const [selectedVideoUrl, setSelectedVideoUrl] = useState(null);
-  const [leaderboard, setLeaderboard] = useState([]);
 
   // Function to extract YouTube video ID
   const getYouTubeVideoId = (url) => {
@@ -63,18 +63,17 @@ export default function Team() {
       setLoading(true);
       setError(null);
       try {
-        // Fetch team data first to get team.season
+        // Fetch team data
         const teamResponse = await axios.get(`/api/teams/${teamId}`, {
           headers: { Authorization: `Bearer ${user.token}` },
         });
         const teamData = teamResponse.data || null;
         setTeam(teamData);
 
-        // Fetch games using team.season
+        // Fetch games
         const gamesResponse = await axios.get(`/api/teams/${teamId}/games?season=${teamData?.season}`, {
           headers: { Authorization: `Bearer ${user.token}` },
         });
-
         setUpcomingGames(gamesResponse?.data?.upcomingGames || []);
         setPreviousGames(gamesResponse?.data?.previousGames || []);
 
@@ -86,7 +85,7 @@ export default function Team() {
       } catch (err) {
         console.error('Fetch team error:', err?.response?.status, err.response?.data, err.message);
         setTeam(null);
-        setError(err?.response?.data?.error || 'Failed to fetch team or games');
+        setError(err?.response?.data?.error || 'Failed to fetch team, games, or leaderboard');
       } finally {
         setLoading(false);
       }
@@ -111,42 +110,9 @@ export default function Team() {
     );
   }
 
-  // Add leaderboard section before the return statement
-  const renderLeaderboard = () => (
-    <div className="mb-8">
-      <h3 className="text-lg font-bold mb-2">Team Leaders - Points</h3>
-      {leaderboard.length === 0 ? (
-        <div className="text-gray-400">No player stats available.</div>
-      ) : (
-        <table className="min-w-full text-sm">
-          <thead className="bg-gray-50 text-gray-700">
-            <tr>
-              <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold">Player</th>
-              <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold">Jersey</th>
-              <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold">Points</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
-            {leaderboard.map((player, index) => {
-              const isGreyRow = index % 2 !== 0;
-              return (
-                <tr key={player._id} className={isGreyRow ? 'bg-gray-50' : 'bg-white'}>
-                  <td className="border-b border-gray-100 px-3 py-2 text-gray-900">{player.playerName || 'Unknown'}</td>
-                  <td className="border-b border-gray-100 px-3 py-2 text-gray-900">{player.jerseyNumber || 'N/A'}</td>
-                  <td className="border-b border-gray-100 px-3 py-2 text-gray-900">{player.totalPoints}</td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      )}
-    </div>
-  );
-
   return (
     <div className="text-white bg-gradient-to-br from-blue-900 via-blue-700 to-slate-800 min-h-[var(--page-height)] py-4 px-4 sm:px-6 lg:px-8">
       <div className="mb-8">
-
         <div className="flex items-center gap-6 mb-4">
           <img
             src={team?.logo || '/team-logo.png'}
@@ -284,11 +250,36 @@ export default function Team() {
             </tbody>
           </table>
         </div>
-
-        {/* LEADERBOARD */}
-        {renderLeaderboard()}
-
-        {/* New sections for games */}
+        <div className="mb-8">
+          <h3 className="text-lg font-bold mb-2">Team Leaders - Points</h3>
+          {leaderboard.length === 0 ? (
+            <div className="text-gray-400">No player stats available.</div>
+          ) : (
+            <table className="min-w-full text-sm">
+              <thead className="bg-gray-50 text-gray-700">
+                <tr>
+                  <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold">Player</th>
+                  <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold">Jersey</th>
+                  <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold">Points</th>
+                  <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold">PPG</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {leaderboard.map((player, index) => {
+                  const isGreyRow = index % 2 !== 0;
+                  return (
+                    <tr key={player._id} className={isGreyRow ? 'bg-gray-50' : 'bg-white'}>
+                      <td className="border-b border-gray-100 px-3 py-2 text-gray-900">{player.playerName || 'Unknown'}</td>
+                      <td className="border-b border-gray-100 px-3 py-2 text-gray-900">{player.jerseyNumber || 'N/A'}</td>
+                      <td className="border-b border-gray-100 px-3 py-2 text-gray-900">{player.totalPoints}</td>
+                      <td className="border-b border-gray-100 px-3 py-2 text-gray-900">{player.pointsPerGame.toFixed(1)}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
+        </div>
         <div className="mb-8">
           <h3 className="text-lg font-bold mb-2">Upcoming Games</h3>
           {upcomingGames?.length === 0 ? (
@@ -325,7 +316,6 @@ export default function Team() {
             </table>
           )}
         </div>
-        {/* RECENT GAMES TABLE */}
         <div className="mb-8">
           <h3 className="text-lg font-bold mb-2">Recent Games</h3>
           {previousGames?.length === 0 ? (
@@ -367,7 +357,7 @@ export default function Team() {
                               src={getYouTubeThumbnailUrl(game.videoUrl)}
                               alt={`Thumbnail for game video on ${new Date(game.date).toLocaleDateString()}`}
                               className="w-32 h-18 object-cover rounded-md hover:opacity-80 transition-opacity"
-                              onError={(e) => (e.target.src = '/placeholder.png')} // Fallback image
+                              onError={(e) => (e.target.src = '/placeholder.png')}
                             />
                           </button>
                         ) : (
@@ -381,7 +371,6 @@ export default function Team() {
             </table>
           )}
         </div>
-        {/* Video Modal */}
         <Modal
           isOpen={isVideoModalOpen}
           onRequestClose={closeVideoModal}
@@ -395,7 +384,7 @@ export default function Team() {
           }}
         >
           <h3 id="video-modal-title" className="text-lg font-bold mb-2">Game Video</h3>
-          <div id="video-modal-description" className="relative" style={{ paddingBottom: '56.25%' /* 16:9 aspect ratio */ }}>
+          <div id="video-modal-description" className="relative" style={{ paddingBottom: '56.25%' }}>
             {selectedVideoUrl ? (
               <iframe
                 src={selectedVideoUrl}

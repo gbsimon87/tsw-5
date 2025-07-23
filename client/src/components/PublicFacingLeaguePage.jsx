@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 
 const PublicFacingLeaguePage = () => {
@@ -7,6 +7,8 @@ const PublicFacingLeaguePage = () => {
   const [league, setLeague] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const navigate = useNavigate();
+
 
   useEffect(() => {
     const fetchLeague = async () => {
@@ -24,8 +26,8 @@ const PublicFacingLeaguePage = () => {
 
   if (loading) {
     return (
-      <div className="container mx-auto p-4 pt-0 px-0 md:px-6 max-w-7xl">
-        <div className="bg-white p-4">
+      <div className="flex flex-col gap-4 container mx-auto p-4 pt-0 md:px-6 max-w-7xl text-white bg-gradient-to-br from-blue-900 via-blue-700 to-slate-800 min-h-[var(--page-height)] py-4 px-4 sm:px-6 lg:px-8">
+        <div className="bg-white shadow-md rounded-lg p-4">
           <div className="text-center text-gray-500 py-10">Loading...</div>
         </div>
       </div>
@@ -33,9 +35,9 @@ const PublicFacingLeaguePage = () => {
   }
 
   return (
-    <div className="container mx-auto p-4 pt-0 px-0 md:px-6 max-w-7xl">
+    <div className="flex flex-col gap-4 container mx-auto p-4 pt-0 md:px-6 max-w-7xl text-white bg-gradient-to-br from-blue-900 via-blue-700 to-slate-800 min-h-[var(--page-height)] py-4 px-4 sm:px-6 lg:px-8">
       {/* League Header */}
-      <div className="bg-white p-4">
+      <div className="bg-white shadow-md rounded-lg p-4">
         {error || !league ? (
           <div className="text-gray-500 text-left">Unable to load league details</div>
         ) : (
@@ -90,7 +92,7 @@ const PublicFacingLeaguePage = () => {
       </div>
 
       {/* Team Rosters */}
-      <div className="bg-white p-4">
+      <div className="bg-white shadow-md rounded-lg p-4">
         <h2 className="text-2xl font-semibold text-gray-800 mb-4">Team Rosters</h2>
         {error || !league || league.teams?.length === 0 ? (
           <p className="text-gray-600">No teams found</p>
@@ -100,7 +102,8 @@ const PublicFacingLeaguePage = () => {
               <li
                 key={team._id}
                 className="flex items-center p-4 border hover:bg-gray-100 cursor-pointer"
-                onClick={() => console.log('Team ID clicked:', team._id)}
+                // onClick={() => console.log({team: team._id, league: league._id})}
+                onClick={() => { navigate(`/league/${league._id}/team/${team._id}`) }}
               >
                 {team.logo && team.logo !== '' ? (
                   <img
@@ -142,7 +145,7 @@ const PublicFacingLeaguePage = () => {
       </div>
 
       {/* Games */}
-      <div className="bg-white p-4">
+      <div className="bg-white shadow-md rounded-lg p-4">
         <h2 className="text-2xl font-semibold text-gray-800 mb-4">Games</h2>
         {error || !league || league.games?.length === 0 ? (
           <div className="text-gray-500 text-left">No games found</div>
@@ -184,7 +187,7 @@ const PublicFacingLeaguePage = () => {
       </div>
 
       {/* League Leaders - Points */}
-      <div className="bg-white p-4">
+      <div className="bg-white shadow-md rounded-lg p-4">
         <h2 className="text-2xl font-semibold text-gray-800 mb-4">League Leaders - Points</h2>
         {error || !league || league.leagueLeaders?.length === 0 ? (
           <div className="text-gray-500 text-left">No league leaders available</div>
@@ -219,7 +222,7 @@ const PublicFacingLeaguePage = () => {
       </div>
 
       {/* League Leaders - Assists */}
-      <div className="bg-white p-4 mt-4">
+      <div className="bg-white shadow-md rounded-lg p-4 mt-4">
         <h2 className="text-2xl font-semibold text-gray-800 mb-4">League Leaders - Assists</h2>
         {error || !league || !league.leagueAssistLeaders || league.leagueAssistLeaders.length === 0 ? (
           <div className="text-gray-500 text-left">No assist leaders available</div>
@@ -254,7 +257,7 @@ const PublicFacingLeaguePage = () => {
       </div>
 
       {/* League Leaders - Rebounds */}
-      <div className="bg-white p-4 mt-4">
+      <div className="bg-white shadow-md rounded-lg p-4 mt-4">
         <h2 className="text-2xl font-semibold text-gray-800 mb-4">League Leaders - Rebounds</h2>
         {error || !league || !league.leagueReboundLeaders || league.leagueReboundLeaders.length === 0 ? (
           <div className="text-gray-500 text-left">No rebound leaders available</div>
