@@ -416,7 +416,7 @@ router.get('/:teamId/leaderboard', authMiddleware, async (req, res) => {
 
     const querySeason = season || team.season;
 
-    // Aggregate player points and games played
+    // Aggregate player points, assists, and rebounds
     const leaderboard = await Game.aggregate([
       {
         $match: {
@@ -461,7 +461,14 @@ router.get('/:teamId/leaderboard', authMiddleware, async (req, res) => {
               { $ifNull: ['$playerStats.stats.freeThrowM', 0] },
             ],
           },
-          gameId: '$_id', // Track game for counting games played
+          assists: { $ifNull: ['$playerStats.stats.assist', 0] },
+          rebounds: {
+            $sum: [
+              { $ifNull: ['$playerStats.stats.offensiveRebound', 0] },
+              { $ifNull: ['$playerStats.stats.defensiveRebound', 0] },
+            ],
+          },
+          gameId: '$_id',
         },
       },
       {
@@ -470,7 +477,9 @@ router.get('/:teamId/leaderboard', authMiddleware, async (req, res) => {
           playerName: { $first: '$playerName' },
           jerseyNumber: { $first: '$jerseyNumber' },
           totalPoints: { $sum: '$points' },
-          gamesPlayed: { $addToSet: '$gameId' }, // Collect unique game IDs
+          totalAssists: { $sum: '$assists' },
+          totalRebounds: { $sum: '$rebounds' },
+          gamesPlayed: { $addToSet: '$gameId' },
         },
       },
       {
@@ -479,30 +488,61 @@ router.get('/:teamId/leaderboard', authMiddleware, async (req, res) => {
           playerName: 1,
           jerseyNumber: 1,
           totalPoints: 1,
-          gamesPlayed: { $size: '$gamesPlayed' }, // Count unique games
+          totalAssists: 1,
+          totalRebounds: 1,
+          gamesPlayed: { $size: '$gamesPlayed' },
           pointsPerGame: {
             $cond: {
               if: { $eq: [{ $size: '$gamesPlayed' }, 0] },
               then: 0,
-              else: {
-                $divide: ['$totalPoints', { $size: '$gamesPlayed' }],
-              },
+              else: { $divide: ['$totalPoints', { $size: '$gamesPlayed' }] },
+            },
+          },
+          assistsPerGame: {
+            $cond: {
+              if: { $eq: [{ $size: '$gamesPlayed' }, 0] },
+              then: 0,
+              else: { $divide: ['$totalAssists', { $size: '$gamesPlayed' }] },
+            },
+          },
+          reboundsPerGame: {
+            $cond: {
+              if: { $eq: [{ $size: '$gamesPlayed' }, 0] },
+              then: 0,
+              else: { $divide: ['$totalRebounds', { $size: '$gamesPlayed' }] },
             },
           },
         },
       },
-      { $sort: { totalPoints: -1 } },
-      { $limit: 5 },
     ]);
 
-    // Round pointsPerGame to 1 decimal place
-    const formattedLeaderboard = leaderboard.map(player => ({
-      ...player,
-      pointsPerGame: player.gamesPlayed === 0 ? 0 : Math.round(player.pointsPerGame * 10) / 10,
-    }));
+    // Split into points, assists, and rebounds leaderboards, each sorted and limited to 5
+    const pointsLeaderboard = leaderboard
+      .sort((a, b) => b.totalPoints - a.totalPoints)
+      .slice(0, 5)
+      .map(player => ({
+        ...player,
+        pointsPerGame: player.gamesPlayed === 0 ? 0 : Math.round(player.pointsPerGame * 10) / 10,
+      }));
+
+    const assistsLeaderboard = leaderboard
+      .sort((a, b) => b.totalAssists - a.totalAssists)
+      .slice(0, 5)
+      .map(player => ({
+        ...player,
+        assistsPerGame: player.gamesPlayed === 0 ? 0 : Math.round(player.assistsPerGame * 10) / 10,
+      }));
+
+    const reboundsLeaderboard = leaderboard
+      .sort((a, b) => b.totalRebounds - a.totalRebounds)
+      .slice(0, 5)
+      .map(player => ({
+        ...player,
+        reboundsPerGame: player.gamesPlayed === 0 ? 0 : Math.round(player.reboundsPerGame * 10) / 10,
+      }));
 
     res.set('Cache-Control', 'no-store');
-    res.json(formattedLeaderboard);
+    res.json({ points: pointsLeaderboard, assists: assistsLeaderboard, rebounds: reboundsLeaderboard });
   } catch (err) {
     console.error('Get team leaderboard error:', err);
     res.status(500).json({ error: 'Failed to fetch leaderboard' });

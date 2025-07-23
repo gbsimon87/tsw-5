@@ -12,9 +12,11 @@ export default function Team() {
   const [error, setError] = useState(null);
   const [upcomingGames, setUpcomingGames] = useState([]);
   const [previousGames, setPreviousGames] = useState([]);
-  const [leaderboard, setLeaderboard] = useState([]);
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
   const [selectedVideoUrl, setSelectedVideoUrl] = useState(null);
+  const [pointsLeaderboard, setPointsLeaderboard] = useState([]);
+  const [assistsLeaderboard, setAssistsLeaderboard] = useState([]);
+  const [reboundsLeaderboard, setReboundsLeaderboard] = useState([]);
 
   // Function to extract YouTube video ID
   const getYouTubeVideoId = (url) => {
@@ -51,6 +53,96 @@ export default function Team() {
     setSelectedVideoUrl(null);
   };
 
+  // Replace renderLeaderboard function with updated version
+  const renderLeaderboards = () => (
+    <div className="mb-8">
+      <h3 className="text-lg font-bold mb-2">Team Leaders - Points</h3>
+      {pointsLeaderboard.length === 0 ? (
+        <div className="text-gray-400 mb-4">No points stats available.</div>
+      ) : (
+        <table className="min-w-full text-sm mb-8">
+          <thead className="bg-gray-50 text-gray-700">
+            <tr>
+              <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold">Player</th>
+              <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold">Jersey</th>
+              <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold">Points</th>
+              <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold">PPG</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100">
+            {pointsLeaderboard.map((player, index) => {
+              const isGreyRow = index % 2 !== 0;
+              return (
+                <tr key={player._id} className={isGreyRow ? 'bg-gray-50' : 'bg-white'}>
+                  <td className="border-b border-gray-100 px-3 py-2 text-gray-900">{player.playerName || 'Unknown'}</td>
+                  <td className="text-center border-b border-gray-200 px-3 py-2 text-gray-900">{player.jerseyNumber || 'N/A'}</td>
+                  <td className="text-center border-b border-gray-200 px-3 py-2 text-gray-900">{player.totalPoints}</td>
+                  <td className="text-center border-b border-gray-200 px-3 py-2 text-gray-900">{player.pointsPerGame.toFixed(1)}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      )}
+      <h3 className="text-lg font-bold mb-2">Team Leaders - Assists</h3>
+      {assistsLeaderboard.length === 0 ? (
+        <div className="text-gray-400 mb-4">No assists stats available.</div>
+      ) : (
+        <table className="min-w-full text-sm mb-8">
+          <thead className="bg-gray-50 text-gray-700">
+            <tr>
+              <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold">Player</th>
+              <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold">Jersey</th>
+              <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold">Assists</th>
+              <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold">APG</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100">
+            {assistsLeaderboard.map((player, index) => {
+              const isGreyRow = index % 2 !== 0;
+              return (
+                <tr key={player._id} className={isGreyRow ? 'bg-gray-50' : 'bg-white'}>
+                  <td className="border-b border-gray-100 px-3 py-2 text-gray-900">{player.playerName || 'Unknown'}</td>
+                  <td className="text-center border-b border-gray-200 px-3 py-2 text-gray-900">{player.jerseyNumber || 'N/A'}</td>
+                  <td className="text-center border-b border-gray-200 px-3 py-2 text-gray-900">{player.totalAssists}</td>
+                  <td className="text-center border-b border-gray-200 px-3 py-2 text-gray-900">{player.assistsPerGame.toFixed(1)}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      )}
+      <h3 className="text-lg font-bold mb-2">Team Leaders - Rebounds</h3>
+      {reboundsLeaderboard.length === 0 ? (
+        <div className="text-gray-400">No rebounds stats available.</div>
+      ) : (
+        <table className="min-w-full text-sm">
+          <thead className="bg-gray-50 text-gray-700">
+            <tr>
+              <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold">Player</th>
+              <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold">Jersey</th>
+              <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold">Rebounds</th>
+              <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold">RPG</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100">
+            {reboundsLeaderboard.map((player, index) => {
+              const isGreyRow = index % 2 !== 0;
+              return (
+                <tr key={player._id} className={isGreyRow ? 'bg-gray-50' : 'bg-white'}>
+                  <td className="border-b border-gray-100 px-3 py-2 text-gray-900">{player.playerName || 'Unknown'}</td>
+                  <td className="text-center border-b border-gray-200 px-3 py-2 text-gray-900">{player.jerseyNumber || 'N/A'}</td>
+                  <td className="text-center border-b border-gray-200 px-3 py-2 text-gray-900">{player.totalRebounds}</td>
+                  <td className="text-center border-b border-gray-200 px-3 py-2 text-gray-900">{player.reboundsPerGame.toFixed(1)}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      )}
+    </div>
+  );
+
   useEffect(() => {
     if (!user?.token || !teamId) {
       setLoading(false);
@@ -63,14 +155,12 @@ export default function Team() {
       setLoading(true);
       setError(null);
       try {
-        // Fetch team data
         const teamResponse = await axios.get(`/api/teams/${teamId}`, {
           headers: { Authorization: `Bearer ${user.token}` },
         });
         const teamData = teamResponse.data || null;
         setTeam(teamData);
 
-        // Fetch games
         const gamesResponse = await axios.get(`/api/teams/${teamId}/games?season=${teamData?.season}`, {
           headers: { Authorization: `Bearer ${user.token}` },
         });
@@ -81,7 +171,9 @@ export default function Team() {
         const leaderboardResponse = await axios.get(`/api/teams/${teamId}/leaderboard?season=${teamData?.season}`, {
           headers: { Authorization: `Bearer ${user.token}` },
         });
-        setLeaderboard(leaderboardResponse.data || []);
+        setPointsLeaderboard(leaderboardResponse.data.points || []);
+        setAssistsLeaderboard(leaderboardResponse.data.assists || []);
+        setReboundsLeaderboard(leaderboardResponse.data.rebounds || []);
       } catch (err) {
         console.error('Fetch team error:', err?.response?.status, err.response?.data, err.message);
         setTeam(null);
@@ -250,36 +342,9 @@ export default function Team() {
             </tbody>
           </table>
         </div>
-        <div className="mb-8">
-          <h3 className="text-lg font-bold mb-2">Team Leaders - Points</h3>
-          {leaderboard.length === 0 ? (
-            <div className="text-gray-400">No player stats available.</div>
-          ) : (
-            <table className="min-w-full text-sm">
-              <thead className="bg-gray-50 text-gray-700">
-                <tr>
-                  <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold">Player</th>
-                  <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold">Jersey</th>
-                  <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold">Points</th>
-                  <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold">PPG</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {leaderboard.map((player, index) => {
-                  const isGreyRow = index % 2 !== 0;
-                  return (
-                    <tr key={player._id} className={isGreyRow ? 'bg-gray-50' : 'bg-white'}>
-                      <td className="border-b border-gray-100 px-3 py-2 text-gray-900">{player.playerName || 'Unknown'}</td>
-                      <td className="border-b border-gray-100 px-3 py-2 text-gray-900">{player.jerseyNumber || 'N/A'}</td>
-                      <td className="border-b border-gray-100 px-3 py-2 text-gray-900">{player.totalPoints}</td>
-                      <td className="border-b border-gray-100 px-3 py-2 text-gray-900">{player.pointsPerGame.toFixed(1)}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          )}
-        </div>
+
+        {renderLeaderboards()}
+
         <div className="mb-8">
           <h3 className="text-lg font-bold mb-2">Upcoming Games</h3>
           {upcomingGames?.length === 0 ? (
