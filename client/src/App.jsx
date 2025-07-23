@@ -19,6 +19,7 @@ import TeamJoin from './components/TeamJoin';
 import NotFound from './components/NotFound';
 import Team from './components/Team/Team';
 import PublicFacingLeaguePage from './components/PublicFacingLeaguePage';
+import PrivacyPolicy from './components/PrivacyPolicy';
 import './App.css';
 
 function AppContent() {
@@ -43,6 +44,7 @@ function AppContent() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/leagues/public/:leagueId" element={<PublicFacingLeaguePage />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route
             path="/league/:leagueId/team/:teamId"
             element={

@@ -68,7 +68,7 @@ export default function UpcomingFeatures() {
     },
     {
       title: "As a user, I want to be able to see the videos for a given game.",
-      status: "todo"
+      status: "done"
     },
 
     // Difficulty 3: Moderate complexity with logic or data handling
@@ -81,8 +81,8 @@ export default function UpcomingFeatures() {
       status: "done"
     },
     {
-      title: "As a member of a team, I want to have a clear view of which of my teams are active and which are inactive.",
-      status: "todo"
+      title: "As a member of a team, I want to have a clear view from MySporty page of which of my teams are active and which are inactive.",
+      status: "done"
     },
     {
       title: "As a scorekeeper, I need to see the shot attempts increase with the shot makes so that I can track player performance accurately.",

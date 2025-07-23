@@ -8,6 +8,7 @@ import {
   UserPlusIcon,
   SparklesIcon,
   InformationCircleIcon,
+  ShieldCheckIcon
 } from '@heroicons/react/24/outline';
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline';
 import tswLogo from '../assets/tsw_logo.png';
@@ -18,6 +19,7 @@ const navIcons = {
   "Admin Panel": <Cog6ToothIcon className="w-5 h-5 text-gray-400" aria-hidden="true" />,
   "Join a Team": <UserPlusIcon className="w-5 h-5 text-gray-400" aria-hidden="true" />,
   "Upcoming Features": <SparklesIcon className="w-5 h-5 text-gray-400" aria-hidden="true" />,
+  "Privacy Policy": <ShieldCheckIcon className="w-5 h-5 text-gray-400" aria-hidden="true" />,
   "About": <InformationCircleIcon className="w-5 h-5 text-gray-400" aria-hidden="true" />,
   "Log out": <ArrowLeftEndOnRectangleIcon className="w-5 h-5 text-gray-400" aria-hidden="true" />,
 };
@@ -44,6 +46,7 @@ function NavBar() {
         // { name: 'Register', to: '/register', current: false },
       ]),
     { name: 'Upcoming Features', to: '/upcoming-features', current: false },
+    { name: 'Privacy Policy', to: '/privacy-policy', current: false },
     { name: 'About', to: '/about', current: false },
   ];
 
@@ -71,8 +74,8 @@ function NavBar() {
                     to={item.to}
                     className={({ isActive }) =>
                       isActive
-                        ? 'flex justify-center items-center bg-gray-900 text-white rounded-md px-3 py-2 text-sm font-medium'
-                        : 'flex justify-center items-center text-gray-300 hover:bg-gray-700 hover:text-white rounded-md px-3 py-2 text-sm font-medium'
+                        ? 'flex justify-center items-center text-center bg-gray-900 text-white rounded-md px-2 py-2 text-sm font-medium'
+                        : 'flex justify-center items-center text-gray-300 hover:bg-gray-700 hover:text-white rounded-md px-2 py-2 text-sm font-medium'
                     }
                     aria-label={`${item.name} page`}
                   >
