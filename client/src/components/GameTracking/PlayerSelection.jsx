@@ -175,10 +175,6 @@ export default function PlayerSelection({
   const [overrideSeconds, setOverrideSeconds] = useState('');
   const [overridePeriod, setOverridePeriod] = useState('');
 
-  console.log('isSubstitutionMode:', isSubstitutionMode);
-  console.log('isRingerModalOpen:', isRingerModalOpen);
-  console.log('PlayerSelection props:', { isRingerModalOpen, teams, leagueId: league?._id, userToken: userToken ? 'present' : 'missing' });
-
   const handleSelectPlayer = (teamId, playerId) => {
     const isTeam1 = teamId === teams[0]?._id;
     const setSelected = isTeam1 ? setSelectedPlayersTeam1 : setSelectedPlayersTeam2;

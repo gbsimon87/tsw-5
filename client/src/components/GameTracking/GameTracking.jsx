@@ -72,8 +72,6 @@ export default function GameTracking() {
         const leagueData = leagueRes.data;
         if (!gameData || !leagueData) throw new Error('Game or league data not found');
 
-        console.log({ user, gameData, leagueData });
-
         setGame(gameData);
         setLeague(leagueData);
 

@@ -36,6 +36,91 @@ router.post('/', authMiddleware, checkAdminOrManager, async (req, res) => {
   }
 });
 
+// Get single player by ID with last 3 games' stats
+router.get('/:playerId', authMiddleware, async (req, res) => {
+  try {
+    const { playerId } = req.params;
+    const { leagueId } = req.query;
+
+    // Validate inputs
+    if (!mongoose.Types.ObjectId.isValid(playerId) || !mongoose.Types.ObjectId.isValid(leagueId)) {
+      return res.status(400).json({ error: 'Invalid playerId or leagueId' });
+    }
+
+    // Fetch player data
+    const player = await Player.findById(playerId)
+      .populate('user', 'name') // Populate user name for non-ringers
+      .populate({
+        path: 'teams',
+        select: 'name league season',
+        populate: { path: 'league', select: 'name' },
+      })
+      .lean();
+
+    if (!player) {
+      return res.status(404).json({ error: 'Player not found' });
+    }
+
+    // Determine player name
+    const playerName = player.isRinger ? player.name : player.user?.name || 'Unknown Player';
+
+    // Verify player is in the league
+    const team = player.teams.find(t => t.league._id.toString() === leagueId);
+    if (!team) {
+      return res.status(400).json({ error: 'Player is not in the specified league' });
+    }
+
+    // Fetch games for the player in the league
+    const games = await Game.find({
+      league: leagueId,
+      season: team.season,
+      'playerStats.player': playerId,
+      isCompleted: true,
+    })
+      .populate('teams', 'name') // Populate team names
+      .lean();
+
+    // Process game stats
+    const gameStats = games.map(game => {
+      const playerStat = game.playerStats.find(stat => stat.player.toString() === playerId);
+      const opponentTeam = game.teams.find(t => t._id.toString() !== team._id.toString());
+
+      // Calculate stats with fallback values
+      const points = ((playerStat?.stats?.twoPointFGM || 0) * 2) +
+                     ((playerStat?.stats?.threePointFGM || 0) * 3) +
+                     (playerStat?.stats?.freeThrowM || 0);
+      const rebounds = (playerStat?.stats?.offensiveRebound || 0) +
+                       (playerStat?.stats?.defensiveRebound || 0);
+      const assists = playerStat?.stats?.assist || 0;
+
+      return {
+        date: game.date,
+        opponentName: opponentTeam?.name || 'Unknown Opponent',
+        points,
+        rebounds,
+        assists,
+      };
+    });
+
+    // Prepare response
+    const response = {
+      name: playerName,
+      isRinger: player.isRinger,
+      team: {
+        name: team.name,
+        league: team.league,
+        season: team.season,
+      },
+      gameStats: gameStats.length > 0 ? gameStats : [],
+    };
+
+    res.json(response);
+  } catch (error) {
+    console.error(`[Get player] Error for playerId: ${req.params.playerId}`, error);
+    res.status(500).json({ error: 'Failed to fetch player data' });
+  }
+});
+
 // // Get players (filter by leagueId)
 router.get('/', authMiddleware, async (req, res) => {
   try {

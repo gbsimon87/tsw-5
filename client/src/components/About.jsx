@@ -21,28 +21,9 @@ export default function About() {
           }
         `}
       </style>
-      {/* Hero Section */}
-      <section
-        className="bg-gradient-to-br from-blue-900 via-blue-800 to-slate-900 text-white py-24 text-center"
-        aria-label="About The Sporty Way"
-      >
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h1 className="text-4xl sm:text-5xl font-bold mb-6 flex items-center justify-center">
-            <GlobeEuropeAfricaIcon className="w-10 h-10 mr-2 text-blue-300" />
-            The Sporty Way
-          </h1>
-          <Link
-            to={isAuthenticated ? '/dashboard' : '/register'}
-            className="bg-blue-700 text-white px-8 py-3 rounded-lg font-semibold shadow-lg hover:bg-blue-800 transition focus:ring-2 focus:ring-blue-400 focus:outline-none"
-            aria-label={isAuthenticated ? 'Go to Dashboard' : 'Join The Sporty Way'}
-          >
-            {isAuthenticated ? 'My Dashboard' : 'Join Now'}
-          </Link>
-        </div>
-      </section>
 
       {/* Our Story Section */}
-      <section className="py-16 bg-gradient-to-br from-blue-50 to-slate-100">
+      <section className="py-8 bg-gradient-to-br from-blue-50 to-slate-100">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-3xl font-bold text-blue-800 mb-6 flex items-center">
             <HeartIcon className="w-8 h-8 mr-2 text-blue-700" />
@@ -74,30 +55,34 @@ export default function About() {
       </section>
 
       {/* Call to Action Section */}
-      <section className="bg-gradient-to-br from-blue-800 to-slate-900 text-white py-12 text-center">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold mb-4">Get Involved</h2>
-          <p className="text-xl text-blue-100 mb-6">
-            Join thousands of players, parents, and coaches building stronger sports communities with The Sporty Way.
-          </p>
+      <footer className="bg-gradient-to-br from-blue-800 to-slate-900 text-white py-8 text-center">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <p className="mb-4 text-lg">Join the sports community today!</p>
           <div className="flex align-center justify-center space-x-6">
             <Link
-              to="/leagues/public-leagues"
-              className="text-white hover:text-blue-200 focus:ring-2 focus:ring-blue-400 focus:outline-none"
-              aria-label="View Sporty Leagues"
+              to="/about"
+              className="text-white hover:text-amber-300 focus:ring-2 focus:ring-amber-400 focus:outline-none"
+              aria-label="Link to About page"
             >
-              Explore Leagues
+              About
             </Link>
             <Link
               to={isAuthenticated ? '/admin' : '/register'}
-              className="bg-blue-700 text-white px-8 py-3 rounded-lg font-semibold shadow-lg hover:bg-blue-800 transition focus:ring-2 focus:ring-blue-400 focus:outline-none"
+              className="text-white hover:text-amber-300 focus:ring-2 focus:ring-amber-400 focus:outline-none"
               aria-label={isAuthenticated ? 'Manage Leagues' : 'Join Now'}
             >
               {isAuthenticated ? 'Manage Leagues' : 'Join Now'}
             </Link>
+            <Link
+              to={'/privacy-policy'}
+              className="text-white hover:text-amber-300 focus:ring-2 focus:ring-amber-400 focus:outline-none"
+              aria-label='Link to Privacy Policy'
+            >
+              Privacy Policy
+            </Link>
           </div>
         </div>
-      </section>
+      </footer>
     </>
   );
 }

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import axios from 'axios';
+import Modal from 'react-modal';
 import { useAuth } from '../../context/AuthContext';
 
 export default function Team() {
@@ -10,7 +11,137 @@ export default function Team() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [upcomingGames, setUpcomingGames] = useState([]);
-  const [previousGames, setPreviousGames] = useState([]);
+  const [recentGames, setRecentGames] = useState([]);
+  const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
+  const [selectedVideoUrl, setSelectedVideoUrl] = useState(null);
+  const [pointsLeaderboard, setPointsLeaderboard] = useState([]);
+  const [assistsLeaderboard, setAssistsLeaderboard] = useState([]);
+  const [reboundsLeaderboard, setReboundsLeaderboard] = useState([]);
+
+  // Function to extract YouTube video ID
+  const getYouTubeVideoId = (url) => {
+    if (!url) return null;
+    const youtubeRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+    const match = url.match(youtubeRegex);
+    return match && match[1] ? match[1] : null;
+  };
+
+  // Function to get YouTube thumbnail URL
+  const getYouTubeThumbnailUrl = (url) => {
+    const videoId = getYouTubeVideoId(url);
+    return videoId ? `https://img.youtube.com/vi/${videoId}/mqdefault.jpg` : null;
+  };
+
+  // Function to transform YouTube URL to embeddable format
+  const getYouTubeEmbedUrl = (url) => {
+    const videoId = getYouTubeVideoId(url);
+    return videoId ? `https://www.youtube.com/embed/${videoId}` : null;
+  };
+
+  // Open video modal
+  const openVideoModal = (videoUrl) => {
+    const embedUrl = getYouTubeEmbedUrl(videoUrl);
+    if (embedUrl) {
+      setSelectedVideoUrl(embedUrl);
+      setIsVideoModalOpen(true);
+    }
+  };
+
+  // Close video modal
+  const closeVideoModal = () => {
+    setIsVideoModalOpen(false);
+    setSelectedVideoUrl(null);
+  };
+
+  // Replace renderLeaderboard function with updated version
+  const renderLeaderboards = () => (
+    <div className="mb-8">
+      <h3 className="text-lg font-bold mb-2">Team Leaders - Points</h3>
+      {pointsLeaderboard.length === 0 ? (
+        <div className="text-gray-400 mb-4">No points stats available.</div>
+      ) : (
+        <table className="min-w-full text-sm mb-8">
+          <thead className="bg-gray-50 text-gray-700">
+            <tr>
+              <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold">Player</th>
+              <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold">Jersey</th>
+              <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold">Points</th>
+              <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold">PPG</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100">
+            {pointsLeaderboard.map((player, index) => {
+              const isGreyRow = index % 2 !== 0;
+              return (
+                <tr key={player._id} className={isGreyRow ? 'bg-gray-50' : 'bg-white'}>
+                  <td className="border-b border-gray-100 px-3 py-2 text-gray-900">{player.playerName || 'Unknown'}</td>
+                  <td className="text-center border-b border-gray-200 px-3 py-2 text-gray-900">{player.jerseyNumber || 'N/A'}</td>
+                  <td className="text-center border-b border-gray-200 px-3 py-2 text-gray-900">{player.totalPoints}</td>
+                  <td className="text-center border-b border-gray-200 px-3 py-2 text-gray-900">{player.pointsPerGame.toFixed(1)}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      )}
+      <h3 className="text-lg font-bold mb-2">Team Leaders - Assists</h3>
+      {assistsLeaderboard.length === 0 ? (
+        <div className="text-gray-400 mb-4">No assists stats available.</div>
+      ) : (
+        <table className="min-w-full text-sm mb-8">
+          <thead className="bg-gray-50 text-gray-700">
+            <tr>
+              <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold">Player</th>
+              <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold">Jersey</th>
+              <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold">Assists</th>
+              <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold">APG</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100">
+            {assistsLeaderboard.map((player, index) => {
+              const isGreyRow = index % 2 !== 0;
+              return (
+                <tr key={player._id} className={isGreyRow ? 'bg-gray-50' : 'bg-white'}>
+                  <td className="border-b border-gray-100 px-3 py-2 text-gray-900">{player.playerName || 'Unknown'}</td>
+                  <td className="text-center border-b border-gray-200 px-3 py-2 text-gray-900">{player.jerseyNumber || 'N/A'}</td>
+                  <td className="text-center border-b border-gray-200 px-3 py-2 text-gray-900">{player.totalAssists}</td>
+                  <td className="text-center border-b border-gray-200 px-3 py-2 text-gray-900">{player.assistsPerGame.toFixed(1)}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      )}
+      <h3 className="text-lg font-bold mb-2">Team Leaders - Rebounds</h3>
+      {reboundsLeaderboard.length === 0 ? (
+        <div className="text-gray-400">No rebounds stats available.</div>
+      ) : (
+        <table className="min-w-full text-sm">
+          <thead className="bg-gray-50 text-gray-700">
+            <tr>
+              <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold">Player</th>
+              <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold">Jersey</th>
+              <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold">Rebounds</th>
+              <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold">RPG</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100">
+            {reboundsLeaderboard.map((player, index) => {
+              const isGreyRow = index % 2 !== 0;
+              return (
+                <tr key={player._id} className={isGreyRow ? 'bg-gray-50' : 'bg-white'}>
+                  <td className="border-b border-gray-100 px-3 py-2 text-gray-900">{player.playerName || 'Unknown'}</td>
+                  <td className="text-center border-b border-gray-200 px-3 py-2 text-gray-900">{player.jerseyNumber || 'N/A'}</td>
+                  <td className="text-center border-b border-gray-200 px-3 py-2 text-gray-900">{player.totalRebounds}</td>
+                  <td className="text-center border-b border-gray-200 px-3 py-2 text-gray-900">{player.reboundsPerGame.toFixed(1)}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      )}
+    </div>
+  );
 
   useEffect(() => {
     if (!user?.token || !teamId) {
@@ -24,21 +155,29 @@ export default function Team() {
       setLoading(true);
       setError(null);
       try {
-        const [teamResponse, gamesResponse] = await Promise.all([
-          axios.get(`/api/teams/${teamId}`, {
-            headers: { Authorization: `Bearer ${user.token}` },
-          }),
-          axios.get(`/api/teams/${teamId}/games`, {
-            headers: { Authorization: `Bearer ${user.token}` },
-          }),
-        ]);
-        setTeam(teamResponse.data || null);
+        const teamResponse = await axios.get(`/api/teams/${teamId}`, {
+          headers: { Authorization: `Bearer ${user.token}` },
+        });
+        const teamData = teamResponse.data || null;
+        setTeam(teamData);
+
+        const gamesResponse = await axios.get(`/api/teams/${teamId}/games?season=${teamData?.season}`, {
+          headers: { Authorization: `Bearer ${user.token}` },
+        });
         setUpcomingGames(gamesResponse?.data?.upcomingGames || []);
-        setPreviousGames(gamesResponse?.data?.previousGames || []);
+        setRecentGames(gamesResponse?.data?.recentGames || []);
+
+        // Fetch leaderboard
+        const leaderboardResponse = await axios.get(`/api/teams/${teamId}/leaderboard?season=${teamData?.season}`, {
+          headers: { Authorization: `Bearer ${user.token}` },
+        });
+        setPointsLeaderboard(leaderboardResponse.data.points || []);
+        setAssistsLeaderboard(leaderboardResponse.data.assists || []);
+        setReboundsLeaderboard(leaderboardResponse.data.rebounds || []);
       } catch (err) {
         console.error('Fetch team error:', err?.response?.status, err.response?.data, err.message);
         setTeam(null);
-        setError(err?.response?.data?.error || 'Failed to fetch team or games');
+        setError(err?.response?.data?.error || 'Failed to fetch team, games, or leaderboard');
       } finally {
         setLoading(false);
       }
@@ -64,13 +203,14 @@ export default function Team() {
   }
 
   return (
-    <div className="text-white bg-gradient-to-br from-blue-900 via-blue-700 to-slate-800 min-h-[var(--page-height)] py-4 px-4 sm:px-6 lg:px-8">
+    <div className="bg-white text-dark min-h-[var(--page-height)] py-4 px-4 sm:px-6 lg:px-8">
       <div className="mb-8">
+        {/* TEAM INFO */}
         <div className="flex items-center gap-6 mb-4">
           <img
             src={team?.logo || '/team-logo.png'}
             alt={`${team?.name} Logo`}
-            className="w-16 h-16 rounded-full border"
+            className="object-cover w-16 h-16 rounded-full border"
           />
           <div>
             <h2 className="text-xl font-bold">{team?.name}</h2>
@@ -91,13 +231,13 @@ export default function Team() {
                 'Unknown'
               )}
             </p>
-            <div
-              className="font-semibold"
-            >
+            <div className="font-semibold">
               {team?.isActive ? 'Active' : 'Inactive'}
             </div>
           </div>
         </div>
+
+        {/* TEAM STATS */}
         <div className="mb-4">
           <h3 className="text-lg font-bold mb-2">Record</h3>
           <div className="flex gap-8">
@@ -117,6 +257,8 @@ export default function Team() {
             </div>
           </div>
         </div>
+
+        {/* ROSTER */}
         <div className="mb-8">
           <h3 className="text-lg font-bold mb-2">Roster</h3>
           <table className="min-w-full text-sm">
@@ -173,17 +315,27 @@ export default function Team() {
                       className={isGreyRow ? 'bg-gray-50 hover:bg-gray-100' : 'bg-white hover:bg-gray-50'}
                     >
                       <td
-                        className={`sticky left-0 border-b border-gray-100 px-2 py-2 font-medium whitespace-normal z-10 ${isGreyRow ? 'bg-gray-50 text-gray-900' : 'bg-white text-gray-900'
-                          }`}
+                        className={`sticky left-0 border-b border-gray-100 px-2 py-2 font-medium whitespace-normal z-10 ${isGreyRow ? 'bg-gray-50 text-gray-900' : 'bg-white text-gray-900'}`}
                         style={{ maxWidth: 150 }}
                       >
                         {index + 1}
                       </td>
                       <td
-                        className={`border-b border-gray-100 px-2 py-2 font-medium text-gray-900 ${isGreyRow ? 'bg-gray-50' : 'bg-white'
-                          }`}
+                        className={`border-b border-gray-100 px-2 py-2 font-medium ${isGreyRow ? 'bg-gray-50' : 'bg-white'}`}
                       >
-                        {member?.player?.user?.name || 'Unknown'}
+                        {member?.player?._id && team?.league?._id ? (
+                          <Link
+                            to={`/league/${team.league._id}/team/${teamId}/players/${member.player._id}`}
+                            className="text-gray-900 hover:text-blue-600 hover:underline"
+                            aria-label={`View profile for ${member?.player?.user?.name || member?.player?.name || 'Unknown'}`}
+                          >
+                            {member?.player?.user?.name || member?.player?.name || 'Unknown'}
+                          </Link>
+                        ) : (
+                          <span className="text-gray-900">
+                            {member?.player?.user?.name || member?.player?.name || 'Unknown'}
+                          </span>
+                        )}
                       </td>
                       <td
                         className="border-b border-gray-100 px-3 py-2 text-center text-sm text-gray-700"
@@ -196,8 +348,7 @@ export default function Team() {
                         {member?.role}
                       </td>
                       <td
-                        className={`border-b border-gray-100 px-3 py-2 text-center text-sm ${member.isActive ? 'text-green-600' : 'text-red-600'
-                          }`}
+                        className={`border-b border-gray-100 px-3 py-2 text-center text-sm ${member.isActive ? 'text-green-600' : 'text-red-600'}`}
                       >
                         {member?.isActive ? 'Active' : 'Inactive'}
                       </td>
@@ -208,7 +359,11 @@ export default function Team() {
             </tbody>
           </table>
         </div>
-        {/* New sections for games */}
+
+        {/* LEADERBOARDS */}
+        {renderLeaderboards()}
+
+        {/* UPCOMING GAMES */}
         <div className="mb-8">
           <h3 className="text-lg font-bold mb-2">Upcoming Games</h3>
           {upcomingGames?.length === 0 ? (
@@ -245,9 +400,11 @@ export default function Team() {
             </table>
           )}
         </div>
+
+        {/* RECENT GAMES */}
         <div className="mb-8">
           <h3 className="text-lg font-bold mb-2">Recent Games</h3>
-          {previousGames?.length === 0 ? (
+          {recentGames?.length === 0 ? (
             <div className="text-gray-400">No recent games played.</div>
           ) : (
             <table className="min-w-full text-sm">
@@ -256,10 +413,11 @@ export default function Team() {
                   <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold">Date</th>
                   <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold">Opponent</th>
                   <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold">Score</th>
+                  <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold">Video</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {previousGames?.map((game, index) => {
+                {recentGames?.map((game, index) => {
                   const isGreyRow = index % 2 !== 0;
                   return (
                     <tr key={game?._id} className={isGreyRow ? 'bg-gray-50' : 'bg-white'}>
@@ -274,6 +432,24 @@ export default function Team() {
                       <td className="border-b border-gray-100 px-3 py-2 text-gray-900">
                         {game?.teamScore} - {game?.opponentScore}
                       </td>
+                      <td className="border-b border-gray-100 px-3 py-2 text-gray-900">
+                        {game.videoUrl ? (
+                          <button
+                            onClick={() => openVideoModal(game.videoUrl)}
+                            className="relative block"
+                            aria-label={`Watch video for game on ${new Date(game.date).toLocaleDateString()}`}
+                          >
+                            <img
+                              src={getYouTubeThumbnailUrl(game.videoUrl)}
+                              alt={`Thumbnail for game video on ${new Date(game.date).toLocaleDateString()}`}
+                              className="w-32 h-18 object-cover rounded-md hover:opacity-80 transition-opacity"
+                              onError={(e) => (e.target.src = '/placeholder.png')}
+                            />
+                          </button>
+                        ) : (
+                          'No Video'
+                        )}
+                      </td>
                     </tr>
                   );
                 })}
@@ -281,6 +457,44 @@ export default function Team() {
             </table>
           )}
         </div>
+
+        {/* VIDEO MODAL */}
+        <Modal
+          isOpen={isVideoModalOpen}
+          onRequestClose={closeVideoModal}
+          className="bg-white p-4 rounded shadow-lg max-w-3xl w-full mx-auto my-8"
+          overlayClassName="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000]"
+          shouldCloseOnOverlayClick={true}
+          contentLabel="Game Video Modal"
+          aria={{
+            labelledby: 'video-modal-title',
+            describedby: 'video-modal-description',
+          }}
+        >
+          <h3 id="video-modal-title" className="text-lg font-bold mb-2">Game Video</h3>
+          <div id="video-modal-description" className="relative" style={{ paddingBottom: '56.25%' }}>
+            {selectedVideoUrl ? (
+              <iframe
+                src={selectedVideoUrl}
+                title="Game Video"
+                className="absolute top-0 left-0 w-full h-full"
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            ) : (
+              <p className="text-red-500">Invalid video URL</p>
+            )}
+          </div>
+          <div className="flex justify-end mt-4">
+            <button
+              onClick={closeVideoModal}
+              className="px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300"
+            >
+              Close
+            </button>
+          </div>
+        </Modal>
       </div>
     </div>
   );

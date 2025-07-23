@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { UsersIcon, ArrowsRightLeftIcon, ChartBarIcon, ListBulletIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
+import { UsersIcon, ArrowsRightLeftIcon, ChartBarIcon, ListBulletIcon, Cog6ToothIcon } from '@heroicons/react/24/outline';
 import Modal from 'react-modal';
 import { toast } from 'react-toastify'; // Add toast import
 import axios from 'axios';
@@ -78,7 +78,7 @@ export default function ScreenNavigation({ activeScreen, onScreenChange, setGame
           className="flex flex-col gap-2 items-center justify-center p-2 rounded-xl bg-gray-200 text-gray-900 hover:bg-gray-300 transition-colors duration-200 w-full"
           aria-label="Open options menu"
         >
-          <CheckCircleIcon className="h-5 w-5 mb-1" />
+          <Cog6ToothIcon className="h-5 w-5 mb-1" />
           <span className="text-xs text-center">Options</span>
         </button>
         {activeScreen === 'substitutions' && (
@@ -96,7 +96,7 @@ export default function ScreenNavigation({ activeScreen, onScreenChange, setGame
         isOpen={isModalOpen}
         onRequestClose={closeModal}
         className="bg-white p-4 rounded shadow-lg max-w-md w-full mx-auto my-8"
-        overlayClassName="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+        overlayClassName="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
         aria={{
           labelledby: "options-modal-title",
           describedby: "options-modal-description",

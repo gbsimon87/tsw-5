@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useParams, Link } from 'react-router-dom';
 import axios from 'axios';
 
 const PublicFacingLeaguePage = () => {
@@ -7,6 +7,8 @@ const PublicFacingLeaguePage = () => {
   const [league, setLeague] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const navigate = useNavigate();
+
 
   useEffect(() => {
     const fetchLeague = async () => {
@@ -24,8 +26,8 @@ const PublicFacingLeaguePage = () => {
 
   if (loading) {
     return (
-      <div className="container mx-auto p-4 pt-0 px-0 md:px-6 max-w-7xl">
-        <div className="bg-white p-4">
+      <div className="flex flex-col gap-4 container mx-auto p-4 pt-6 md:px-6 max-w-7xl text-dark bg-white min-h-[var(--page-height)] py-4 px-4 sm:px-6 lg:px-8">
+        <div className="bg-white shadow-md rounded-lg p-4">
           <div className="text-center text-gray-500 py-10">Loading...</div>
         </div>
       </div>
@@ -33,9 +35,9 @@ const PublicFacingLeaguePage = () => {
   }
 
   return (
-    <div className="container mx-auto p-4 pt-0 px-0 md:px-6 max-w-7xl">
+    <div className="flex flex-col gap-4 container mx-auto p-4 pt-6 md:px-6 max-w-7xl text-dark bg-white min-h-[var(--page-height)] py-4 px-4 sm:px-6 lg:px-8">
       {/* League Header */}
-      <div className="bg-white p-4">
+      <div className="bg-white shadow-md rounded-lg p-4">
         {error || !league ? (
           <div className="text-gray-500 text-left">Unable to load league details</div>
         ) : (
@@ -89,60 +91,8 @@ const PublicFacingLeaguePage = () => {
         )}
       </div>
 
-      {/* Team Rosters */}
-      <div className="bg-white p-4">
-        <h2 className="text-2xl font-semibold text-gray-800 mb-4">Team Rosters</h2>
-        {error || !league || league.teams?.length === 0 ? (
-          <p className="text-gray-600">No teams found</p>
-        ) : (
-          <ul className="space-y-4">
-            {league.teams.map((team) => (
-              <li
-                key={team._id}
-                className="flex items-center p-4 border hover:bg-gray-100 cursor-pointer"
-                onClick={() => console.log('Team ID clicked:', team._id)}
-              >
-                {team.logo && team.logo !== '' ? (
-                  <img
-                    src={team.logo}
-                    alt={`${team.name || 'Unnamed Team'} logo`}
-                    className="w-12 h-12 rounded-full object-cover mr-4"
-                    onError={(e) => {
-                      e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48"%3E%3Ccircle cx="24" cy="24" r="24" fill="%23D1D5DB"/%3E%3C/svg%3E';
-                    }}
-                  />
-                ) : (
-                  <div className="w-12 h-12 rounded-full bg-gray-300 mr-4"></div>
-                )}
-                <div>
-                  <h3 className="text-xl font-medium text-gray-700">
-                    {team.name || 'Unnamed Team'}
-                  </h3>
-                  {team.members.filter((m) => m.isActive).length > 0 ? (
-                    <ul className="mt-2 space-y-1">
-                      {team.members
-                        .filter((m) => m.isActive)
-                        .map((member) => (
-                          <li key={member.player._id} className="text-gray-600 text-sm">
-                            {member.player.user?.name || 'Unknown Player'}
-                            {member.player.jerseyNumber && ` (#${member.player.jerseyNumber})`}
-                            {member.player.position && ` - ${member.player.position}`}
-                            {member.role === 'manager' && ' (Manager)'}
-                          </li>
-                        ))}
-                    </ul>
-                  ) : (
-                    <p className="text-gray-600 text-sm mt-2">No active members</p>
-                  )}
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-
       {/* Games */}
-      <div className="bg-white p-4">
+      <div className="bg-white shadow-md rounded-lg p-4">
         <h2 className="text-2xl font-semibold text-gray-800 mb-4">Games</h2>
         {error || !league || league.games?.length === 0 ? (
           <div className="text-gray-500 text-left">No games found</div>
@@ -160,21 +110,63 @@ const PublicFacingLeaguePage = () => {
                 {league.games
                   .sort((a, b) => new Date(b.date) - new Date(a.date))
                   .map((game) => (
-                    <tr key={game._id || game.date}>
-                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">
-                        {new Date(game.date).toLocaleDateString()}
-                      </td>
-                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">
-                        {game.teamScores
-                          .map((ts) => {
-                            const team = game.teams.find((t) => t._id === ts.team);
-                            return `${team?.name || 'Unknown'}: ${ts.score}`;
-                          })
-                          .join(' - ')}
-                      </td>
-                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">
-                        {game.isCompleted ? 'Completed' : 'Scheduled'}
-                      </td>
+                    <tr
+                      key={game._id || game.date}
+                      className={game.isCompleted ? 'hover:bg-gray-100 cursor-pointer transition-colors' : ''}
+                    >
+                      {game.isCompleted ? (
+                        <>
+                          <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">
+                            <Link
+                              to={`/leagues/${leagueId}/games/${game._id}`}
+                              className="block w-full"
+                              aria-label={`View details for game on ${new Date(game.date).toLocaleDateString()} between ${game.teams.map((t) => t.name || 'Unknown').join(' and ')}`}
+                            >
+                              {new Date(game.date).toLocaleDateString()}
+                            </Link>
+                          </td>
+                          <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">
+                            <Link
+                              to={`/leagues/${leagueId}/games/${game._id}`}
+                              className="block w-full"
+                              aria-label={`View score for game on ${new Date(game.date).toLocaleDateString()}`}
+                            >
+                              {game.teamScores
+                                .map((ts) => {
+                                  const team = game.teams.find((t) => t._id === ts.team);
+                                  return `${team?.name || 'Unknown'}: ${ts.score}`;
+                                })
+                                .join(' - ')}
+                            </Link>
+                          </td>
+                          <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">
+                            <Link
+                              to={`/leagues/${leagueId}/games/${game._id}`}
+                              className="block w-full"
+                              aria-label={`View status for game on ${new Date(game.date).toLocaleDateString()}`}
+                            >
+                              Completed
+                            </Link>
+                          </td>
+                        </>
+                      ) : (
+                        <>
+                          <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">
+                            {new Date(game.date).toLocaleDateString()}
+                          </td>
+                          <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">
+                            {game.teamScores
+                              .map((ts) => {
+                                const team = game.teams.find((t) => t._id === ts.team);
+                                return `${team?.name || 'Unknown'}: ${ts.score}`;
+                              })
+                              .join(' - ')}
+                          </td>
+                          <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">
+                            Scheduled
+                          </td>
+                        </>
+                      )}
                     </tr>
                   ))}
               </tbody>
@@ -183,8 +175,8 @@ const PublicFacingLeaguePage = () => {
         )}
       </div>
 
-      {/* League Leaders */}
-      <div className="bg-white p-4">
+      {/* League Leaders - Points */}
+      <div className="bg-white shadow-md rounded-lg p-4">
         <h2 className="text-2xl font-semibold text-gray-800 mb-4">League Leaders - Points</h2>
         {error || !league || league.leagueLeaders?.length === 0 ? (
           <div className="text-gray-500 text-left">No league leaders available</div>
@@ -209,6 +201,76 @@ const PublicFacingLeaguePage = () => {
                     </td>
                     <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">
                       {leader.points || 0}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* League Leaders - Assists */}
+      <div className="bg-white shadow-md rounded-lg p-4 mt-4">
+        <h2 className="text-2xl font-semibold text-gray-800 mb-4">League Leaders - Assists</h2>
+        {error || !league || !league.leagueAssistLeaders || league.leagueAssistLeaders.length === 0 ? (
+          <div className="text-gray-500 text-left">No assist leaders available</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Player</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Team</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Assists</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {league.leagueAssistLeaders.map((leader) => (
+                  <tr key={leader._id}>
+                    <td className="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {leader.name || 'Unknown Player'}
+                    </td>
+                    <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">
+                      {leader.team || 'Unknown Team'}
+                    </td>
+                    <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">
+                      {leader.assists || 0}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* League Leaders - Rebounds */}
+      <div className="bg-white shadow-md rounded-lg p-4 mt-4">
+        <h2 className="text-2xl font-semibold text-gray-800 mb-4">League Leaders - Rebounds</h2>
+        {error || !league || !league.leagueReboundLeaders || league.leagueReboundLeaders.length === 0 ? (
+          <div className="text-gray-500 text-left">No rebound leaders available</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Player</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Team</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rebounds</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {league.leagueReboundLeaders.map((leader) => (
+                  <tr key={leader._id}>
+                    <td className="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {leader.name || 'Unknown Player'}
+                    </td>
+                    <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">
+                      {leader.team || 'Unknown Team'}
+                    </td>
+                    <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">
+                      {leader.rebounds || 0}
                     </td>
                   </tr>
                 ))}

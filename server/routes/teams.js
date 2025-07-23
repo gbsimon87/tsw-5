@@ -346,15 +346,8 @@ router.get('/:teamId/games', authMiddleware, async (req, res) => {
       return res.status(403).json({ error: 'User is not a member of this team' });
     }
 
-    // Default to league's active season if not provided
-    let querySeason = season;
-    if (!querySeason) {
-      const league = await League.findById(team.league).select('season');
-      if (!league) {
-        return res.status(404).json({ error: 'League not found' });
-      }
-      querySeason = league.season || 'Season 1'; // Fallback if league.season is empty
-    }
+    // Use the team's season instead of the league's season
+    const querySeason = team.season;
 
     const query = { teams: teamId, season: querySeason };
 
@@ -364,10 +357,10 @@ router.get('/:teamId/games', authMiddleware, async (req, res) => {
       .populate('teams', 'name')
       .lean();
 
-    // Fetch last 3 previous games (isCompleted: true)
+    // Fetch previously completed games (isCompleted: true)
     const previousGames = await Game.find({ ...query, isCompleted: true })
       .sort({ date: -1 }) // Most recent first
-      .limit(3)
+      // .limit(3)
       .populate('teams', 'name')
       .lean();
 
@@ -382,6 +375,7 @@ router.get('/:teamId/games', authMiddleware, async (req, res) => {
         opponentName: opponent?.name || 'Unknown',
         teamScore: teamScoreObj?.score ?? (game.isCompleted ? 0 : 'TBD'),
         opponentScore: opponentScoreObj?.score ?? (game.isCompleted ? 0 : 'TBD'),
+        videoUrl: game.videoUrl || null, // Include videoUrl
       };
     };
 
@@ -393,6 +387,165 @@ router.get('/:teamId/games', authMiddleware, async (req, res) => {
   } catch (err) {
     console.error('Get team games error:', err);
     res.status(500).json({ error: 'Failed to fetch team games' });
+  }
+});
+
+// Get team leaderboard
+router.get('/:teamId/leaderboard', authMiddleware, async (req, res) => {
+  try {
+    const { teamId } = req.params;
+    const { season } = req.query;
+
+    // Validate teamId
+    if (!mongoose.Types.ObjectId.isValid(teamId)) {
+      return res.status(400).json({ error: 'Invalid team ID' });
+    }
+
+    // Find the team to get season and validate user access
+    const team = await Team.findById(teamId).select('season league');
+    if (!team) {
+      return res.status(404).json({ error: 'Team not found' });
+    }
+
+    // Ensure user is a member of the team
+    const players = await Player.find({ user: req.user._id }).select('_id');
+    const playerIds = players.map(player => player._id);
+    if (!(await Team.findOne({ _id: teamId, 'members.player': { $in: playerIds } }))) {
+      return res.status(403).json({ error: 'User is not a member of this team' });
+    }
+
+    const querySeason = season || team.season;
+
+    // Aggregate player points, assists, and rebounds
+    const leaderboard = await Game.aggregate([
+      {
+        $match: {
+          teams: new mongoose.Types.ObjectId(teamId),
+          isCompleted: true,
+          season: querySeason,
+        },
+      },
+      { $unwind: '$playerStats' },
+      {
+        $match: {
+          'playerStats.team': new mongoose.Types.ObjectId(teamId),
+        },
+      },
+      {
+        $lookup: {
+          from: 'players',
+          localField: 'playerStats.player',
+          foreignField: '_id',
+          as: 'playerDetails',
+        },
+      },
+      { $unwind: '$playerDetails' },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'playerDetails.user',
+          foreignField: '_id',
+          as: 'userDetails',
+        },
+      },
+      { $unwind: '$userDetails' },
+      {
+        $project: {
+          playerId: '$playerStats.player',
+          playerName: '$userDetails.name',
+          jerseyNumber: '$playerDetails.jerseyNumber',
+          points: {
+            $sum: [
+              { $multiply: [{ $ifNull: ['$playerStats.stats.twoPointFGM', 0] }, 2] },
+              { $multiply: [{ $ifNull: ['$playerStats.stats.threePointFGM', 0] }, 3] },
+              { $ifNull: ['$playerStats.stats.freeThrowM', 0] },
+            ],
+          },
+          assists: { $ifNull: ['$playerStats.stats.assist', 0] },
+          rebounds: {
+            $sum: [
+              { $ifNull: ['$playerStats.stats.offensiveRebound', 0] },
+              { $ifNull: ['$playerStats.stats.defensiveRebound', 0] },
+            ],
+          },
+          gameId: '$_id',
+        },
+      },
+      {
+        $group: {
+          _id: '$playerId',
+          playerName: { $first: '$playerName' },
+          jerseyNumber: { $first: '$jerseyNumber' },
+          totalPoints: { $sum: '$points' },
+          totalAssists: { $sum: '$assists' },
+          totalRebounds: { $sum: '$rebounds' },
+          gamesPlayed: { $addToSet: '$gameId' },
+        },
+      },
+      {
+        $project: {
+          _id: 1,
+          playerName: 1,
+          jerseyNumber: 1,
+          totalPoints: 1,
+          totalAssists: 1,
+          totalRebounds: 1,
+          gamesPlayed: { $size: '$gamesPlayed' },
+          pointsPerGame: {
+            $cond: {
+              if: { $eq: [{ $size: '$gamesPlayed' }, 0] },
+              then: 0,
+              else: { $divide: ['$totalPoints', { $size: '$gamesPlayed' }] },
+            },
+          },
+          assistsPerGame: {
+            $cond: {
+              if: { $eq: [{ $size: '$gamesPlayed' }, 0] },
+              then: 0,
+              else: { $divide: ['$totalAssists', { $size: '$gamesPlayed' }] },
+            },
+          },
+          reboundsPerGame: {
+            $cond: {
+              if: { $eq: [{ $size: '$gamesPlayed' }, 0] },
+              then: 0,
+              else: { $divide: ['$totalRebounds', { $size: '$gamesPlayed' }] },
+            },
+          },
+        },
+      },
+    ]);
+
+    // Split into points, assists, and rebounds leaderboards, each sorted and limited to 5
+    const pointsLeaderboard = leaderboard
+      .sort((a, b) => b.totalPoints - a.totalPoints)
+      .slice(0, 5)
+      .map(player => ({
+        ...player,
+        pointsPerGame: player.gamesPlayed === 0 ? 0 : Math.round(player.pointsPerGame * 10) / 10,
+      }));
+
+    const assistsLeaderboard = leaderboard
+      .sort((a, b) => b.totalAssists - a.totalAssists)
+      .slice(0, 5)
+      .map(player => ({
+        ...player,
+        assistsPerGame: player.gamesPlayed === 0 ? 0 : Math.round(player.assistsPerGame * 10) / 10,
+      }));
+
+    const reboundsLeaderboard = leaderboard
+      .sort((a, b) => b.totalRebounds - a.totalRebounds)
+      .slice(0, 5)
+      .map(player => ({
+        ...player,
+        reboundsPerGame: player.gamesPlayed === 0 ? 0 : Math.round(player.reboundsPerGame * 10) / 10,
+      }));
+
+    res.set('Cache-Control', 'no-store');
+    res.json({ points: pointsLeaderboard, assists: assistsLeaderboard, rebounds: reboundsLeaderboard });
+  } catch (err) {
+    console.error('Get team leaderboard error:', err);
+    res.status(500).json({ error: 'Failed to fetch leaderboard' });
   }
 });
 

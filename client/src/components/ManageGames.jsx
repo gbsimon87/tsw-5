@@ -3,9 +3,12 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
+import Modal from 'react-modal';
 import {
   CalendarIcon,
+  VideoCameraIcon,
   ChartBarIcon,
+  DocumentChartBarIcon,
   PlusIcon,
   PencilIcon,
   TrashIcon,
@@ -14,12 +17,8 @@ import {
   MapPinIcon,
   ClockIcon,
   FlagIcon,
-  FilmIcon,
-  DocumentTextIcon,
-  UserIcon,
-  CloudIcon,
   TrophyIcon,
-  UserGroupIcon
+  UserGroupIcon,
 } from '@heroicons/react/24/outline';
 import AdminPanelPageHeader from './AdminPanelPageHeader';
 
@@ -46,21 +45,34 @@ export default function ManageGames() {
     periodType: '',
     periodDuration: '',
     overtimeDuration: '',
-    scoringRules: {}
+    scoringRules: {},
+    videoUrl: '',
   });
   const [editingGameId, setEditingGameId] = useState(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingGame, setEditingGame] = useState(null);
+  const [editFormData, setEditFormData] = useState({
+    date: '',
+    time: '',
+    location: '',
+    venue: '',
+    matchType: 'league',
+    eventType: 'regular',
+    videoUrl: '',
+  });
+  const [editError, setEditError] = useState(null);
 
   const tabs = [
     {
       id: 'create',
       label: 'New Game',
-      icon: PlusIcon
+      icon: PlusIcon,
     },
     {
       id: 'view',
       label: 'Scheduled Games',
-      icon: ClockIcon
-    }
+      icon: ClockIcon,
+    },
   ];
 
   useEffect(() => {
@@ -76,7 +88,7 @@ export default function ManageGames() {
           periodType: leagueData?.settings?.periodType || '',
           periodDuration: leagueData?.settings?.periodDuration || '',
           overtimeDuration: leagueData?.settings?.overtimeDuration || '',
-          scoringRules: leagueData?.settings?.scoringRules || {}
+          scoringRules: leagueData?.settings?.scoringRules || {},
         }));
 
         const isAdmin = leagueData.admins?.some(admin => admin._id === user._id) || false;
@@ -122,6 +134,7 @@ export default function ManageGames() {
     fetchData();
   }, [leagueId, user.token, user._id]);
 
+  // Update handleInputChange to handle videoUrl
   const handleInputChange = (e) => {
     const { name, value } = e.target;
 
@@ -140,148 +153,315 @@ export default function ManageGames() {
         scoringRules: {
           ...prev.scoringRules,
           [rule]: parseInt(value) || 0,
-        }
+        },
       }));
     } else {
       setFormData(prev => ({ ...prev, [name]: value }));
     }
   };
 
+  // Update handleEditInputChange to handle videoUrl
+  const handleEditInputChange = (e) => {
+    const { name, value } = e.target;
+    setEditFormData(prev => ({ ...prev, [name]: value }));
+  };
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  try {
-    if (formData.teams[0] === formData.teams[1]) {
-      setError('Home and Away teams must be different');
-      toast.error('Home and Away teams must be different', {
-        position: "top-right",
+  // Update handleSubmit to include videoUrl in payload
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      if (formData.teams[0] === formData.teams[1]) {
+        setError('Home and Away teams must be different');
+        toast.error('Home and Away teams must be different', {
+          position: 'top-right',
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          theme: 'light',
+        });
+        return;
+      }
+
+      // Basic client-side validation for videoUrl
+      if (formData.videoUrl && !/^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+$/.test(formData.videoUrl)) {
+        setError('Invalid YouTube URL');
+        toast.error('Invalid YouTube URL', {
+          position: 'top-right',
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          theme: 'light',
+        });
+        return;
+      }
+
+      const dateTime = new Date(`${formData.date}T${formData.time}`).toISOString();
+      const payload = {
+        ...formData,
+        date: dateTime,
+        league: leagueId,
+        season: league?.seasons.find(s => s.isActive)?.name || 'Season 1',
+        teams: formData.teams.filter(id => id),
+        isCompleted: formData.eventType === 'final' || formData.score.team1 > 0 || formData.score.team2 > 0,
+        periodType: formData.periodType,
+        periodDuration: parseInt(formData.periodDuration),
+        overtimeDuration: parseInt(formData.overtimeDuration),
+        scoringRules: formData.scoringRules,
+        videoUrl: formData.videoUrl || undefined, // Include videoUrl
+      };
+
+      if (editingGameId) {
+        await axios.patch(`/api/games/${editingGameId}`, payload, {
+          headers: { Authorization: `Bearer ${user.token}` },
+        });
+        toast.success('Game updated successfully!', {
+          position: 'top-right',
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          theme: 'light',
+        });
+      } else {
+        await axios.post(`/api/games`, payload, {
+          headers: { Authorization: `Bearer ${user.token}` },
+        });
+        toast.success('Game created successfully!', {
+          position: 'top-right',
+          autoClose: 1000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          theme: 'light',
+        });
+      }
+
+      const activeSeason = league?.seasons.find(s => s.isActive)?.name || 'Season 1';
+      const gamesResponse = await axios.get(`/api/games?leagueId=${leagueId}&season=${activeSeason}&t=${Date.now()}`, {
+        headers: {
+          Authorization: `Bearer ${user.token}`,
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache',
+        },
+      });
+      setGames(gamesResponse.data || []);
+
+      setFormData({
+        date: '',
+        time: '',
+        teams: ['', ''],
+        location: '',
+        venue: '',
+        score: { team1: 0, team2: 0 },
+        matchType: 'league',
+        eventType: 'regular',
+        periodType: '',
+        periodDuration: '',
+        overtimeDuration: '',
+        scoringRules: {},
+        videoUrl: '', // Reset videoUrl
+      });
+      setEditingGameId(null);
+      setError(null);
+      setActiveTab('view');
+    } catch (err) {
+      console.error('Save game error:', err.response?.data || err.message);
+      const errorMessage = err.response?.data?.error || 'Failed to save game';
+      setError(errorMessage);
+      toast.error(errorMessage, {
+        position: 'top-right',
         autoClose: 3000,
         hideProgressBar: false,
         closeOnClick: true,
         pauseOnHover: true,
         draggable: true,
-        theme: "light",
+        theme: 'light',
+      });
+    }
+  };
+
+  // Update handleEditGame to include videoUrl
+  const handleEditGame = (game) => {
+    const gameDate = new Date(game.date);
+    if (isNaN(gameDate.getTime())) {
+      toast.error('Invalid game date', {
+        position: 'top-right',
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        theme: 'light',
       });
       return;
     }
+    setEditingGame(game);
+    setEditFormData({
+      date: gameDate.toISOString().split('T')[0],
+      time: gameDate.toTimeString().slice(0, 5),
+      location: game.location || '',
+      venue: game.venue || '',
+      matchType: game.matchType || 'league',
+      eventType: game.eventType || 'regular',
+      videoUrl: game.videoUrl || '', // Include videoUrl
+    });
+    setEditError(null);
+    setIsEditModalOpen(true);
+  };
 
-    const dateTime = new Date(`${formData.date}T${formData.time}`).toISOString();
-    const payload = {
-      ...formData,
-      date: dateTime,
-      league: leagueId,
-      season: league?.seasons.find(s => s.isActive)?.name || 'Season 1',
-      teams: formData.teams.filter(id => id),
-      isCompleted: formData.eventType === 'final' || formData.score.team1 > 0 || formData.score.team2 > 0,
-      periodType: formData.periodType,
-      periodDuration: parseInt(formData.periodDuration),
-      overtimeDuration: parseInt(formData.overtimeDuration),
-      scoringRules: formData.scoringRules,
-    };
+  // Update handleEditSubmit to include videoUrl in payload
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      if (!editFormData.date || !editFormData.time) {
+        setEditError('Date and Time are required');
+        toast.error('Date and Time are required', {
+          position: 'top-right',
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          theme: 'light',
+        });
+        return;
+      }
 
-    if (editingGameId) {
-      await axios.patch(`/api/games/${editingGameId}`, payload, {
+      // Basic client-side validation for videoUrl
+      if (editFormData.videoUrl && !/^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+$/.test(editFormData.videoUrl)) {
+        setEditError('Invalid YouTube URL');
+        toast.error('Invalid YouTube URL', {
+          position: 'top-right',
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          theme: 'light',
+        });
+        return;
+      }
+
+      const dateTime = new Date(`${editFormData.date}T${editFormData.time}`).toISOString();
+      const payload = {
+        date: dateTime,
+        location: editFormData.location,
+        venue: editFormData.venue,
+        matchType: editFormData.matchType,
+        eventType: editFormData.eventType,
+        teams: editingGame.teams.map(t => t._id || t), // Include teams to avoid server validation errors
+        season: editingGame.season,
+        videoUrl: editFormData.videoUrl || undefined, // Include videoUrl
+      };
+
+      await axios.patch(`/api/games/${editingGame._id}`, payload, {
         headers: { Authorization: `Bearer ${user.token}` },
       });
+
+      const activeSeason = league?.seasons.find(s => s.isActive)?.name || 'Season 1';
+      const gamesResponse = await axios.get(`/api/games?leagueId=${leagueId}&season=${activeSeason}&t=${Date.now()}`, {
+        headers: {
+          Authorization: `Bearer ${user.token}`,
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache',
+        },
+      });
+      setGames(gamesResponse.data || []);
+
       toast.success('Game updated successfully!', {
-        position: "top-right",
+        position: 'top-right',
         autoClose: 3000,
         hideProgressBar: false,
         closeOnClick: true,
         pauseOnHover: true,
         draggable: true,
-        theme: "light",
+        theme: 'light',
       });
-    } else {
-      await axios.post(`/api/games`, payload, {
-        headers: { Authorization: `Bearer ${user.token}` },
+
+      setIsEditModalOpen(false);
+      setEditingGame(null);
+      setEditFormData({
+        date: '',
+        time: '',
+        location: '',
+        venue: '',
+        matchType: 'league',
+        eventType: 'regular',
+        videoUrl: '', // Reset videoUrl
       });
-      toast.success('Game created successfully!', {
-        position: "top-right",
-        autoClose: 1000,
+      setEditError(null);
+    } catch (err) {
+      console.error('Edit game error:', err.response?.data || err.message);
+      const errorMessage = err.response?.data?.error || 'Failed to update game';
+      setEditError(errorMessage);
+      toast.error(errorMessage, {
+        position: 'top-right',
+        autoClose: 3000,
         hideProgressBar: false,
         closeOnClick: true,
         pauseOnHover: true,
         draggable: true,
-        theme: "light",
+        theme: 'light',
       });
     }
+  };
 
-    const activeSeason = league?.seasons.find(s => s.isActive)?.name || 'Season 1';
-    const gamesResponse = await axios.get(`/api/games?leagueId=${leagueId}&season=${activeSeason}&t=${Date.now()}`, {
-      headers: {
-        Authorization: `Bearer ${user.token}`,
-        'Cache-Control': 'no-cache',
-        'Pragma': 'no-cache',
-      },
-    });
-    setGames(gamesResponse.data || []);
-
-    setFormData({
-      date: '',
-      time: '',
-      teams: ['', ''],
-      location: '',
-      venue: '',
-      score: { team1: 0, team2: 0 },
-      matchType: 'league',
-      eventType: 'regular',
-    });
-    setEditingGameId(null);
-    setError(null);
-    setActiveTab('view');
-  } catch (err) {
-    console.error('Save game error:', err.response?.data || err.message);
-    const errorMessage = err.response?.data?.error || 'Failed to save game';
-    setError(errorMessage);
-    toast.error(errorMessage, {
-      position: "top-right",
-      autoClose: 3000,
-      hideProgressBar: false,
-      closeOnClick: true,
-      pauseOnHover: true,
-      draggable: true,
-      theme: "light",
-    });
-  }
-};
-
-  const handleEditGame = (game) => {
+  const handleTrackGame = (game) => {
     navigate(`/leagues/${leagueId}/games/${game._id}/tracking`);
   };
 
-const handleDeleteGame = async (gameId) => {
-  if (!window.confirm('Are you sure you want to delete this game?')) return;
-  try {
-    await axios.delete(`/api/games/${gameId}`, {
-      headers: { Authorization: `Bearer ${user.token}` },
+  const handleDeleteGame = async (gameId) => {
+    if (!window.confirm('Are you sure you want to delete this game?')) return;
+    try {
+      await axios.delete(`/api/games/${gameId}`, {
+        headers: { Authorization: `Bearer ${user.token}` },
+      });
+      setGames(games.filter(game => game._id !== gameId));
+      setError(null);
+      toast.success('Game deleted successfully!', {
+        position: 'top-right',
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        theme: 'light',
+      });
+    } catch (err) {
+      console.error('Delete game error:', err.response?.data || err.message);
+      const errorMessage = err.response?.data?.error || 'Failed to delete game';
+      setError(errorMessage);
+      toast.error(errorMessage, {
+        position: 'top-right',
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        theme: 'light',
+      });
+    }
+  };
+
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false);
+    setEditingGame(null);
+    setEditFormData({
+      date: '',
+      time: '',
+      location: '',
+      venue: '',
+      matchType: 'league',
+      eventType: 'regular',
     });
-    setGames(games.filter(game => game._id !== gameId));
-    setError(null);
-    toast.success('Game deleted successfully!', {
-      position: "top-right",
-      autoClose: 3000,
-      hideProgressBar: false,
-      closeOnClick: true,
-      pauseOnHover: true,
-      draggable: true,
-      theme: "light",
-    });
-  } catch (err) {
-    console.error('Delete game error:', err.response?.data || err.message);
-    const errorMessage = err.response?.data?.error || 'Failed to delete game';
-    setError(errorMessage);
-    toast.error(errorMessage, {
-      position: "top-right",
-      autoClose: 3000,
-      hideProgressBar: false,
-      closeOnClick: true,
-      pauseOnHover: true,
-      draggable: true,
-      theme: "light",
-    });
-  }
-};
+    setEditError(null);
+  };
 
   if (loading) {
     return (
@@ -302,7 +482,6 @@ const handleDeleteGame = async (gameId) => {
   return (
     <div className="min-h-[var(--page-height)] bg-gray-50 py-4 px-4">
       <div className="max-w-4xl mx-auto">
-
         <AdminPanelPageHeader
           backButtonLink={`/leagues/${leagueId}`}
           backButtonText="Back to League"
@@ -315,7 +494,7 @@ const handleDeleteGame = async (gameId) => {
 
         {/* Create Game Form */}
         {activeTab === 'create' && (
-          <section className="bg-white shadow-xl rounded-2xl p-8 border border-gray-200 mb-8">
+          <section className="bg-white shadow-xl rounded-2xl p-4 border border-gray-200 mb-8">
             <div className="flex items-center gap-3 mb-4">
               <PlusIcon className="w-6 h-6 text-blue-500" />
               <h2 className="text-2xl font-semibold text-gray-800">
@@ -417,6 +596,20 @@ const handleDeleteGame = async (gameId) => {
                 </div>
                 <div className="flex flex-col">
                   <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                    <VideoCameraIcon className="w-5 h-5 text-gray-500" />
+                    YouTube Video URL (optional):
+                  </label>
+                  <input
+                    type="url"
+                    name="videoUrl"
+                    value={formData.videoUrl}
+                    onChange={handleInputChange}
+                    placeholder="https://www.youtube.com/watch?v=..."
+                    className="mt-1 w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  />
+                </div>
+                <div className="flex flex-col">
+                  <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
                     <FlagIcon className="w-5 h-5 text-gray-500" />
                     Match Type (optional):
                   </label>
@@ -486,7 +679,6 @@ const handleDeleteGame = async (gameId) => {
                     />
                   </div>
                 ))}
-
               </div>
               <div className="flex gap-3">
                 <button
@@ -509,8 +701,14 @@ const handleDeleteGame = async (gameId) => {
                         score: { team1: 0, team2: 0 },
                         matchType: 'league',
                         eventType: 'regular',
+                        periodType: '',
+                        periodDuration: '',
+                        overtimeDuration: '',
+                        scoringRules: {},
+                        videoUrl: '',
                       });
                       setEditingGameId(null);
+                      setError(null);
                       setActiveTab('create');
                     }}
                     className="flex-1 flex items-center gap-2 justify-center bg-gray-300 text-gray-800 px-5 py-2 rounded-lg font-semibold shadow hover:bg-gray-400 transition focus:ring-2 focus:ring-gray-500 focus:outline-none"
@@ -532,7 +730,7 @@ const handleDeleteGame = async (gameId) => {
               <h2 className="text-2xl font-semibold text-gray-800">Current Season Games</h2>
             </div>
             {games.length > 0 ? (
-              <div className="space-y-2">
+              <div className="grid gap-2 md:grid-cols-2">
                 {games.map(game => {
                   const isValidGame = game && Array.isArray(game.teams) && game.teams.length >= 2 && game.date;
                   if (!isValidGame) {
@@ -560,7 +758,7 @@ const handleDeleteGame = async (gameId) => {
                             <span>{new Date(game?.date).toLocaleDateString() || 'No date'}</span>
                           </div>
                         </div>
-                        <div className="mt-3 flex justify-end">
+                        <div className="mt-3 flex justify-end gap-2">
                           <button
                             onClick={() => handleDeleteGame(game._id)}
                             className="flex items-center gap-2 bg-red-600 text-white px-3 py-1 rounded-md hover:bg-red-700 transition focus:ring-2 focus:ring-red-500 focus:outline-none"
@@ -574,9 +772,9 @@ const handleDeleteGame = async (gameId) => {
                     );
                   }
                   return (
-                    <div key={game._id} className="flex gap-2 items-center justify-between bg-white p-3 rounded-md border border-gray-200">
+                    <div key={game._id} className="flex flex-col gap-2 justify-between bg-white p-3 rounded-md border border-gray-200">
                       <div className="space-y-1 text-gray-700">
-                        <div className="flex items-center gap-8">
+                        <div className="flex items-center gap-2">
                           <UserGroupIcon className="w-4 h-4 text-gray-500" />
                           <span>{(game.teams[0]?.name || 'TBD')} vs {(game.teams[1]?.name || 'TBD')}</span>
                         </div>
@@ -609,14 +807,22 @@ const handleDeleteGame = async (gameId) => {
                           </div>
                         )}
                       </div>
-                      <div className="flex flex-col gap-2">
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleTrackGame(game)}
+                          className="flex items-center gap-2 bg-blue-600 text-white px-3 py-1 rounded-md hover:bg-blue-700 transition focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                          aria-label="Track Game"
+                        >
+                          <DocumentChartBarIcon className="w-4 h-4" />
+                          Track
+                        </button>
                         <button
                           onClick={() => handleEditGame(game)}
-                          className="flex items-center gap-2 bg-blue-600 text-white px-3 py-1 rounded-md hover:bg-blue-700 transition focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                          aria-label="Edit Game"
+                          className="flex items-center gap-2 bg-yellow-600 text-white px-3 py-1 rounded-md hover:bg-yellow-700 transition focus:ring-2 focus:ring-yellow-500 focus:outline-none"
+                          aria-label="Edit Game Details"
                         >
                           <PencilIcon className="w-4 h-4" />
-                          Edit
+                          Details
                         </button>
                         <button
                           onClick={() => handleDeleteGame(game._id)}
@@ -636,6 +842,142 @@ const handleDeleteGame = async (gameId) => {
             )}
           </section>
         )}
+
+        {/* Edit Game Modal */}
+        <Modal
+          isOpen={isEditModalOpen}
+          onRequestClose={handleCloseEditModal}
+          className="bg-white p-4 rounded shadow-lg max-w-md w-full mx-auto my-8"
+          overlayClassName="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[1000]"
+          shouldCloseOnOverlayClick={true}
+          contentLabel="Edit Game Details Modal"
+          aria={{
+            labelledby: 'edit-game-modal-title',
+            describedby: 'edit-game-modal-description',
+          }}
+        >
+          <h3 id="edit-game-modal-title" className="text-lg font-bold mb-2">Edit Game Details</h3>
+          {editError && <p className="text-red-500 mb-4 text-center">{editError}</p>}
+          <form id="edit-game-modal-description" onSubmit={handleEditSubmit} className="space-y-4">
+            <div className="flex flex-col">
+              <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                <CalendarIcon className="w-5 h-5 text-gray-500" />
+                Date:
+              </label>
+              <input
+                type="date"
+                name="date"
+                value={editFormData.date}
+                onChange={handleEditInputChange}
+                required
+                className="mt-1 w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              />
+            </div>
+            <div className="flex flex-col">
+              <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                <ClockIcon className="w-5 h-5 text-gray-500" />
+                Time:
+              </label>
+              <input
+                type="time"
+                name="time"
+                value={editFormData.time}
+                onChange={handleEditInputChange}
+                required
+                className="mt-1 w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              />
+            </div>
+            <div className="flex flex-col">
+              <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                <MapPinIcon className="w-5 h-5 text-gray-500" />
+                Location (optional):
+              </label>
+              <input
+                type="text"
+                name="location"
+                value={editFormData.location}
+                onChange={handleEditInputChange}
+                className="mt-1 w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              />
+            </div>
+            <div className="flex flex-col">
+              <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                <MapPinIcon className="w-5 h-5 text-gray-500" />
+                Venue (optional):
+              </label>
+              <input
+                type="text"
+                name="venue"
+                value={editFormData.venue}
+                onChange={handleEditInputChange}
+                className="mt-1 w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              />
+            </div>
+            <div className="flex flex-col">
+              <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                <VideoCameraIcon className="w-5 h-5 text-gray-500" />
+                YouTube Video URL (optional):
+              </label>
+              <input
+                type="url"
+                name="videoUrl"
+                value={editFormData.videoUrl}
+                onChange={handleEditInputChange}
+                placeholder="https://www.youtube.com/watch?v=..."
+                className="mt-1 w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              />
+            </div>
+            <div className="flex flex-col">
+              <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                <FlagIcon className="w-5 h-5 text-gray-500" />
+                Match Type:
+              </label>
+              <select
+                name="matchType"
+                value={editFormData.matchType}
+                onChange={handleEditInputChange}
+                required
+                className="mt-1 w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              >
+                <option value="league">League</option>
+                <option value="friendly">Friendly</option>
+                <option value="tournament">Tournament</option>
+              </select>
+            </div>
+            <div className="flex flex-col">
+              <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                <FlagIcon className="w-5 h-5 text-gray-500" />
+                Event Type:
+              </label>
+              <select
+                name="eventType"
+                value={editFormData.eventType}
+                onChange={handleEditInputChange}
+                required
+                className="mt-1 w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              >
+                <option value="regular">Regular</option>
+                <option value="playoff">Playoff</option>
+                <option value="final">Final</option>
+              </select>
+            </div>
+            <div className="flex justify-end space-x-2">
+              <button
+                type="button"
+                onClick={handleCloseEditModal}
+                className="px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              >
+                Update Game
+              </button>
+            </div>
+          </form>
+        </Modal>
       </div>
     </div>
   );

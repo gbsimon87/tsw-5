@@ -409,11 +409,11 @@ export default function Home() {
           <p className="mb-4 text-lg">Join the sports community today!</p>
           <div className="flex align-center justify-center space-x-6">
             <Link
-              to="/leagues/public-leagues"
+              to="/about"
               className="text-white hover:text-amber-300 focus:ring-2 focus:ring-amber-400 focus:outline-none"
-              aria-label="View Sporty Leagues"
+              aria-label="Link to About page"
             >
-              Explore Leagues
+              About
             </Link>
             <Link
               to={isAuthenticated ? '/admin' : '/register'}
@@ -421,6 +421,13 @@ export default function Home() {
               aria-label={isAuthenticated ? 'Manage Leagues' : 'Join Now'}
             >
               {isAuthenticated ? 'Manage Leagues' : 'Join Now'}
+            </Link>
+            <Link
+              to={'/privacy-policy'}
+              className="text-white hover:text-amber-300 focus:ring-2 focus:ring-amber-400 focus:outline-none"
+              aria-label='Link to Privacy Policy'
+            >
+              Privacy Policy
             </Link>
           </div>
         </div>
