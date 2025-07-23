@@ -36,6 +36,117 @@ router.post('/', authMiddleware, checkAdminOrManager, async (req, res) => {
   }
 });
 
+// Get single player by ID with last 3 games' stats
+router.get('/:playerId', authMiddleware, async (req, res) => {
+  try {
+    const { playerId } = req.params;
+    const { leagueId } = req.query;
+
+    if (!mongoose.Types.ObjectId.isValid(playerId) || !mongoose.Types.ObjectId.isValid(leagueId)) {
+      console.log(`[Get player] Invalid playerId: ${playerId} or leagueId: ${leagueId}`);
+      return res.status(400).json({ error: 'Invalid playerId or leagueId' });
+    }
+
+    // Fetch player data
+    const player = await Player.findById(playerId)
+      .populate({
+        path: 'teams',
+        select: 'name league season',
+        populate: { path: 'league', select: 'name settings' },
+      })
+      .lean();
+
+    if (!player) {
+      console.log(`[Get player] Player not found for playerId: ${playerId}`);
+      return res.status(404).json({ error: 'Player not found' });
+    }
+
+    // Log team and league information
+    console.log(`[Get player] Player teams:`, JSON.stringify(player.teams, null, 2));
+
+    // Check if player is in the specified league
+    const team = player.teams.find(t => t.league._id.toString() === leagueId);
+    if (!team) {
+      console.log(`[Get player] Player ${playerId} not in league ${leagueId}`);
+      player.stats = { gameStats: [] };
+      return res.json(player);
+    }
+
+    // Fetch last 3 games for the player in the league and season
+    const games = await Game.aggregate([
+      {
+        $match: {
+          league: new mongoose.Types.ObjectId(leagueId),
+          season: team.season,
+          'playerStats.player': new mongoose.Types.ObjectId(playerId),
+          isCompleted: true,
+        },
+      },
+      { $unwind: '$playerStats' },
+      {
+        $match: {
+          'playerStats.player': new mongoose.Types.ObjectId(playerId),
+        },
+      },
+      {
+        $lookup: {
+          from: 'leagues',
+          localField: 'league',
+          foreignField: '_id',
+          as: 'league',
+        },
+      },
+      { $unwind: '$league' },
+      {
+        $project: {
+          date: 1,
+          season: 1,
+          stats: '$playerStats.stats',
+          leagueSettings: '$league.settings',
+        },
+      },
+      { $sort: { date: -1 } },
+      { $limit: 3 },
+      {
+        $project: {
+          date: 1,
+          season: 1,
+          points: {
+            $sum: [
+              { $multiply: [{ $ifNull: ['$stats.twoPointFGM', 0] }, 2] },
+              { $multiply: [{ $ifNull: ['$stats.threePointFGM', 0] }, 3] },
+              { $ifNull: ['$stats.freeThrowM', 0] },
+            ],
+          },
+          rebounds: {
+            $sum: [
+              { $ifNull: ['$stats.offensiveRebound', 0] },
+              { $ifNull: ['$stats.defensiveRebound', 0] },
+            ],
+          },
+          assists: { $ifNull: ['$stats.assist', 0] },
+        },
+      },
+    ]);
+
+    // Format player response
+    player.stats = {
+      gameStats: games.map(game => ({
+        date: game.date,
+        season: game.season,
+        points: game.points || 0,
+        rebounds: game.rebounds || 0,
+        assists: game.assists || 0,
+      })),
+    };
+
+    res.json(player);
+  } catch (error) {
+    console.error(`[Get player] Error for playerId: ${req.params.playerId}`, error);
+    res.status(500).json({ error: 'Failed to fetch player data' });
+  }
+});
+
 // // Get players (filter by leagueId)
 router.get('/', authMiddleware, async (req, res) => {
   try {

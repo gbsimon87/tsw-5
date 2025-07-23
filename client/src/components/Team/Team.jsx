@@ -316,9 +316,21 @@ export default function Team() {
                         {index + 1}
                       </td>
                       <td
-                        className={`border-b border-gray-100 px-2 py-2 font-medium text-gray-900 ${isGreyRow ? 'bg-gray-50' : 'bg-white'}`}
+                        className={`border-b border-gray-100 px-2 py-2 font-medium ${isGreyRow ? 'bg-gray-50' : 'bg-white'}`}
                       >
-                        {member?.player?.user?.name || 'Unknown'}
+                        {member?.player?._id && team?.league?._id ? (
+                          <Link
+                            to={`/league/${team.league._id}/team/${teamId}/players/${member.player._id}`}
+                            className="text-gray-900 hover:text-blue-600 hover:underline"
+                            aria-label={`View profile for ${member?.player?.user?.name || member?.player?.name || 'Unknown'}`}
+                          >
+                            {member?.player?.user?.name || member?.player?.name || 'Unknown'}
+                          </Link>
+                        ) : (
+                          <span className="text-gray-900">
+                            {member?.player?.user?.name || member?.player?.name || 'Unknown'}
+                          </span>
+                        )}
                       </td>
                       <td
                         className="border-b border-gray-100 px-3 py-2 text-center text-sm text-gray-700"

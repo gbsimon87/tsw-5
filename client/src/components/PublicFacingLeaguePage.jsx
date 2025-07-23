@@ -26,7 +26,7 @@ const PublicFacingLeaguePage = () => {
 
   if (loading) {
     return (
-      <div className="flex flex-col gap-4 container mx-auto p-4 pt-0 md:px-6 max-w-7xl text-white bg-gradient-to-br from-blue-900 via-blue-700 to-slate-800 min-h-[var(--page-height)] py-4 px-4 sm:px-6 lg:px-8">
+      <div className="flex flex-col gap-4 container mx-auto p-4 pt-6 md:px-6 max-w-7xl text-white bg-gradient-to-br from-blue-900 via-blue-700 to-slate-800 min-h-[var(--page-height)] py-4 px-4 sm:px-6 lg:px-8">
         <div className="bg-white shadow-md rounded-lg p-4">
           <div className="text-center text-gray-500 py-10">Loading...</div>
         </div>
@@ -35,7 +35,7 @@ const PublicFacingLeaguePage = () => {
   }
 
   return (
-    <div className="flex flex-col gap-4 container mx-auto p-4 pt-0 md:px-6 max-w-7xl text-white bg-gradient-to-br from-blue-900 via-blue-700 to-slate-800 min-h-[var(--page-height)] py-4 px-4 sm:px-6 lg:px-8">
+    <div className="flex flex-col gap-4 container mx-auto p-4 pt-6 md:px-6 max-w-7xl text-white bg-gradient-to-br from-blue-900 via-blue-700 to-slate-800 min-h-[var(--page-height)] py-4 px-4 sm:px-6 lg:px-8">
       {/* League Header */}
       <div className="bg-white shadow-md rounded-lg p-4">
         {error || !league ? (
