@@ -15,16 +15,24 @@ export default function Team() {
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
   const [selectedVideoUrl, setSelectedVideoUrl] = useState(null);
 
-  // Function to transform YouTube URL to embeddable format
-  const getYouTubeEmbedUrl = (url) => {
+  // Function to extract YouTube video ID
+  const getYouTubeVideoId = (url) => {
     if (!url) return null;
-    // Handle youtube.com/watch?v= format
     const youtubeRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
     const match = url.match(youtubeRegex);
-    if (match && match[1]) {
-      return `https://www.youtube.com/embed/${match[1]}`;
-    }
-    return null; // Invalid URL
+    return match && match[1] ? match[1] : null;
+  };
+
+  // Function to get YouTube thumbnail URL
+  const getYouTubeThumbnailUrl = (url) => {
+    const videoId = getYouTubeVideoId(url);
+    return videoId ? `https://img.youtube.com/vi/${videoId}/mqdefault.jpg` : null;
+  };
+
+  // Function to transform YouTube URL to embeddable format
+  const getYouTubeEmbedUrl = (url) => {
+    const videoId = getYouTubeVideoId(url);
+    return videoId ? `https://www.youtube.com/embed/${videoId}` : null;
   };
 
   // Open video modal
@@ -103,7 +111,7 @@ export default function Team() {
           <img
             src={team?.logo || '/team-logo.png'}
             alt={`${team?.name} Logo`}
-            className="w-16 h-16 rounded-full border"
+            className="object-cover w-16 h-16 rounded-full border"
           />
           <div>
             <h2 className="text-xl font-bold">{team?.name}</h2>
@@ -124,9 +132,7 @@ export default function Team() {
                 'Unknown'
               )}
             </p>
-            <div
-              className="font-semibold"
-            >
+            <div className="font-semibold">
               {team?.isActive ? 'Active' : 'Inactive'}
             </div>
           </div>
@@ -206,15 +212,13 @@ export default function Team() {
                       className={isGreyRow ? 'bg-gray-50 hover:bg-gray-100' : 'bg-white hover:bg-gray-50'}
                     >
                       <td
-                        className={`sticky left-0 border-b border-gray-100 px-2 py-2 font-medium whitespace-normal z-10 ${isGreyRow ? 'bg-gray-50 text-gray-900' : 'bg-white text-gray-900'
-                          }`}
+                        className={`sticky left-0 border-b border-gray-100 px-2 py-2 font-medium whitespace-normal z-10 ${isGreyRow ? 'bg-gray-50 text-gray-900' : 'bg-white text-gray-900'}`}
                         style={{ maxWidth: 150 }}
                       >
                         {index + 1}
                       </td>
                       <td
-                        className={`border-b border-gray-100 px-2 py-2 font-medium text-gray-900 ${isGreyRow ? 'bg-gray-50' : 'bg-white'
-                          }`}
+                        className={`border-b border-gray-100 px-2 py-2 font-medium text-gray-900 ${isGreyRow ? 'bg-gray-50' : 'bg-white'}`}
                       >
                         {member?.player?.user?.name || 'Unknown'}
                       </td>
@@ -229,8 +233,7 @@ export default function Team() {
                         {member?.role}
                       </td>
                       <td
-                        className={`border-b border-gray-100 px-3 py-2 text-center text-sm ${member.isActive ? 'text-green-600' : 'text-red-600'
-                          }`}
+                        className={`border-b border-gray-100 px-3 py-2 text-center text-sm ${member.isActive ? 'text-green-600' : 'text-red-600'}`}
                       >
                         {member?.isActive ? 'Active' : 'Inactive'}
                       </td>
@@ -278,7 +281,6 @@ export default function Team() {
             </table>
           )}
         </div>
-
         {/* RECENT GAMES TABLE */}
         <div className="mb-8">
           <h3 className="text-lg font-bold mb-2">Recent Games</h3>
@@ -314,10 +316,15 @@ export default function Team() {
                         {game.videoUrl ? (
                           <button
                             onClick={() => openVideoModal(game.videoUrl)}
-                            className="text-blue-400 hover:text-blue-300 underline"
+                            className="relative block"
                             aria-label={`Watch video for game on ${new Date(game.date).toLocaleDateString()}`}
                           >
-                            Watch Video
+                            <img
+                              src={getYouTubeThumbnailUrl(game.videoUrl)}
+                              alt={`Thumbnail for game video on ${new Date(game.date).toLocaleDateString()}`}
+                              className="w-32 h-18 object-cover rounded-md hover:opacity-80 transition-opacity"
+                              onError={(e) => (e.target.src = '/placeholder.png')} // Fallback image
+                            />
                           </button>
                         ) : (
                           'No Video'
@@ -330,7 +337,6 @@ export default function Team() {
             </table>
           )}
         </div>
-
         {/* Video Modal */}
         <Modal
           isOpen={isVideoModalOpen}
@@ -351,6 +357,7 @@ export default function Team() {
                 src={selectedVideoUrl}
                 title="Game Video"
                 className="absolute top-0 left-0 w-full h-full"
+                frameBorder="0"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
               />
