@@ -390,6 +390,99 @@ router.get('/:teamId/games', authMiddleware, async (req, res) => {
   }
 });
 
+// Get team leaderboard
+router.get('/:teamId/leaderboard', authMiddleware, async (req, res) => {
+  try {
+    const { teamId } = req.params;
+    const { season } = req.query;
+
+    // Validate teamId
+    if (!mongoose.Types.ObjectId.isValid(teamId)) {
+      return res.status(400).json({ error: 'Invalid team ID' });
+    }
+
+    // Find the team to get season and validate user access
+    const team = await Team.findById(teamId).select('season league');
+    if (!team) {
+      return res.status(404).json({ error: 'Team not found' });
+    }
+
+    // Ensure user is a member of the team
+    const players = await Player.find({ user: req.user._id }).select('_id');
+    const playerIds = players.map(player => player._id);
+    if (!(await Team.findOne({ _id: teamId, 'members.player': { $in: playerIds } }))) {
+      return res.status(403).json({ error: 'User is not a member of this team' });
+    }
+
+    const querySeason = season || team.season;
+
+    // Aggregate player points
+    const leaderboard = await Game.aggregate([
+      {
+        $match: {
+          teams: new mongoose.Types.ObjectId(teamId),
+          isCompleted: true,
+          season: querySeason,
+        },
+      },
+      { $unwind: '$playerStats' },
+      {
+        $match: {
+          'playerStats.team': new mongoose.Types.ObjectId(teamId),
+        },
+      },
+      {
+        $lookup: {
+          from: 'players',
+          localField: 'playerStats.player',
+          foreignField: '_id',
+          as: 'playerDetails',
+        },
+      },
+      { $unwind: '$playerDetails' },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'playerDetails.user',
+          foreignField: '_id',
+          as: 'userDetails',
+        },
+      },
+      { $unwind: '$userDetails' },
+      {
+        $project: {
+          playerId: '$playerStats.player',
+          playerName: '$userDetails.name',
+          jerseyNumber: '$playerDetails.jerseyNumber',
+          points: {
+            $sum: [
+              { $multiply: ['$playerStats.stats.twoPointFGM', 2] },
+              { $multiply: ['$playerStats.stats.threePointFGM', 3] },
+              '$playerStats.stats.freeThrowM',
+            ],
+          },
+        },
+      },
+      {
+        $group: {
+          _id: '$playerId',
+          playerName: { $first: '$playerName' },
+          jerseyNumber: { $first: '$jerseyNumber' },
+          totalPoints: { $sum: '$points' },
+        },
+      },
+      { $sort: { totalPoints: -1 } },
+      { $limit: 5 },
+    ]);
+
+    res.set('Cache-Control', 'no-store');
+    res.json(leaderboard);
+  } catch (err) {
+    console.error('Get team leaderboard error:', err);
+    res.status(500).json({ error: 'Failed to fetch leaderboard' });
+  }
+});
+
 // Route to get a single team by ID, with user validation and record/ranking
 router.get('/:teamId', authMiddleware, async (req, res) => {
   try {
