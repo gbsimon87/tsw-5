@@ -31,12 +31,16 @@ export default function UpcomingFeatures() {
       status: "done"
     },
     {
-      title: "As a league administrator, I want to choose halves or quarters when creating a league so that the game format matches our needs.",
+      title: "As a user, I want to see the league leaders in points for a league.",
       status: "done"
     },
     {
-      title: "As a scorekeeper, I want the option to skip recording the court location for a play so that I can save time when it's not needed.",
+      title: "System - if images get a 429 request, I want to display a fallback image.",
       status: "todo"
+    },
+    {
+      title: "As a league administrator, I want to choose halves or quarters when creating a league so that the game format matches our needs.",
+      status: "done"
     },
     {
       title: "As a league administrator, I want to prevent duplicate league names that I am the admin of.",
@@ -59,7 +63,11 @@ export default function UpcomingFeatures() {
       status: "todo"
     },
     {
-      title: "As a team manager, I should be able to upload images for the team logos.",
+      title: "As an admin, I want to be able to add a video URL when I edit the game information.",
+      status: "todo"
+    },
+    {
+      title: "As a user, I want to be able to see the videos for a given game.",
       status: "todo"
     },
 
@@ -117,7 +125,7 @@ export default function UpcomingFeatures() {
       status: "todo"
     },
     {
-      title: "As a player, I should be informed from MySporty if I don't have any upcoming games.",
+      title: "As a player, I should be informed from the cards in the MySporty page if I don't have any upcoming games.",
       status: "todo"
     },
 
@@ -135,10 +143,6 @@ export default function UpcomingFeatures() {
           status: "todo"
         }
       ]
-    },
-    {
-      title: "As an admin, I need to add a a second admin to the league within 90 days or the functionality to edit the league will be cut off.",
-      status: "todo"
     },
     {
       title: "As an admin, I want to be able to create a season and carry over teams for the next season.",
@@ -206,8 +210,8 @@ export default function UpcomingFeatures() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-blue-700 to-slate-800 px-4">
-      <div className="max-w-4xl mx-auto p-6">
+    <div className="min-h-[var(--page-height)] bg-gradient-to-br from-blue-900 via-blue-700 to-slate-800 p-2">
+      <div className="max-w-4xl mx-auto">
         <h1 className="text-2xl sm:text-3xl font-bold mb-8 text-center text-white drop-shadow">
           <span className="mr-2">🚀</span> Upcoming Features & Fixes
         </h1>

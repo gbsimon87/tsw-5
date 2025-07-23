@@ -287,16 +287,19 @@ router.get('/public/:leagueId', async (req, res) => {
         players
           .map((player) => {
             const playerId = player._id.toString();
-            const team = league.teams.find((t) =>
-              t.members.some((m) => m?.player?._id?.toString() === playerId)
-            );
+            const teamId = playerPointsMap[playerId]?.teamId?.toString();
+            const team = league.teams.find((t) => t._id.toString() === teamId);
+            if (!team) {
+              console.warn(`No team found for player ${playerId} with teamId ${teamId}`);
+            }
             return {
               _id: player._id,
               name: player.user?.name || 'Unknown Player',
               team: team ? team.name : 'Unknown Team',
-              points: playerPointsMap[playerId].points || 0
+              points: playerPointsMap[playerId]?.points || 0
             };
           })
+          .filter((leader) => leader.points > 0) // Exclude players with no points
           .sort((a, b) => b.points - a.points)
           .slice(0, 5)
       );

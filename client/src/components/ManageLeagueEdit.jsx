@@ -289,7 +289,7 @@ export default function ManageLeagueEdit() {
       <div className="max-w-4xl mx-auto">
 
         {/* League Details */}
-        <section className="bg-white shadow-xl rounded-2xl p-8 border border-gray-200 mb-8">
+        <section>
           <header className="flex flex-col mb-8 gap-4">
           <h1 className="text-2xl font-bold text-gray-800">
             {league.name}
@@ -323,7 +323,7 @@ export default function ManageLeagueEdit() {
         </header>
 
           {error && <p className="text-red-500 mb-4 text-center">{error}</p>}
-          <form id="leagueForm" onSubmit={handleSubmit} className="space-y-6">
+          <form id="leagueForm" onSubmit={handleSubmit} className="bg-white shadow-xl rounded-2xl p-8 border border-gray-200 mb-8">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="flex flex-col">
                 <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
