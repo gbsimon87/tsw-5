@@ -222,7 +222,7 @@ router.get('/public/:leagueId', async (req, res) => {
         path: 'teams',
         select: 'name logo _id'
       })
-      .select('teams date location status teamScores isCompleted playerStats -_id')
+      .select('teams date location status teamScores isCompleted playerStats')
       .lean();
 
     // Calculate team standings
@@ -347,47 +347,47 @@ router.get('/public/:leagueId', async (req, res) => {
       );
 
 
-      const playerReboundsMap = {};
-games
-  .filter((game) => game.isCompleted)
-  .forEach((game) => {
-    game.playerStats.forEach((stat) => {
-      const playerId = stat.player.toString();
-      const rebounds = (stat.stats.offensiveRebound || 0) + (stat.stats.defensiveRebound || 0);
-      if (!playerReboundsMap[playerId]) {
-        playerReboundsMap[playerId] = {
-          player: stat.player,
-          teamId: stat.team,
-          rebounds: 0,
-        };
-      }
-      playerReboundsMap[playerId].rebounds += rebounds;
-    });
-  });
+    const playerReboundsMap = {};
+    games
+      .filter((game) => game.isCompleted)
+      .forEach((game) => {
+        game.playerStats.forEach((stat) => {
+          const playerId = stat.player.toString();
+          const rebounds = (stat.stats.offensiveRebound || 0) + (stat.stats.defensiveRebound || 0);
+          if (!playerReboundsMap[playerId]) {
+            playerReboundsMap[playerId] = {
+              player: stat.player,
+              teamId: stat.team,
+              rebounds: 0,
+            };
+          }
+          playerReboundsMap[playerId].rebounds += rebounds;
+        });
+      });
 
-const leagueReboundLeaders = await Player.find({ _id: { $in: Object.keys(playerReboundsMap) } })
-  .populate('user', 'name')
-  .lean()
-  .then((players) =>
-    players
-      .map((player) => {
-        const playerId = player._id.toString();
-        const teamId = playerReboundsMap[playerId]?.teamId?.toString();
-        const team = league.teams.find((t) => t._id.toString() === teamId);
-        if (!team) {
-          console.warn(`No team found for player ${playerId} with teamId ${teamId}`);
-        }
-        return {
-          _id: player._id,
-          name: player.user?.name || player.name || 'Unknown Player',
-          team: team ? team.name : 'Unknown Team',
-          rebounds: playerReboundsMap[playerId]?.rebounds || 0,
-        };
-      })
-      .filter((leader) => leader.rebounds > 0)
-      .sort((a, b) => b.rebounds - a.rebounds)
-      .slice(0, 5)
-  );
+    const leagueReboundLeaders = await Player.find({ _id: { $in: Object.keys(playerReboundsMap) } })
+      .populate('user', 'name')
+      .lean()
+      .then((players) =>
+        players
+          .map((player) => {
+            const playerId = player._id.toString();
+            const teamId = playerReboundsMap[playerId]?.teamId?.toString();
+            const team = league.teams.find((t) => t._id.toString() === teamId);
+            if (!team) {
+              console.warn(`No team found for player ${playerId} with teamId ${teamId}`);
+            }
+            return {
+              _id: player._id,
+              name: player.user?.name || player.name || 'Unknown Player',
+              team: team ? team.name : 'Unknown Team',
+              rebounds: playerReboundsMap[playerId]?.rebounds || 0,
+            };
+          })
+          .filter((leader) => leader.rebounds > 0)
+          .sort((a, b) => b.rebounds - a.rebounds)
+          .slice(0, 5)
+      );
 
     // Combine league data with games, standings, and league leaders
     const response = {

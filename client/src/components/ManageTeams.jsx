@@ -486,7 +486,7 @@ export default function ManageTeams() {
                                 {member.isActive && (
                                   <button
                                     onClick={() => handleDeactivateMember(team._id, member.player._id)}
-                                    className="mt-2 flex items-center gap-2 bg-red-600 text-white px-3 py-1 rounded-md hover:bg-red-700 transition focus:ring-2 focus:ring-red-500 focus:outline-none self-start"
+                                    className="flex items-center gap-2 bg-red-600 text-white px-3 py-1 rounded-md hover:bg-red-700 transition focus:ring-2 focus:ring-red-500 focus:outline-none self-start"
                                     aria-label={`Deactivate member ${member.player?.user?.name || 'Unknown'}`}
                                     title="Deactivate Member"
                                   >

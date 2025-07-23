@@ -11,7 +11,7 @@ export default function Team() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [upcomingGames, setUpcomingGames] = useState([]);
-  const [previousGames, setPreviousGames] = useState([]);
+  const [recentGames, setRecentGames] = useState([]);
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
   const [selectedVideoUrl, setSelectedVideoUrl] = useState(null);
   const [pointsLeaderboard, setPointsLeaderboard] = useState([]);
@@ -165,7 +165,7 @@ export default function Team() {
           headers: { Authorization: `Bearer ${user.token}` },
         });
         setUpcomingGames(gamesResponse?.data?.upcomingGames || []);
-        setPreviousGames(gamesResponse?.data?.previousGames || []);
+        setRecentGames(gamesResponse?.data?.recentGames || []);
 
         // Fetch leaderboard
         const leaderboardResponse = await axios.get(`/api/teams/${teamId}/leaderboard?season=${teamData?.season}`, {
@@ -205,6 +205,7 @@ export default function Team() {
   return (
     <div className="bg-white text-dark min-h-[var(--page-height)] py-4 px-4 sm:px-6 lg:px-8">
       <div className="mb-8">
+        {/* TEAM INFO */}
         <div className="flex items-center gap-6 mb-4">
           <img
             src={team?.logo || '/team-logo.png'}
@@ -235,6 +236,8 @@ export default function Team() {
             </div>
           </div>
         </div>
+
+        {/* TEAM STATS */}
         <div className="mb-4">
           <h3 className="text-lg font-bold mb-2">Record</h3>
           <div className="flex gap-8">
@@ -254,6 +257,8 @@ export default function Team() {
             </div>
           </div>
         </div>
+
+        {/* ROSTER */}
         <div className="mb-8">
           <h3 className="text-lg font-bold mb-2">Roster</h3>
           <table className="min-w-full text-sm">
@@ -355,8 +360,10 @@ export default function Team() {
           </table>
         </div>
 
+        {/* LEADERBOARDS */}
         {renderLeaderboards()}
 
+        {/* UPCOMING GAMES */}
         <div className="mb-8">
           <h3 className="text-lg font-bold mb-2">Upcoming Games</h3>
           {upcomingGames?.length === 0 ? (
@@ -393,9 +400,11 @@ export default function Team() {
             </table>
           )}
         </div>
+
+        {/* RECENT GAMES */}
         <div className="mb-8">
           <h3 className="text-lg font-bold mb-2">Recent Games</h3>
-          {previousGames?.length === 0 ? (
+          {recentGames?.length === 0 ? (
             <div className="text-gray-400">No recent games played.</div>
           ) : (
             <table className="min-w-full text-sm">
@@ -408,7 +417,7 @@ export default function Team() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {previousGames?.map((game, index) => {
+                {recentGames?.map((game, index) => {
                   const isGreyRow = index % 2 !== 0;
                   return (
                     <tr key={game?._id} className={isGreyRow ? 'bg-gray-50' : 'bg-white'}>
@@ -448,6 +457,8 @@ export default function Team() {
             </table>
           )}
         </div>
+
+        {/* VIDEO MODAL */}
         <Modal
           isOpen={isVideoModalOpen}
           onRequestClose={closeVideoModal}

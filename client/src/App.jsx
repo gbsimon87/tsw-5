@@ -21,6 +21,7 @@ import Team from './components/Team/Team';
 import PublicFacingLeaguePage from './components/PublicFacingLeaguePage';
 import PrivacyPolicy from './components/PrivacyPolicy';
 import PlayerProfile from './components/Player/PlayerProfile';
+import CompletedGamePage from './components/Game/CompletedGamePage';
 import './App.css';
 
 function AppContent() {
@@ -52,6 +53,14 @@ function AppContent() {
             element={
               <ProtectedRoute>
                 <Team />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/leagues/:leagueId/games/:gameId"
+            element={
+              <ProtectedRoute>
+                <CompletedGamePage />
               </ProtectedRoute>
             }
           />
