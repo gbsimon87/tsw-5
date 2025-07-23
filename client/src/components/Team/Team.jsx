@@ -203,7 +203,7 @@ export default function Team() {
   }
 
   return (
-    <div className="text-white bg-gradient-to-br from-blue-900 via-blue-700 to-slate-800 min-h-[var(--page-height)] py-4 px-4 sm:px-6 lg:px-8">
+    <div className="bg-white text-dark min-h-[var(--page-height)] py-4 px-4 sm:px-6 lg:px-8">
       <div className="mb-8">
         <div className="flex items-center gap-6 mb-4">
           <img

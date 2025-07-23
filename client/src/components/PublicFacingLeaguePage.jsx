@@ -26,7 +26,7 @@ const PublicFacingLeaguePage = () => {
 
   if (loading) {
     return (
-      <div className="flex flex-col gap-4 container mx-auto p-4 pt-6 md:px-6 max-w-7xl text-white bg-gradient-to-br from-blue-900 via-blue-700 to-slate-800 min-h-[var(--page-height)] py-4 px-4 sm:px-6 lg:px-8">
+      <div className="flex flex-col gap-4 container mx-auto p-4 pt-6 md:px-6 max-w-7xl text-dark bg-white min-h-[var(--page-height)] py-4 px-4 sm:px-6 lg:px-8">
         <div className="bg-white shadow-md rounded-lg p-4">
           <div className="text-center text-gray-500 py-10">Loading...</div>
         </div>
@@ -35,7 +35,7 @@ const PublicFacingLeaguePage = () => {
   }
 
   return (
-    <div className="flex flex-col gap-4 container mx-auto p-4 pt-6 md:px-6 max-w-7xl text-white bg-gradient-to-br from-blue-900 via-blue-700 to-slate-800 min-h-[var(--page-height)] py-4 px-4 sm:px-6 lg:px-8">
+    <div className="flex flex-col gap-4 container mx-auto p-4 pt-6 md:px-6 max-w-7xl text-dark bg-white min-h-[var(--page-height)] py-4 px-4 sm:px-6 lg:px-8">
       {/* League Header */}
       <div className="bg-white shadow-md rounded-lg p-4">
         {error || !league ? (
@@ -88,59 +88,6 @@ const PublicFacingLeaguePage = () => {
               </tbody>
             </table>
           </div>
-        )}
-      </div>
-
-      {/* Team Rosters */}
-      <div className="bg-white shadow-md rounded-lg p-4">
-        <h2 className="text-2xl font-semibold text-gray-800 mb-4">Team Rosters</h2>
-        {error || !league || league.teams?.length === 0 ? (
-          <p className="text-gray-600">No teams found</p>
-        ) : (
-          <ul className="space-y-4">
-            {league.teams.map((team) => (
-              <li
-                key={team._id}
-                className="flex items-center p-4 border hover:bg-gray-100 cursor-pointer"
-                // onClick={() => console.log({team: team._id, league: league._id})}
-                onClick={() => { navigate(`/league/${league._id}/team/${team._id}`) }}
-              >
-                {team.logo && team.logo !== '' ? (
-                  <img
-                    src={team.logo}
-                    alt={`${team.name || 'Unnamed Team'} logo`}
-                    className="w-12 h-12 rounded-full object-cover mr-4"
-                    onError={(e) => {
-                      e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48"%3E%3Ccircle cx="24" cy="24" r="24" fill="%23D1D5DB"/%3E%3C/svg%3E';
-                    }}
-                  />
-                ) : (
-                  <div className="w-12 h-12 rounded-full bg-gray-300 mr-4"></div>
-                )}
-                <div>
-                  <h3 className="text-xl font-medium text-gray-700">
-                    {team.name || 'Unnamed Team'}
-                  </h3>
-                  {team.members.filter((m) => m.isActive).length > 0 ? (
-                    <ul className="mt-2 space-y-1">
-                      {team.members
-                        .filter((m) => m.isActive)
-                        .map((member) => (
-                          <li key={member.player._id} className="text-gray-600 text-sm">
-                            {member.player.user?.name || 'Unknown Player'}
-                            {member.player.jerseyNumber && ` (#${member.player.jerseyNumber})`}
-                            {member.player.position && ` - ${member.player.position}`}
-                            {member.role === 'manager' && ' (Manager)'}
-                          </li>
-                        ))}
-                    </ul>
-                  ) : (
-                    <p className="text-gray-600 text-sm mt-2">No active members</p>
-                  )}
-                </div>
-              </li>
-            ))}
-          </ul>
         )}
       </div>
 

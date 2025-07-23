@@ -13,13 +13,12 @@ export default function PlayerProfile() {
   useEffect(() => {
     const fetchPlayerData = async () => {
       if (!user?.token || !playerId || !leagueId) {
-        toast.error('Missing authentication or required parameters', { toastId: 'player-profile-error' });
+        toast.error('Missing authentication or parameters');
         setLoading(false);
         return;
       }
 
       try {
-        console.log(`[PlayerProfile] Fetching player with ID: ${playerId}, leagueId: ${leagueId}`);
         const response = await axios.get(`/api/players/${playerId}`, {
           params: { leagueId },
           headers: { Authorization: `Bearer ${user.token}` },
@@ -28,16 +27,11 @@ export default function PlayerProfile() {
         const playerData = response.data;
         if (!playerData) throw new Error('Player not found');
 
-        // Sort gameStats by date to ensure most recent first
-        if (playerData.stats?.gameStats) {
-          playerData.stats.gameStats.sort((a, b) => new Date(b.date) - new Date(a.date));
-        }
-
         setPlayer(playerData);
       } catch (error) {
         const errorMsg = error.response?.data?.error || 'Failed to fetch player data';
-        toast.error(errorMsg, { toastId: 'fetch-player-error' });
-        console.error(`[PlayerProfile useEffect] Error: ${errorMsg}`, error);
+        toast.error(errorMsg);
+        console.error(`[PlayerProfile] Error: ${errorMsg}`, error);
       } finally {
         setLoading(false);
       }
@@ -46,68 +40,55 @@ export default function PlayerProfile() {
     fetchPlayerData();
   }, [playerId, leagueId, user?.token]);
 
-  // Calculate stats for the last 3 games
-  const calculateLastThreeGamesStats = () => {
-    if (!player?.stats?.gameStats || player.stats.gameStats.length === 0) {
+  // Calculate season stats
+  const calculateSeasonStats = () => {
+    if (!player?.gameStats || player.gameStats.length === 0) {
       return { total: { points: 0, rebounds: 0, assists: 0 }, average: { points: 0, rebounds: 0, assists: 0 }, gameCount: 0 };
     }
 
-    // Take the first 3 games (already sorted by date)
-    const lastThreeGames = player.stats.gameStats.slice(0, 3);
-
-    const stats = lastThreeGames.reduce(
+    const stats = player.gameStats.reduce(
       (acc, game) => ({
-        totalPoints: acc.totalPoints + (game.points || 0),
-        totalRebounds: acc.totalRebounds + (game.rebounds || 0),
-        totalAssists: acc.totalAssists + (game.assists || 0),
+        points: acc.points + (game.points || 0),
+        rebounds: acc.rebounds + (game.rebounds || 0),
+        assists: acc.assists + (game.assists || 0),
         gameCount: acc.gameCount + 1,
       }),
-      { totalPoints: 0, totalRebounds: 0, totalAssists: 0, gameCount: 0 }
+      { points: 0, rebounds: 0, assists: 0, gameCount: 0 }
     );
 
     return {
-      total: {
-        points: stats.totalPoints,
-        rebounds: stats.totalRebounds,
-        assists: stats.totalAssists,
-      },
+      total: { points: stats.points, rebounds: stats.rebounds, assists: stats.assists },
       average: {
-        points: stats.gameCount ? (stats.totalPoints / stats.gameCount).toFixed(1) : 0,
-        rebounds: stats.gameCount ? (stats.totalRebounds / stats.gameCount).toFixed(1) : 0,
-        assists: stats.gameCount ? (stats.totalAssists / stats.gameCount).toFixed(1) : 0,
+        points: stats.gameCount ? (stats.points / stats.gameCount).toFixed(1) : 0,
+        rebounds: stats.gameCount ? (stats.rebounds / stats.gameCount).toFixed(1) : 0,
+        assists: stats.gameCount ? (stats.assists / stats.gameCount).toFixed(1) : 0,
       },
       gameCount: stats.gameCount,
     };
   };
 
-  if (loading) {
-    return <div className="text-center text-gray-500">Loading player profile...</div>;
-  }
+  if (loading) return <div className="text-center text-gray-500">Loading...</div>;
+  if (!player) return <div className="text-center text-red-500">Player not found</div>;
 
-  if (!player) {
-    return <div className="text-center text-red-500">Player not found</div>;
-  }
-
-  const stats = calculateLastThreeGamesStats();
-  const team = player.teams?.[0] || { name: 'No Team Assigned', _id: '', league: { _id: '', name: 'Unknown League' } };
-  const season = team.season || 'Unknown Season';
+  const stats = calculateSeasonStats();
+  const team = player.team || { name: 'No Team', league: { _id: '', name: 'Unknown League' }, season: 'Unknown Season' };
 
   return (
-    <div className="w-full max-w-2xl mx-auto p-4" role="region" aria-label="Player Profile">
-      <h2 className="text-2xl font-bold mb-4">{player.name || 'Unknown Player'}</h2>
-      <div className="bg-white border border-gray-300 rounded-md shadow-sm p-4 mb-4">
+    <div className="w-full max-w-4xl mx-auto p-4">
+      <h2 className="text-2xl font-bold mb-4">{player.name}</h2>
+      <div className="bg-white border rounded-md shadow-sm p-4 mb-4">
         <h3 className="text-lg font-semibold mb-2">Team Information</h3>
-        <p className="text-gray-700">
+        <p>
           League:{' '}
           <Link
             to={`/leagues/public/${team.league._id}`}
             className="text-blue-600 hover:underline"
             aria-label={`View league ${team.league.name}`}
           >
-            {team.league.name || 'Unknown League'}
+            {team.league.name}
           </Link>
         </p>
-        <p className="text-gray-700">
+        <p>
           Team:{' '}
           <Link
             to={`/league/${team.league._id}/team/${team._id}`}
@@ -117,41 +98,72 @@ export default function PlayerProfile() {
             {team.name}
           </Link>
         </p>
-        <p className="text-gray-700">Season: {season}</p>
+        <p>Season: {team.season}</p>
       </div>
-      <div className="bg-white border border-gray-300 rounded-md shadow-sm p-4 mb-4">
-        <h3 className="text-lg font-semibold mb-2">Total Stats (Last {stats.gameCount} Games)</h3>
+      <div className="bg-white border rounded-md shadow-sm p-4 mb-4">
+        <h3 className="text-lg font-semibold mb-2">Season Totals ({stats.gameCount} Games)</h3>
         <div className="grid grid-cols-3 gap-4">
           <div>
-            <p className="font-medium text-gray-700">Points</p>
-            <p className="text-gray-900">{stats.total.points}</p>
+            <p className="font-medium">Points</p>
+            <p>{stats.total.points}</p>
           </div>
           <div>
-            <p className="font-medium text-gray-700">Rebounds</p>
-            <p className="text-gray-900">{stats.total.rebounds}</p>
+            <p className="font-medium">Rebounds</p>
+            <p>{stats.total.rebounds}</p>
           </div>
           <div>
-            <p className="font-medium text-gray-700">Assists</p>
-            <p className="text-gray-900">{stats.total.assists}</p>
+            <p className="font-medium">Assists</p>
+            <p>{stats.total.assists}</p>
           </div>
         </div>
       </div>
-      <div className="bg-white border border-gray-300 rounded-md shadow-sm p-4">
-        <h3 className="text-lg font-semibold mb-2">Average Stats (Last {stats.gameCount} Games)</h3>
+      <div className="bg-white border rounded-md shadow-sm p-4 mb-4">
+        <h3 className="text-lg font-semibold mb-2">Season Averages ({stats.gameCount} Games)</h3>
         <div className="grid grid-cols-3 gap-4">
           <div>
-            <p className="font-medium text-gray-700">Points</p>
-            <p className="text-gray-900">{stats.average.points}</p>
+            <p className="font-medium">Points</p>
+            <p>{stats.average.points}</p>
           </div>
           <div>
-            <p className="font-medium text-gray-700">Rebounds</p>
-            <p className="text-gray-900">{stats.average.rebounds}</p>
+            <p className="font-medium">Rebounds</p>
+            <p>{stats.average.rebounds}</p>
           </div>
           <div>
-            <p className="font-medium text-gray-700">Assists</p>
-            <p className="text-gray-900">{stats.average.assists}</p>
+            <p className="font-medium">Assists</p>
+            <p>{stats.average.assists}</p>
           </div>
         </div>
+      </div>
+      <div className="bg-white border rounded-md shadow-sm p-4">
+        <h3 className="text-lg font-semibold mb-2">Game Log</h3>
+        {player.gameStats.length === 0 ? (
+          <p className="text-gray-500">No games played this season.</p>
+        ) : (
+          <table className="min-w-full text-sm">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="border-b px-3 py-2 text-left">Date</th>
+                <th className="border-b px-3 py-2 text-left">Opponent</th>
+                <th className="border-b px-3 py-2 text-center">Points</th>
+                <th className="border-b px-3 py-2 text-center">Rebounds</th>
+                <th className="border-b px-3 py-2 text-center">Assists</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y">
+              {player.gameStats.map((game, index) => (
+                <tr key={game.date} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                  <td className="border-b px-3 py-2">
+                    {new Date(game.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                  </td>
+                  <td className="border-b px-3 py-2">{game.opponentName}</td>
+                  <td className="border-b px-3 py-2 text-center">{game.points}</td>
+                  <td className="border-b px-3 py-2 text-center">{game.rebounds}</td>
+                  <td className="border-b px-3 py-2 text-center">{game.assists}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );
