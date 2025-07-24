@@ -515,7 +515,7 @@ export default function ManageGames() {
                     value={formData.date}
                     onChange={handleInputChange}
                     required
-                    className="mt-1 w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="mt-1 max-w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   />
                 </div>
                 <div className="flex flex-col">
@@ -529,7 +529,7 @@ export default function ManageGames() {
                     value={formData.time}
                     onChange={handleInputChange}
                     required
-                    className="mt-1 w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="mt-1 max-w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   />
                 </div>
                 <div className="flex flex-col">
@@ -542,7 +542,7 @@ export default function ManageGames() {
                     value={formData.teams[0]}
                     onChange={handleInputChange}
                     required
-                    className="mt-1 w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="mt-1 max-w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   >
                     <option value="">Select Home Team</option>
                     {teams.map(team => (
@@ -560,7 +560,7 @@ export default function ManageGames() {
                     value={formData.teams[1]}
                     onChange={handleInputChange}
                     required
-                    className="mt-1 w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="mt-1 max-w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   >
                     <option value="">Select Away Team</option>
                     {teams.map(team => (
@@ -578,7 +578,7 @@ export default function ManageGames() {
                     name="location"
                     value={formData.location}
                     onChange={handleInputChange}
-                    className="mt-1 w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="mt-1 max-w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   />
                 </div>
                 <div className="flex flex-col">
@@ -591,7 +591,7 @@ export default function ManageGames() {
                     name="venue"
                     value={formData.venue}
                     onChange={handleInputChange}
-                    className="mt-1 w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="mt-1 max-w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   />
                 </div>
                 <div className="flex flex-col">
@@ -605,7 +605,7 @@ export default function ManageGames() {
                     value={formData.videoUrl}
                     onChange={handleInputChange}
                     placeholder="https://www.youtube.com/watch?v=..."
-                    className="mt-1 w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="mt-1 max-w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   />
                 </div>
                 <div className="flex flex-col">
@@ -618,7 +618,7 @@ export default function ManageGames() {
                     value={formData.matchType}
                     onChange={handleInputChange}
                     required
-                    className="mt-1 w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="mt-1 max-w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   >
                     <option value="league">League</option>
                     <option value="friendly">Friendly</option>
@@ -635,7 +635,7 @@ export default function ManageGames() {
                     value={formData.eventType}
                     onChange={handleInputChange}
                     required
-                    className="mt-1 w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="mt-1 max-w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   >
                     <option value="regular">Regular</option>
                     <option value="playoff">Playoff</option>
@@ -870,7 +870,7 @@ export default function ManageGames() {
                 value={editFormData.date}
                 onChange={handleEditInputChange}
                 required
-                className="mt-1 w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                className="mt-1 max-w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
               />
             </div>
             <div className="flex flex-col">
@@ -884,7 +884,7 @@ export default function ManageGames() {
                 value={editFormData.time}
                 onChange={handleEditInputChange}
                 required
-                className="mt-1 w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                className="mt-1 max-w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
               />
             </div>
             <div className="flex flex-col">
@@ -897,7 +897,7 @@ export default function ManageGames() {
                 name="location"
                 value={editFormData.location}
                 onChange={handleEditInputChange}
-                className="mt-1 w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                className="mt-1 max-w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
               />
             </div>
             <div className="flex flex-col">
@@ -910,7 +910,7 @@ export default function ManageGames() {
                 name="venue"
                 value={editFormData.venue}
                 onChange={handleEditInputChange}
-                className="mt-1 w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                className="mt-1 max-w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
               />
             </div>
             <div className="flex flex-col">
@@ -924,7 +924,7 @@ export default function ManageGames() {
                 value={editFormData.videoUrl}
                 onChange={handleEditInputChange}
                 placeholder="https://www.youtube.com/watch?v=..."
-                className="mt-1 w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                className="mt-1 max-w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
               />
             </div>
             <div className="flex flex-col">
@@ -937,7 +937,7 @@ export default function ManageGames() {
                 value={editFormData.matchType}
                 onChange={handleEditInputChange}
                 required
-                className="mt-1 w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                className="mt-1 max-w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
               >
                 <option value="league">League</option>
                 <option value="friendly">Friendly</option>
@@ -954,7 +954,7 @@ export default function ManageGames() {
                 value={editFormData.eventType}
                 onChange={handleEditInputChange}
                 required
-                className="mt-1 w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                className="mt-1 max-w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
               >
                 <option value="regular">Regular</option>
                 <option value="playoff">Playoff</option>
