@@ -232,7 +232,7 @@ export default function ManageLeagueEdit() {
           </header>
 
           {error && <p className="text-red-500 mb-4 text-center">{error}</p>}
-          <form id="leagueForm" onSubmit={handleSubmit} className="bg-white shadow-xl rounded-2xl p-8 border border-gray-200 mb-8">
+          <form id="leagueForm" onSubmit={handleSubmit} className="bg-white shadow-xl rounded-2xl p-4 border border-gray-200 mb-8">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="flex flex-col">
                 <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
@@ -399,7 +399,7 @@ export default function ManageLeagueEdit() {
         </section>
 
         {/* Season Management */}
-        <section className="bg-white shadow-xl rounded-2xl p-8 border border-gray-200">
+        <section className="bg-white shadow-xl rounded-2xl p-4 border border-gray-200">
           <div className="flex items-center gap-3 mb-4">
             <CalendarIcon className="w-6 h-6 text-purple-500" />
             <h2 className="text-2xl font-semibold text-gray-800">Season Management</h2>

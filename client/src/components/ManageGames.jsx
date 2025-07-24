@@ -724,7 +724,7 @@ export default function ManageGames() {
 
         {/* Current Season Games List */}
         {activeTab === 'view' && (
-          <section className="bg-white shadow-xl rounded-2xl p-8 border border-gray-200">
+          <section className="bg-white shadow-xl rounded-2xl p-4 border border-gray-200">
             <div className="flex items-center gap-3 mb-4">
               <StarIcon className="w-6 h-6 text-yellow-400" />
               <h2 className="text-2xl font-semibold text-gray-800">Current Season Games</h2>

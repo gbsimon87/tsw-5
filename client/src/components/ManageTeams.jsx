@@ -297,7 +297,7 @@ export default function ManageTeams() {
 
         {/* Create Team Form */}
         {activeTab === 'create' && (
-          <section className="bg-white shadow-xl rounded-2xl p-8 border border-gray-200 mb-8">
+          <section className="bg-white shadow-xl rounded-2xl p-4 border border-gray-200 mb-8">
             <div className="flex items-center gap-3 mb-4">
               <PlusIcon className="w-6 h-6 text-blue-500" />
               <h2 className="text-2xl font-semibold text-gray-800">New Team</h2>
@@ -316,7 +316,7 @@ export default function ManageTeams() {
                     value={formData.name}
                     onChange={handleInputChange}
                     required
-                    className="mt-1 w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="mt-1 max-w-full w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   />
                 </div>
                 <div className="flex flex-col">
@@ -329,7 +329,7 @@ export default function ManageTeams() {
                     name="logo"
                     value={formData.logo}
                     onChange={handleInputChange}
-                    className="mt-1 w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="mt-1 max-w-full w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   />
                 </div>
                 <button

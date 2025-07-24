@@ -3,7 +3,7 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 import Modal from 'react-modal';
 import { getFirstCapitalLetter } from '../../utils/getFirstCapitalLetter';
-import { getInitialAndLastName } from '../../utils/getInitialAndLastName';
+import { getInitialAndLastName, getInitialsAndShortLastName } from '../../utils/getInitialAndLastName';
 import { statDisplayMap } from '../../utils/statDisplayMap';
 import StatModal from './StatModal';
 
@@ -222,7 +222,7 @@ export default function PlayerSelection({
     return (
       <div
         key={player.playerId}
-        className={`w-full h-[80px] bg-white border ${hasFouledOut ? 'border-red-500' : 'border-gray-200'} shadow-sm hover:shadow-md flex flex-col justify-between transition cursor-pointer rounded-md ${hasFouledOut ? 'opacity-50' : ''}`}
+        className={`w-full h-[60px] bg-white border ${hasFouledOut ? 'border-red-500' : 'border-gray-200'} shadow-sm hover:shadow-md flex flex-col justify-between transition cursor-pointer rounded-md ${hasFouledOut ? 'opacity-50' : ''}`}
         onClick={() => !isSubstitutionMode && !hasFouledOut && setSelectedPlayer({ ...player, teamId })}
       >
         <div className="flex flex-row items-center gap-3 w-full px-2 p-2">
@@ -244,22 +244,27 @@ export default function PlayerSelection({
           )}
 
           <div className="flex flex-col flex-1 min-w-0">
-            <span className="font-semibold text-sm text-gray-900 truncate">
-              {getInitialAndLastName(player.player?.name || player.name) || 'Unknown'}
-              {hasFouledOut && <span className="text-red-500 text-xs ml-2">(Fouled Out)</span>}
-            </span>
+            <div className="flex justify-between items-center">
+              <span className="font-semibold text-sm text-gray-900 truncate">
+                {getInitialsAndShortLastName(player.player?.name || player.name) || 'Unknown'}
+              </span>
+              <span className='text-gray-400'> | </span>
+              <span className="font-semibold text-sm text-gray-900 truncate">
+                #{player?.jerseyNumber || 'N/A'}
+              </span>
+              <span className="font-semibold text-sm text-gray-900 truncate">
+                {hasFouledOut && <span className="text-red-500 text-xs ml-2">(Fouled Out)</span>}
+              </span>
+            </div>
+
             <div>
               <span className="text-xs text-gray-400">{getFirstCapitalLetter(player?.position) || 'N/A'}</span>
               <span className='text-gray-400'> | </span>
-              <span className="text-xs text-gray-500">
-                #{player?.jerseyNumber || 'N/A'}
-              </span>
-            </div>
-            <div>
               <span className={`text-xs ${hasFouledOut ? 'text-red-500' : 'text-gray-500'}`}>
                 Fouls: {personalFoul}/{league?.sportType === 'basketball' ? league?.settings?.foulOutLimit || 5 : '-'}
               </span>
             </div>
+
           </div>
         </div>
       </div>

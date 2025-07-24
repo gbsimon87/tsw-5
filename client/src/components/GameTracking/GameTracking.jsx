@@ -514,7 +514,7 @@ export default function GameTracking() {
   if (loading) return <div>Loading Game Tracking...</div>;
 
   return (
-    <div>
+    <div className="min-h-[var(--page-height)]">
       <ScoreBoard
         teamScores={formData.score.map(s => {
           const team = game?.teams.find(t => t?._id?.toString() === s?.team?.toString());
@@ -524,7 +524,7 @@ export default function GameTracking() {
           };
         })}
       />
-      <div className="bg-white h-[65vh] overflow-y-auto px-2">{renderScreenView()}</div>
+      <div className="bg-white h-[55vh] overflow-y-auto px-2">{renderScreenView()}</div>
       <ClockControls
         clockState={clockState}
         handleClockToggle={handleClockToggle}
