@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'react-toastify';
+import Skeleton from 'react-loading-skeleton';
 import { useAuth } from '../../context/AuthContext';
 
 export default function PlayerProfile() {
@@ -91,8 +92,37 @@ export default function PlayerProfile() {
   };
 
   if (loading) {
-    return <div className="text-center text-gray-500" role="status">Loading...</div>;
+    return (
+      <div className="w-full max-w-4xl mx-auto p-4" role="region" aria-label="Player Profile">
+        <Skeleton height={40} width={200} className="mb-4" />
+        <section className="bg-white border rounded-md shadow-sm p-4 mb-4">
+          <Skeleton height={24} width={150} className="mb-2" />
+          <Skeleton count={3} height={20} />
+        </section>
+        <div className="flex flex-col lg:flex-row gap-4">
+          <section className="bg-white border rounded-md shadow-sm p-4 mb-4 flex-1">
+            <Skeleton height={24} width={150} className="mb-2" />
+            <div className="grid grid-cols-3 gap-4">
+              <Skeleton count={3} height={20} />
+            </div>
+          </section>
+          <section className="bg-white border rounded-md shadow-sm p-4 mb-4 flex-1">
+            <Skeleton height={24} width={150} className="mb-2" />
+            <div className="grid grid-cols-3 gap-4">
+              <Skeleton count={3} height={20} />
+            </div>
+          </section>
+        </div>
+        <section className="bg-white border rounded-md shadow-sm p-4">
+          <Skeleton height={24} width={150} className="mb-2" />
+          <div className="overflow-x-auto">
+            <Skeleton count={5} height={40} className="min-w-[600px]" />
+          </div>
+        </section>
+      </div>
+    );
   }
+
   if (!player) {
     return <div className="text-center text-red-500" role="alert">Player not found</div>;
   }
@@ -127,95 +157,102 @@ export default function PlayerProfile() {
         </p>
         <p>Season: {team.season}</p>
       </section>
-      <section className="bg-white border rounded-md shadow-sm p-4 mb-4">
-        <h3 className="text-lg font-semibold mb-2">Season Totals ({stats.gameCount} Games)</h3>
-        <div className="grid grid-cols-3 gap-4">
-          <div>
-            <p className="font-medium text-gray-700">Points</p>
-            <p className="text-gray-900">{stats.total.points}</p>
+      <div className="flex flex-col lg:flex-row gap-4">
+        <section className="bg-white border rounded-md shadow-sm p-4 mb-4 flex-1">
+          <h3 className="text-lg font-semibold mb-2">Season Totals ({stats.gameCount} Games)</h3>
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <p className="font-medium text-gray-700">Points</p>
+              <p className="text-gray-900">{stats.total.points}</p>
+            </div>
+            <div>
+              <p className="font-medium text-gray-700">Rebounds</p>
+              <p className="text-gray-900">{stats.total.rebounds}</p>
+            </div>
+            <div>
+              <p className="font-medium text-gray-700">Assists</p>
+              <p className="text-gray-900">{stats.total.assists}</p>
+            </div>
           </div>
-          <div>
-            <p className="font-medium text-gray-700">Rebounds</p>
-            <p className="text-gray-900">{stats.total.rebounds}</p>
+        </section>
+        <section className="bg-white border rounded-md shadow-sm p-4 mb-4 flex-1">
+          <h3 className="text-lg font-semibold mb-2">Season Averages ({stats.gameCount} Games)</h3>
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <p className="font-medium text-gray-700">Points</p>
+              <p className="text-gray-900">{stats.average.points}</p>
+            </div>
+            <div>
+              <p className="font-medium text-gray-700">Rebounds</p>
+              <p className="text-gray-900">{stats.average.rebounds}</p>
+            </div>
+            <div>
+              <p className="font-medium text-gray-700">Assists</p>
+              <p className="text-gray-900">{stats.average.assists}</p>
+            </div>
           </div>
-          <div>
-            <p className="font-medium text-gray-700">Assists</p>
-            <p className="text-gray-900">{stats.total.assists}</p>
-          </div>
-        </div>
-      </section>
-      <section className="bg-white border rounded-md shadow-sm p-4 mb-4">
-        <h3 className="text-lg font-semibold mb-2">Season Averages ({stats.gameCount} Games)</h3>
-        <div className="grid grid-cols-3 gap-4">
-          <div>
-            <p className="font-medium text-gray-700">Points</p>
-            <p className="text-gray-900">{stats.average.points}</p>
-          </div>
-          <div>
-            <p className="font-medium text-gray-700">Rebounds</p>
-            <p className="text-gray-900">{stats.average.rebounds}</p>
-          </div>
-          <div>
-            <p className="font-medium text-gray-700">Assists</p>
-            <p className="text-gray-900">{stats.average.assists}</p>
-          </div>
-        </div>
-      </section>
+        </section>
+      </div>
       <section className="bg-white border rounded-md shadow-sm p-4">
         <h3 className="text-lg font-semibold mb-2">Game Log</h3>
         {sortedGameStats.length === 0 ? (
           <p className="text-gray-500">No games played this season.</p>
         ) : (
-          <table className="min-w-full text-sm" role="grid" aria-label="Player game log">
-            <thead className="bg-gray-50">
-              <tr>
-                <th
-                  scope="col"
-                  className="border-b px-3 py-2 text-left font-semibold text-gray-700 cursor-pointer"
-                  onClick={() => handleSort('date')}
-                >
-                  Date {sortConfig.key === 'date' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
-                </th>
-                <th scope="col" className="border-b px-3 py-2 text-left font-semibold text-gray-700">
-                  Opponent
-                </th>
-                <th
-                  scope="col"
-                  className="border-b px-3 py-2 text-center font-semibold text-gray-700 cursor-pointer"
-                  onClick={() => handleSort('points')}
-                >
-                  Points {sortConfig.key === 'points' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
-                </th>
-                <th
-                  scope="col"
-                  className="border-b px-3 py-2 text-center font-semibold text-gray-700 cursor-pointer"
-                  onClick={() => handleSort('rebounds')}
-                >
-                  Rebounds {sortConfig.key === 'rebounds' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
-                </th>
-                <th
-                  scope="col"
-                  className="border-b px-3 py-2 text-center font-semibold text-gray-700 cursor-pointer"
-                  onClick={() => handleSort('assists')}
-                >
-                  Assists {sortConfig.key === 'assists' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {sortedGameStats.map((game, index) => (
-                <tr key={game.date} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                  <td className="border-b px-3 py-2 text-gray-900">
-                    {new Date(game.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                  </td>
-                  <td className="border-b px-3 py-2 text-gray-900">{game.opponentName}</td>
-                  <td className="border-b px-3 py-2 text-center text-gray-900">{game.points}</td>
-                  <td className="border-b px-3 py-2 text-center text-gray-900">{game.rebounds}</td>
-                  <td className="border-b px-3 py-2 text-center text-gray-900">{game.assists}</td>
+          <div className="overflow-x-auto">
+            <table className="min-w-[600px] text-sm" role="grid" aria-label="Player game log">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th
+                    scope="col"
+                    className="border-b px-3 py-2 text-left font-semibold text-gray-700 cursor-pointer"
+                    onClick={() => handleSort('date')}
+                  >
+                    Date {sortConfig.key === 'date' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                  </th>
+                  <th
+                    scope="col"
+                    className="border-b px-3 py-2 text-left font-semibold text-gray-700"
+                  >
+                    Opponent
+                  </th>
+                  <th
+                    scope="col"
+                    className="border-b px-3 py-2 text-center font-semibold text-gray-700 cursor-pointer"
+                    onClick={() => handleSort('points')}
+                  >
+                    Points {sortConfig.key === 'points' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                  </th>
+                  <th
+                    scope="col"
+                    className="border-b px-3 py-2 text-center font-semibold text-gray-700 cursor-pointer"
+                    onClick={() => handleSort('rebounds')}
+                  >
+                    Rebounds {sortConfig.key === 'rebounds' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                  </th>
+                  <th
+                    scope="col"
+                    className="border-b px-3 py-2 text-center font-semibold text-gray-700 cursor-pointer"
+                    onClick={() => handleSort('assists')}
+                  >
+                    Assists {sortConfig.key === 'assists' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {sortedGameStats.map((game, index) => (
+                  <tr key={game.date} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                    <td className="border-b px-3 py-2 text-gray-900">
+                      {new Date(game.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                    </td>
+                    <td className="border-b px-3 py-2 text-gray-900">{game.opponentName}</td>
+                    <td className="border-b px-3 py-2 text-center text-gray-900">{game.points}</td>
+                    <td className="border-b px-3 py-2 text-center text-gray-900">{game.rebounds}</td>
+                    <td className="border-b px-3 py-2 text-center text-gray-900">{game.assists}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </section>
     </div>
