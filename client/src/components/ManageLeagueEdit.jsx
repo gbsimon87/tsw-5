@@ -245,7 +245,7 @@ export default function ManageLeagueEdit() {
                   value={formData.name}
                   onChange={handleInputChange}
                   required
-                  className="mt-1 w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  className="mt-1 max-w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 />
               </div>
               <div className="flex flex-col">
@@ -258,7 +258,7 @@ export default function ManageLeagueEdit() {
                   value={formData.sportType}
                   onChange={handleInputChange}
                   required
-                  className="mt-1 w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  className="mt-1 max-w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 >
                   <option value="basketball">Basketball</option>
                   <option value="football">Football</option>
@@ -277,7 +277,7 @@ export default function ManageLeagueEdit() {
                   value={formData.visibility}
                   onChange={handleInputChange}
                   required
-                  className="mt-1 w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  className="mt-1 max-w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 >
                   <option value="public">Public</option>
                   <option value="private">Private</option>
@@ -293,7 +293,7 @@ export default function ManageLeagueEdit() {
                   name="location"
                   value={formData.location}
                   onChange={handleInputChange}
-                  className="mt-1 w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  className="mt-1 max-w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 />
               </div>
               <div className="flex flex-col">
@@ -306,7 +306,7 @@ export default function ManageLeagueEdit() {
                   name="establishedYear"
                   value={formData.establishedYear}
                   onChange={handleInputChange}
-                  className="mt-1 w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  className="mt-1 max-w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 />
               </div>
               <div className="flex items-center gap-2">
@@ -332,7 +332,7 @@ export default function ManageLeagueEdit() {
                   value={formData.settings.periodType}
                   onChange={handleInputChange}
                   required
-                  className="mt-1 w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  className="mt-1 max-w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 >
                   <option value="halves">Halves</option>
                   <option value="quarters">Quarters</option>
@@ -351,7 +351,7 @@ export default function ManageLeagueEdit() {
                   onChange={handleInputChange}
                   required
                   min="1"
-                  className="mt-1 w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  className="mt-1 max-w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 />
               </div>
               <div className="flex flex-col">
@@ -366,7 +366,7 @@ export default function ManageLeagueEdit() {
                   onChange={handleInputChange}
                   required
                   min="1"
-                  className="mt-1 w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  className="mt-1 max-w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 />
               </div>
             </div>

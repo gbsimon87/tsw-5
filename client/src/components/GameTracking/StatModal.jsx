@@ -67,9 +67,11 @@ export default function StatModal({
                 onClick={() =>
                   handleFollowUp({ playerId: player.playerId, statType: followUpConfig.extra || selectedStatType })
                 }
-                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                className="flex justify-center px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
               >
-                {getInitialAndLastName(player.player?.name || player.name) || 'Unknown'}
+                <span className='flex-1'>{getInitialAndLastName(player.player?.name || player.name) || 'Unknown'}</span>
+                <span className='flex-1'>|</span>
+                <span className='flex-1'> #{player.jerseyNumber}</span>
               </button>
             ))}
             {followUpConfig.allowNone && (
