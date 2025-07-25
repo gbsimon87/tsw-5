@@ -368,30 +368,6 @@ export default function PlayerProfile() {
           </div>
         </div>
       </section>
-      <section className="bg-white border rounded-md shadow-sm p-4 mb-4">
-        <h3 className="text-lg font-semibold mb-2">Team Information</h3>
-        <p>
-          League:{' '}
-          <Link
-            to={`/leagues/public/${team.league._id}`}
-            className="text-blue-600 hover:underline"
-            aria-label={`View league ${team.league.name}`}
-          >
-            {team.league.name}
-          </Link>
-        </p>
-        <p>
-          Team:{' '}
-          <Link
-            to={`/leagues/${team.league._id}/team/${team._id}`}
-            className="text-blue-600 hover:underline"
-            aria-label={`View team ${team.name}`}
-          >
-            {team.name}
-          </Link>
-        </p>
-        <p>Season: {team.season}</p>
-      </section>
       <div className="flex flex-col lg:flex-row gap-4">
         <section className="bg-white border rounded-md shadow-sm p-4 mb-4 flex-1">
           <h3 className="text-lg font-semibold mb-2">Season Totals ({stats.gameCount} Games)</h3>
