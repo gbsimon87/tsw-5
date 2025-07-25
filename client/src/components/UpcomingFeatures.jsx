@@ -9,6 +9,10 @@ export default function UpcomingFeatures() {
   const features = [
     // Difficulty 1: Simple UI changes or notifications
     {
+      title: "As a non logged in user, I want to disable being able to view completed games.",
+      status: "todo"
+    },
+    {
       title: "As a user, I want to receive a confirmation or error toast when creating a game so that I know the answer.",
       status: "done"
     },
@@ -135,6 +139,22 @@ export default function UpcomingFeatures() {
     {
       title: "As a coach or scorekeeper, I want to see fouls per player and have fouled out players disabled on the subs screen so that substitutions are accurate.",
       status: "done"
+    },
+    {
+      title: "System - check Game Tracking component to fix the rebounds not showing up in the box score.",
+      status: "todo"
+    },
+    {
+      title: "System - check Game Tracking component to include a 'Nobody' option in the follow up question when a user steals the ball.",
+      status: "todo"
+    },
+    {
+      title: "System - Check Game Tracking component, if the user enters a stat and the clock is not running, inform them it is not running and ask them if they would like to start the clock.",
+      status: "todo"
+    },
+    {
+      title: "System - check Game Tracking component to fix the ringers names not showing up in the Play by Play section.",
+      status: "todo"
     },
     {
       title: "As a player, I want to select which stat to display on my profile chart so that I can focus on the stats that matter most to me.",
