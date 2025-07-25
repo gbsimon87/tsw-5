@@ -21,6 +21,7 @@ import {
   UserGroupIcon,
 } from '@heroicons/react/24/outline';
 import AdminPanelPageHeader from './AdminPanelPageHeader';
+import Unauthorized from './Unauthorized';
 
 export default function ManageGames() {
   const { leagueId } = useParams();
@@ -471,6 +472,10 @@ export default function ManageGames() {
     );
   }
 
+  if (error === 'You are not authorized to manage games for this league') {
+    return <Unauthorized />;
+  }
+
   if (error) {
     return (
       <div className="min-h-[var(--page-height)] bg-gray-50 flex items-center justify-center">
@@ -478,6 +483,7 @@ export default function ManageGames() {
       </div>
     );
   }
+
 
   return (
     <div className="min-h-[var(--page-height)] bg-gray-50 py-4 px-4">
