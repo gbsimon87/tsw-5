@@ -14,6 +14,7 @@ import {
   PencilSquareIcon
 } from '@heroicons/react/24/outline';
 
+import Unauthorized from './Unauthorized';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 
@@ -78,11 +79,19 @@ export default function ManageLeagueEdit() {
   useEffect(() => {
     const fetchLeague = async () => {
       try {
-        const response = await axios.get(`/api/leagues/${leagueId}`, {
+        const leagueResponse = await axios.get(`/api/leagues/${leagueId}`, {
           headers: { Authorization: `Bearer ${user.token}` },
           validateStatus: (status) => status >= 200 && status < 300,
         });
-        const leagueData = response.data;
+        const leagueData = leagueResponse.data;
+
+        const isAdmin = leagueData.admins?.some(admin => admin._id === user._id) || false;
+        const isManager = leagueData.managers?.some(manager => manager._id === user._id) || false;
+        if (!isAdmin && !isManager) {
+          setError('You are not authorised to edit this league');
+          setLoading(false);
+          return;
+        }
 
         if (leagueData) {
           setLeague(leagueData);
@@ -107,7 +116,7 @@ export default function ManageLeagueEdit() {
       } catch (err) {
         setError(
           err.response?.status === 403
-            ? 'You are not authorized to edit this league'
+            ? 'You are not authorised to edit this league'
             : 'Failed to fetch league'
         );
         setLoading(false);
@@ -159,7 +168,7 @@ export default function ManageLeagueEdit() {
     } catch (err) {
       setError(
         err.response?.status === 403
-          ? 'You are not authorized to edit this league'
+          ? 'You are not authorised to edit this league'
           : 'Failed to update league'
       );
     }
@@ -183,6 +192,10 @@ export default function ManageLeagueEdit() {
         <p className="text-center text-gray-600 text-lg">Loading...</p>
       </div>
     );
+  }
+
+  if (error === 'You are not authorised to edit this league') {
+    return <Unauthorized />;
   }
 
   if (error) {
