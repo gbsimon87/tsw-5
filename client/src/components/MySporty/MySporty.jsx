@@ -1,7 +1,8 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Chart from 'chart.js/auto';
+import Skeleton from 'react-loading-skeleton';
 import {
   BuildingOfficeIcon,
   TrophyIcon,
@@ -12,15 +13,9 @@ import {
   XCircleIcon,
   ClockIcon,
   ChartBarIcon,
-  StarIcon,
-  SunIcon,
-  FireIcon,
 } from '@heroicons/react/24/outline';
 import { useAuth } from '../../context/AuthContext';
 import TeamJoin from '../TeamJoin';
-import PerformanceTrend from './PerformanceTrend';
-import PerformanceStats from './PerformanceStats';
-import NextGame from './NextGame';
 
 export default function MySporty() {
   const { user } = useAuth();
@@ -44,8 +39,9 @@ export default function MySporty() {
         const response = await axios.get(`/api/players?userId=${user?._id}`, {
           headers: { Authorization: `Bearer ${user?.token}` },
         });
-        setPlayerIds(response?.data?.map(p => p?._id));
-        setPlayer(response?.data[0]);
+        if (!response.data) throw new Error('No player data found');
+        setPlayerIds(response.data.map(p => p?._id).filter(Boolean));
+        setPlayer(response.data[0]);
       } catch (err) {
         setError('Failed to fetch player data');
         setLoading(false);
@@ -54,8 +50,8 @@ export default function MySporty() {
 
     const fetchTeams = async () => {
       try {
-        const response = await axios.get('/api/teams/my-teams?t=' + Date.now(), {
-          headers: { Authorization: `Bearer ${user.token}` },
+        const response = await axios.get('/api/teams/my-teams', {
+          headers: { Authorization: `Bearer ${user?.token}` },
         });
         setTeams(response.data);
       } catch (err) {
@@ -66,8 +62,8 @@ export default function MySporty() {
 
     const fetchNextGame = async () => {
       try {
-        const response = await axios.get('/api/games/next-game?t=' + Date.now(), {
-          headers: { Authorization: `Bearer ${user.token}` },
+        const response = await axios.get('/api/games/next-game', {
+          headers: { Authorization: `Bearer ${user?.token}` },
         });
         setNextGame(response.data);
         setLoading(false);
@@ -77,7 +73,9 @@ export default function MySporty() {
       }
     };
 
-    Promise.all([fetchPlayerData(), fetchTeams(), fetchNextGame()]);
+    Promise.all([fetchPlayerData(), fetchTeams(), fetchNextGame()]).catch(() => {
+      setLoading(false);
+    });
   }, [user?._id, user?.token]);
 
   // Performance stats chart
@@ -88,14 +86,14 @@ export default function MySporty() {
       }
       const ctx = canvasRef.current.getContext('2d');
       const seasons = [...new Set(player.stats.gamePoints.map(gp => gp.season))];
-      const datasets = seasons.map(season => ({
+      const datasets = useMemo(() => seasons.map(season => ({
         label: `Season ${season}`,
         data: player.stats.gamePoints.filter(gp => gp.season === season).map(gp => gp.points),
         borderColor: season === player.stats.seasonStats[player.stats.seasonStats.length - 1]?.season ? '#2563eb' : '#64748b',
         backgroundColor: season === player.stats.seasonStats[player.stats.seasonStats.length - 1]?.season ? '#2563eb' : '#64748b',
         fill: false,
         tension: 0.3,
-      }));
+      })), [player.stats.gamePoints, player.stats.seasonStats]);
 
       chartRef.current = new Chart(ctx, {
         type: 'line',
@@ -134,14 +132,14 @@ export default function MySporty() {
         ? player.stats.gameStats
         : player.stats.gameStats.filter(gs => gs.season === selectedSeason);
 
-      const datasets = [{
+      const datasets = useMemo(() => [{
         label: `${selectedStat.charAt(0).toUpperCase() + selectedStat.slice(1)}`,
         data: filteredStats.map(gs => gs[selectedStat] || 0),
         borderColor: '#2563eb',
         backgroundColor: '#2563eb',
         fill: false,
         tension: 0.3,
-      }];
+      }], [filteredStats, selectedStat]);
 
       trendChartRef.current = new Chart(ctx, {
         type: 'line',
@@ -178,31 +176,178 @@ export default function MySporty() {
         const gameTime = new Date(nextGame.date);
         const diff = gameTime - now;
         if (diff <= 0) {
-          setCountdown('Game started or passed');
+          setCountdown('Game started');
           return;
         }
         const days = Math.floor(diff / (1000 * 60 * 60 * 24));
         const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
         const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-        setCountdown(`${days}d ${hours}h ${minutes}m`);
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+        setCountdown(`${days}d ${hours}h ${minutes}m ${seconds}s`);
       };
+
       updateCountdown();
-      const interval = setInterval(updateCountdown, 60000);
+      const interval = setInterval(updateCountdown, 1000);
+
+      // Redirect 5 seconds after countdown reaches zero
+      if (countdown === 'Game started') {
+        const redirectTimeout = setTimeout(() => {
+          navigate('/game'); // Adjust to `/leagues/:leagueId/game/:gameId` if IDs available
+        }, 5000);
+        return () => clearTimeout(redirectTimeout);
+      }
+
       return () => clearInterval(interval);
     }
-  }, [nextGame]);
+  }, [nextGame, countdown, navigate]);
 
   if (loading) {
     return (
-      <div className="h-[var(--page-height)] flex items-center justify-center text-slate-600">
-        Loading data...
+      <div className="bg-gradient-to-br from-blue-900 via-blue-700 to-slate-800 min-h-[var(--page-height)] py-4 px-4 sm:px-6 lg:px-8" role="status" aria-busy="true">
+        <div className="max-w-7xl mx-auto">
+          <div className="mb-10">
+            <Skeleton
+              height={40}
+              width={300}
+              baseColor="#334155"
+              highlightColor="#475569"
+              className="rounded-md"
+              aria-hidden="true"
+            />
+            <Skeleton
+              height={24}
+              width={200}
+              baseColor="#334155"
+              highlightColor="#475569"
+              className="mt-2 rounded-md"
+              aria-hidden="true"
+            />
+          </div>
+          <section className="mb-6">
+            <Skeleton
+              height={32}
+              width={200}
+              baseColor="#334155"
+              highlightColor="#475569"
+              className="mb-4 rounded-md"
+              aria-hidden="true"
+            />
+            <div className="bg-white shadow-md rounded-2xl p-6 border border-blue-200">
+              <div className="flex items-center gap-4 mb-2">
+                <Skeleton
+                  circle
+                  height={40}
+                  width={40}
+                  baseColor="#e2e8f0"
+                  highlightColor="#f1f5f9"
+                  aria-hidden="true"
+                />
+                <Skeleton
+                  height={24}
+                  width={200}
+                  baseColor="#e2e8f0"
+                  highlightColor="#f1f5f9"
+                  className="rounded-md"
+                  aria-hidden="true"
+                />
+                <Skeleton
+                  circle
+                  height={40}
+                  width={40}
+                  baseColor="#e2e8f0"
+                  highlightColor="#f1f5f9"
+                  aria-hidden="true"
+                />
+              </div>
+              <Skeleton
+                height={20}
+                width={150}
+                baseColor="#e2e8f0"
+                highlightColor="#f1f5f9"
+                className="mb-2 rounded-md"
+                aria-hidden="true"
+              />
+              <Skeleton
+                height={20}
+                width={100}
+                baseColor="#e2e8f0"
+                highlightColor="#f1f5f9"
+                className="mb-2 rounded-md"
+                aria-hidden="true"
+              />
+              <Skeleton
+                height={20}
+                width={120}
+                baseColor="#e2e8f0"
+                highlightColor="#f1f5f9"
+                className="mb-2 rounded-md"
+                aria-hidden="true"
+              />
+              <Skeleton
+                height={20}
+                width={80}
+                baseColor="#e2e8f0"
+                highlightColor="#f1f5f9"
+                className="rounded-md"
+                aria-hidden="true"
+              />
+            </div>
+          </section>
+          <section>
+            <Skeleton
+              height={32}
+              width={200}
+              baseColor="#334155"
+              highlightColor="#475569"
+              className="mb-4 rounded-md"
+              aria-hidden="true"
+            />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {Array.from({ length: 3 }).map((_, index) => (
+                <div
+                  key={index}
+                  className="bg-white shadow-md rounded-2xl p-6 flex flex-col border border-blue-200"
+                >
+                  <Skeleton
+                    circle
+                    height={64}
+                    width={64}
+                    baseColor="#e2e8f0"
+                    highlightColor="#f1f5f9"
+                    className="mb-4"
+                    aria-hidden="true"
+                  />
+                  <Skeleton
+                    height={32}
+                    baseColor="#e2e8f0"
+                    highlightColor="#f1f5f9"
+                    className="mb-4 rounded-md"
+                    aria-hidden="true"
+                  />
+                  <div className="space-y-4">
+                    {Array.from({ length: 8 }).map((_, i) => (
+                      <Skeleton
+                        key={i}
+                        height={20}
+                        baseColor="#e2e8f0"
+                        highlightColor="#f1f5f9"
+                        className="rounded-md"
+                        aria-hidden="true"
+                      />
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="h-[var(--page-height)] flex items-center justify-center text-red-500">
+      <div className="h-[var(--page-height)] flex items-center justify-center text-red-500" role="alert" aria-live="assertive">
         {error}
       </div>
     );
@@ -221,24 +366,49 @@ export default function MySporty() {
         </div>
 
         {nextGame && (
-          <NextGame nextGame={nextGame} countdown={countdown} />
+          <section className="mb-6" role="region" aria-label="Next Game">
+            <h2 className="text-2xl font-bold text-white mb-4">Next Game</h2>
+            <div className="bg-white shadow-md rounded-2xl p-6 border border-blue-200">
+              <div className="flex items-center gap-4 mb-2">
+                {nextGame.userTeam?.logo ? (
+                  <img
+                    src={nextGame.userTeam.logo}
+                    alt={`${nextGame.userTeam.name} logo`}
+                    className="w-10 h-10 object-cover rounded-full border border-blue-200"
+                  />
+                ) : (
+                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center border border-blue-200">
+                    <span className="text-blue-300 text-sm font-bold">?</span>
+                  </div>
+                )}
+                <p className="text-slate-800 font-semibold">
+                  {nextGame.userTeam?.name} vs {nextGame.opponentTeam?.name}
+                </p>
+                {nextGame.opponentTeam?.logo ? (
+                  <img
+                    src={nextGame.opponentTeam.logo}
+                    alt={`${nextGame.opponentTeam.name} logo`}
+                    className="w-10 h-10 object-cover rounded-full border border-blue-200"
+                  />
+                ) : (
+                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center border border-blue-200">
+                    <span className="text-blue-300 text-sm font-bold">?</span>
+                  </div>
+                )}
+              </div>
+              <p className="text-slate-600">
+                {new Date(nextGame.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} at {nextGame.time}
+              </p>
+              <p className="text-slate-600">{nextGame.venue} ({nextGame.location})</p>
+              <p className="text-slate-600">{nextGame.league}</p>
+              <p className="text-slate-600">
+                {nextGame.matchType.charAt(0).toUpperCase() + nextGame.matchType.slice(1)} -{' '}
+                {nextGame.eventType.charAt(0).toUpperCase() + nextGame.eventType.slice(1)}
+              </p>
+              <p className="text-blue-600 font-medium" aria-live="polite">{countdown}</p>
+            </div>
+          </section>
         )}
-
-        {/* Performance Trend */}
-        {/* {player && (
-          <PerformanceTrend
-            player={player}
-            selectedSeason={selectedSeason}
-            setSelectedSeason={setSelectedSeason}
-            selectedStat={selectedStat}
-            setSelectedStat={setSelectedStat}
-          />
-        )} */}
-
-        {/* Performance Stats */}
-        {/* {player && (
-          <PerformanceStats player={player} canvasRef={canvasRef} />
-        )} */}
 
         <section>
           <h2 className="text-2xl font-bold text-white mb-4">Your Teams</h2>
@@ -250,11 +420,12 @@ export default function MySporty() {
                 month: 'long',
                 day: 'numeric',
               });
-              
+
               return (
                 <article
                   key={team?._id}
                   className="relative bg-gradient-to-br from-white to-blue-50 shadow-md rounded-2xl p-6 flex flex-col border border-blue-200 hover:shadow-xl transition-shadow duration-300"
+                  role="article"
                   aria-label={`Team card for ${team?.name}`}
                   onClick={() => navigate(`/leagues/${team?.league?._id}/team/${team?._id}`)}
                 >

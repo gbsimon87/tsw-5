@@ -9,7 +9,47 @@ export default function UpcomingFeatures() {
   const features = [
     // Difficulty 1: Simple UI changes or notifications
     {
+      title: "As a non logged in user, I want to disable being able to view completed games.",
+      status: "todo"
+    },
+    {
       title: "As a user, I want to receive a confirmation or error toast when creating a game so that I know the answer.",
+      status: "done"
+    },
+    {
+      title: "As a user, I want to see skeleton placeholders instead of a 'Loading data...' message during data fetching so that the UI feels more responsive and consistent.",
+      status: "done"
+    },
+    {
+      title: "As a user, I want the NextGame section to display all relevant game details (team names, logos, date, time, venue, league, match type, and event type) so that I have complete information about the upcoming game.",
+      status: "done"
+    },
+    {
+      title: "As a user, I want the countdown timer in the NextGame section to update every second with days, hours, minutes, and seconds displayed so that I can see a live countdown to the game.",
+      status: "done"
+    },
+    {
+      title: "As a user, I want to be redirected to the game page 5 seconds after the countdown timer reaches zero so that I can view game details immediately after the game starts.",
+      status: "done"
+    },
+    {
+      title: "As a user, I want the countdown timer updates to be announced to screen readers so that the component is accessible to visually impaired users.",
+      status: "done"
+    },
+    {
+      title: "As a user, I want the NextGame section skeleton to accurately mimic the layout of team logos and game details during loading so that the transition to loaded content is seamless.",
+      status: "done"
+    },
+    {
+      title: "As a user, I want chart data calculations to be memoized to prevent unnecessary re-renders and improve performance.",
+      status: "done"
+    },
+    {
+      title: "As a user, I want the loading and error states to include ARIA attributes (role='status', role='alert') so that the component is accessible to screen reader users.",
+      status: "done"
+    },
+    {
+      title: "As a user, I want team cards to have role='article' and proper ARIA labels to improve accessibility and semantic structure.",
       status: "done"
     },
     {
@@ -99,6 +139,22 @@ export default function UpcomingFeatures() {
     {
       title: "As a coach or scorekeeper, I want to see fouls per player and have fouled out players disabled on the subs screen so that substitutions are accurate.",
       status: "done"
+    },
+    {
+      title: "System - check Game Tracking component to fix the rebounds not showing up in the box score.",
+      status: "todo"
+    },
+    {
+      title: "System - check Game Tracking component to include a 'Nobody' option in the follow up question when a user steals the ball.",
+      status: "todo"
+    },
+    {
+      title: "System - Check Game Tracking component, if the user enters a stat and the clock is not running, inform them it is not running and ask them if they would like to start the clock.",
+      status: "todo"
+    },
+    {
+      title: "System - check Game Tracking component to fix the ringers names not showing up in the Play by Play section.",
+      status: "todo"
     },
     {
       title: "As a player, I want to select which stat to display on my profile chart so that I can focus on the stats that matter most to me.",
