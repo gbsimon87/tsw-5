@@ -52,7 +52,11 @@ export default function PlayerProfile() {
   // Calculate season stats with memoization
   const calculateSeasonStats = useMemo(() => {
     if (!player?.gameStats || player.gameStats.length === 0) {
-      return { total: { points: 0, rebounds: 0, assists: 0 }, average: { points: 0, rebounds: 0, assists: 0 }, gameCount: 0 };
+      return {
+        total: { points: 0, rebounds: 0, assists: 0, steals: 0, turnovers: 0 },
+        average: { points: 0, rebounds: 0, assists: 0, steals: 0, turnovers: 0 },
+        gameCount: 0,
+      };
     }
 
     const stats = player.gameStats.reduce(
@@ -60,17 +64,21 @@ export default function PlayerProfile() {
         points: acc.points + (game.points || 0),
         rebounds: acc.rebounds + (game.rebounds || 0),
         assists: acc.assists + (game.assists || 0),
+        steals: acc.steals + (game.steals || 0),
+        turnovers: acc.turnovers + (game.turnovers || 0),
         gameCount: acc.gameCount + 1,
       }),
-      { points: 0, rebounds: 0, assists: 0, gameCount: 0 }
+      { points: 0, rebounds: 0, assists: 0, steals: 0, turnovers: 0, gameCount: 0 }
     );
 
     return {
-      total: { points: stats.points, rebounds: stats.rebounds, assists: stats.assists },
+      total: { points: stats.points, rebounds: stats.rebounds, assists: stats.assists, steals: stats.steals, turnovers: stats.turnovers },
       average: {
         points: stats.gameCount ? (stats.points / stats.gameCount).toFixed(1) : 0,
         rebounds: stats.gameCount ? (stats.rebounds / stats.gameCount).toFixed(1) : 0,
         assists: stats.gameCount ? (stats.assists / stats.gameCount).toFixed(1) : 0,
+        steals: stats.gameCount ? (stats.steals / stats.gameCount).toFixed(1) : 0,
+        turnovers: stats.gameCount ? (stats.turnovers / stats.gameCount).toFixed(1) : 0,
       },
       gameCount: stats.gameCount,
     };
@@ -117,7 +125,9 @@ export default function PlayerProfile() {
     const pointsData = sortedGameStats.map(game => game.points || 0);
     const reboundsData = sortedGameStats.map(game => game.rebounds || 0);
     const assistsData = sortedGameStats.map(game => game.assists || 0);
-    console.log('[PlayerProfile] Chart data:', { labels, pointsData, reboundsData, assistsData });
+    const stealsData = sortedGameStats.map(game => game.steals || 0);
+    const turnoversData = sortedGameStats.map(game => game.turnovers || 0);
+    console.log('[PlayerProfile] Chart data:', { labels, pointsData, reboundsData, assistsData, stealsData, turnoversData });
     return {
       labels,
       datasets: [
@@ -142,6 +152,22 @@ export default function PlayerProfile() {
           data: assistsData,
           borderColor: '#f97316',
           backgroundColor: 'rgba(249, 115, 22, 0.2)',
+          fill: true,
+          tension: 0.4,
+        },
+        {
+          label: 'Steals',
+          data: stealsData,
+          borderColor: '#a855f7',
+          backgroundColor: 'rgba(168, 85, 247, 0.2)',
+          fill: true,
+          tension: 0.4,
+        },
+        {
+          label: 'Turnovers',
+          data: turnoversData,
+          borderColor: '#ef4444',
+          backgroundColor: 'rgba(239, 68, 68, 0.2)',
           fill: true,
           tension: 0.4,
         },
@@ -202,10 +228,95 @@ export default function PlayerProfile() {
           <Skeleton height={200} />
         </section>
         <section className="bg-white border rounded-md shadow-sm p-4">
-          <Skeleton height={24} width={150} className="mb-2" />
-          <div className="overflow-x-auto">
-            <Skeleton count={5} height={40} className="min-w-[600px]" />
-          </div>
+          <h3 className="text-lg font-semibold mb-2">Game Log</h3>
+          {sortedGameStats.length === 0 ? (
+            <p className="text-gray-500">No games played this season.</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-[800px] text-sm" role="grid" aria-label="Player game log">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th
+                      scope="col"
+                      className="border-b px-3 py-2 text-left font-semibold text-gray-700 cursor-pointer"
+                      onClick={() => handleSort('date')}
+                    >
+                      Date {sortConfig.key === 'date' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                    </th>
+                    <th
+                      scope="col"
+                      className="border-b px-3 py-2 text-left font-semibold text-gray-700"
+                    >
+                      Opponent
+                    </th>
+                    <th
+                      scope="col"
+                      className="border-b px-3 py-2 text-center font-semibold text-gray-700 cursor-pointer"
+                      onClick={() => handleSort('result')}
+                    >
+                      Result {sortConfig.key === 'result' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                    </th>
+                    <th
+                      scope="col"
+                      className="border-b px-3 py-2 text-center font-semibold text-gray-700 cursor-pointer"
+                      onClick={() => handleSort('points')}
+                    >
+                      Points {sortConfig.key === 'points' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                    </th>
+                    <th
+                      scope="col"
+                      className="border-b px-3 py-2 text-center font-semibold text-gray-700 cursor-pointer"
+                      onClick={() => handleSort('rebounds')}
+                    >
+                      Rebounds {sortConfig.key === 'rebounds' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                    </th>
+                    <th
+                      scope="col"
+                      className="border-b px-3 py-2 text-center font-semibold text-gray-700 cursor-pointer"
+                      onClick={() => handleSort('assists')}
+                    >
+                      Assists {sortConfig.key === 'assists' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                    </th>
+                    <th
+                      scope="col"
+                      className="border-b px-3 py-2 text-center font-semibold text-gray-700 cursor-pointer"
+                      onClick={() => handleSort('steals')}
+                    >
+                      Steals {sortConfig.key === 'steals' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                    </th>
+                    <th
+                      scope="col"
+                      className="border-b px-3 py-2 text-center font-semibold text-gray-700 cursor-pointer"
+                      onClick={() => handleSort('turnovers')}
+                    >
+                      Turnovers {sortConfig.key === 'turnovers' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {sortedGameStats.map((game, index) => {
+                    const playerTeamScore = game.teamScores.find(ts => ts.team === player.team._id)?.score || 0;
+                    const opponentScore = game.teamScores.find(ts => ts.team !== player.team._id)?.score || 0;
+                    const result = playerTeamScore > opponentScore ? 'W' : playerTeamScore < opponentScore ? 'L' : 'T';
+                    return (
+                      <tr key={game.date} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                        <td className="border-b px-3 py-2 text-gray-900">
+                          {new Date(game.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                        </td>
+                        <td className="border-b px-3 py-2 text-gray-900">{game.opponentName}</td>
+                        <td className="border-b px-3 py-2 text-center text-gray-900">{game.points}</td>
+                        <td className="border-b px-3 py-2 text-center text-gray-900">{game.rebounds}</td>
+                        <td className="border-b px-3 py-2 text-center text-gray-900">{game.assists}</td>
+                        <td className="border-b px-3 py-2 text-center text-gray-900">{game.steals}</td>
+                        <td className="border-b px-3 py-2 text-center text-gray-900">{game.turnovers}</td>
+                        <td className="border-b px-3 py-2 text-center text-gray-900">{result}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
         </section>
       </div>
     );
@@ -284,7 +395,7 @@ export default function PlayerProfile() {
       <div className="flex flex-col lg:flex-row gap-4">
         <section className="bg-white border rounded-md shadow-sm p-4 mb-4 flex-1">
           <h3 className="text-lg font-semibold mb-2">Season Totals ({stats.gameCount} Games)</h3>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
             <div>
               <p className="font-medium text-gray-700">Points</p>
               <p className="text-gray-900">{stats.total.points}</p>
@@ -297,11 +408,19 @@ export default function PlayerProfile() {
               <p className="font-medium text-gray-700">Assists</p>
               <p className="text-gray-900">{stats.total.assists}</p>
             </div>
+            <div>
+              <p className="font-medium text-gray-700">Steals</p>
+              <p className="text-gray-900">{stats.total.steals}</p>
+            </div>
+            <div>
+              <p className="font-medium text-gray-700">Turnovers</p>
+              <p className="text-gray-900">{stats.total.turnovers}</p>
+            </div>
           </div>
         </section>
         <section className="bg-white border rounded-md shadow-sm p-4 mb-4 flex-1">
           <h3 className="text-lg font-semibold mb-2">Season Averages ({stats.gameCount} Games)</h3>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
             <div>
               <p className="font-medium text-gray-700">Points</p>
               <p className="text-gray-900">{stats.average.points}</p>
@@ -313,6 +432,14 @@ export default function PlayerProfile() {
             <div>
               <p className="font-medium text-gray-700">Assists</p>
               <p className="text-gray-900">{stats.average.assists}</p>
+            </div>
+            <div>
+              <p className="font-medium text-gray-700">Steals</p>
+              <p className="text-gray-900">{stats.average.steals}</p>
+            </div>
+            <div>
+              <p className="font-medium text-gray-700">Turnovers</p>
+              <p className="text-gray-900">{stats.average.turnovers}</p>
             </div>
           </div>
         </section>
@@ -348,6 +475,13 @@ export default function PlayerProfile() {
                   <th
                     scope="col"
                     className="border-b px-3 py-2 text-center font-semibold text-gray-700 cursor-pointer"
+                    onClick={() => handleSort('result')}
+                  >
+                    Result {sortConfig.key === 'result' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                  </th>
+                  <th
+                    scope="col"
+                    className="border-b px-3 py-2 text-center font-semibold text-gray-700 cursor-pointer"
                     onClick={() => handleSort('points')}
                   >
                     Points {sortConfig.key === 'points' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
@@ -366,13 +500,7 @@ export default function PlayerProfile() {
                   >
                     Assists {sortConfig.key === 'assists' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
                   </th>
-                  <th
-                    scope="col"
-                    className="border-b px-3 py-2 text-center font-semibold text-gray-700 cursor-pointer"
-                    onClick={() => handleSort('result')}
-                  >
-                    Result {sortConfig.key === 'result' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
-                  </th>
+                  
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -386,10 +514,10 @@ export default function PlayerProfile() {
                         {new Date(game.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                       </td>
                       <td className="border-b px-3 py-2 text-gray-900">{game.opponentName}</td>
+                      <td className="border-b px-3 py-2 text-center text-gray-900">{result}</td>
                       <td className="border-b px-3 py-2 text-center text-gray-900">{game.points}</td>
                       <td className="border-b px-3 py-2 text-center text-gray-900">{game.rebounds}</td>
                       <td className="border-b px-3 py-2 text-center text-gray-900">{game.assists}</td>
-                      <td className="border-b px-3 py-2 text-center text-gray-900">{result}</td>
                     </tr>
                   );
                 })}

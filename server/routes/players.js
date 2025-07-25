@@ -59,18 +59,18 @@ router.get('/:playerId', authMiddleware, async (req, res) => {
       .lean();
 
     if (!player) {
-      console.log(`[Get player] Player not found for playerId: ${playerId}`);
+      // console.log(`[Get player] Player not found for playerId: ${playerId}`);
       return res.status(404).json({ error: 'Player not found' });
     }
 
     // Determine player name
     const playerName = player.isRinger ? player.name : player.user?.name || 'Unknown Player';
-    console.log(`[Get player] Player name: ${playerName}, isRinger: ${player.isRinger}`);
+    // console.log(`[Get player] Player name: ${playerName}, isRinger: ${player.isRinger}`);
 
     // Verify player is in the league
     const team = player.teams.find(t => t.league._id.toString() === leagueId);
     if (!team) {
-      console.log(`[Get player] Player ${playerId} not in league ${leagueId}`);
+      // console.log(`[Get player] Player ${playerId} not in league ${leagueId}`);
       return res.status(400).json({ error: 'Player is not in the specified league' });
     }
 
@@ -96,6 +96,8 @@ router.get('/:playerId', authMiddleware, async (req, res) => {
       const rebounds = (playerStat?.stats?.offensiveRebound || 0) +
         (playerStat?.stats?.defensiveRebound || 0);
       const assists = playerStat?.stats?.assist || 0;
+      const steals = playerStat?.stats?.steal || 0;
+      const turnovers = playerStat?.stats?.turnover || 0;
 
       return {
         date: game.date,
@@ -103,6 +105,8 @@ router.get('/:playerId', authMiddleware, async (req, res) => {
         points,
         rebounds,
         assists,
+        steals,
+        turnovers,
         teamScores: game.teamScores || [],
       };
     });
