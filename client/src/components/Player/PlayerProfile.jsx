@@ -102,7 +102,7 @@ export default function PlayerProfile() {
     }));
   };
 
-  // Chart data and options for points
+  // Chart data for performance trends
   const chartData = useMemo(() => {
     if (!player?.gameStats || player.gameStats.length === 0) {
       console.log('[PlayerProfile] No gameStats available for chart');
@@ -114,18 +114,38 @@ export default function PlayerProfile() {
         ? date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
         : 'Invalid Date';
     });
-    const data = sortedGameStats.map(game => game.points || 0);
-    console.log('[PlayerProfile] Chart data:', { labels, data });
+    const pointsData = sortedGameStats.map(game => game.points || 0);
+    const reboundsData = sortedGameStats.map(game => game.rebounds || 0);
+    const assistsData = sortedGameStats.map(game => game.assists || 0);
+    console.log('[PlayerProfile] Chart data:', { labels, pointsData, reboundsData, assistsData });
     return {
       labels,
-      datasets: [{
-        label: 'Points per Game',
-        data,
-        borderColor: '#3b82f6',
-        backgroundColor: 'rgba(59, 130, 246, 0.2)',
-        fill: true,
-        tension: 0.4,
-      }],
+      datasets: [
+        {
+          label: 'Points',
+          data: pointsData,
+          borderColor: '#3b82f6',
+          backgroundColor: 'rgba(59, 130, 246, 0.2)',
+          fill: true,
+          tension: 0.4,
+        },
+        {
+          label: 'Rebounds',
+          data: reboundsData,
+          borderColor: '#22c55e',
+          backgroundColor: 'rgba(34, 197, 94, 0.2)',
+          fill: true,
+          tension: 0.4,
+        },
+        {
+          label: 'Assists',
+          data: assistsData,
+          borderColor: '#f97316',
+          backgroundColor: 'rgba(249, 115, 22, 0.2)',
+          fill: true,
+          tension: 0.4,
+        },
+      ],
     };
   }, [sortedGameStats]);
 
@@ -146,7 +166,7 @@ export default function PlayerProfile() {
       y: {
         type: 'linear',
         beginAtZero: true,
-        title: { display: true, text: 'Points' },
+        title: { display: true, text: 'Stats' },
       },
     },
   };
@@ -298,8 +318,8 @@ export default function PlayerProfile() {
         </section>
       </div>
       {chartData && (
-        <section className="bg-white border rounded-md shadow-sm p-4 mb-4" aria-label="Points trend chart">
-          <h3 className="text-lg font-semibold mb-2">Points Trend</h3>
+        <section className="bg-white border rounded-md shadow-sm p-4 mb-4" aria-label="Performance trend chart">
+          <h3 className="text-lg font-semibold mb-2">Performance Trends</h3>
           <Line data={chartData} options={chartOptions} />
         </section>
       )}
