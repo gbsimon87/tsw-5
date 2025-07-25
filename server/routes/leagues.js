@@ -423,6 +423,138 @@ router.get('/', authMiddleware, async (req, res) => {
   }
 });
 
+// Get public league stats
+router.get('/public/:leagueId/stats', async (req, res, next) => {
+  try {
+    const { leagueId } = req.params;
+
+    // Validate leagueId
+    if (!mongoose.Types.ObjectId.isValid(leagueId)) {
+      return res.status(400).json({ error: 'Invalid league ID' });
+    }
+
+    // Fetch league details
+    const league = await League.findById(leagueId, 'name logo sportType season').lean();
+    if (!league) {
+      return res.status(404).json({ error: 'League not found' });
+    }
+
+    // Aggregate team and player counts
+    const teamCount = await Team.countDocuments({ league: leagueId, isActive: true });
+
+    const playerCount = await Team.aggregate([
+      { $match: { league: new mongoose.Types.ObjectId(leagueId), isActive: true } },
+      { $unwind: '$members' },
+      { $match: { 'members.isActive': true } },
+      { $group: { _id: null, uniquePlayers: { $addToSet: '$members.player' } } },
+      { $project: { count: { $size: '$uniquePlayers' } } },
+    ]);
+
+    // Aggregate game stats
+    const gameStats = await Game.aggregate([
+      { $match: { league: new mongoose.Types.ObjectId(leagueId), isCompleted: true } },
+      {
+        $group: {
+          _id: null,
+          totalGames: { $sum: 1 },
+          totalPoints: {
+            $sum: {
+              $sum: '$teamScores.score',
+            },
+          },
+          totalAssists: {
+            $sum: {
+              $sum: {
+                $map: {
+                  input: '$playByPlay',
+                  as: 'play',
+                  in: { $cond: [{ $eq: ['$$play.statType', 'assist'] }, 1, 0] },
+                },
+              },
+            },
+          },
+          totalRebounds: {
+            $sum: {
+              $sum: {
+                $map: {
+                  input: '$playByPlay',
+                  as: 'play',
+                  in: {
+                    $cond: [
+                      { $in: ['$$play.statType', ['offensiveRebound', 'defensiveRebound']] },
+                      1,
+                      0,
+                    ],
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    ]);
+
+    // Sport-specific stats (extendable based on sportType)
+    const sportSpecificStats = {};
+    if (league.sportType === 'basketball') {
+      const basketballStats = await Game.aggregate([
+        { $match: { league: new mongoose.Types.ObjectId(leagueId), isCompleted: true } },
+        {
+          $group: {
+            _id: null,
+            totalThreePointFGM: {
+              $sum: {
+                $sum: {
+                  $map: {
+                    input: '$playByPlay',
+                    as: 'play',
+                    in: { $cond: [{ $eq: ['$$play.statType', 'threePointFGM'] }, 1, 0] },
+                  },
+                },
+              },
+            },
+            totalFreeThrows: {
+              $sum: {
+                $sum: {
+                  $map: {
+                    input: '$playByPlay',
+                    as: 'play',
+                    in: { $cond: [{ $eq: ['$$play.statType', 'freeThrowM'] }, 1, 0] },
+                  },
+                },
+              },
+            },
+          },
+        },
+      ]);
+      Object.assign(sportSpecificStats, basketballStats[0] || {});
+    }
+    // Add similar conditions for other sportTypes (e.g., football, hockey)
+
+    const response = {
+      league: {
+        name: league.name,
+        logo: league.logo || null,
+        sportType: league.sportType,
+        season: league.season || '',
+      },
+      numberOfTeams: teamCount,
+      numberOfPlayers: playerCount[0]?.count || 0,
+      totalGames: gameStats[0]?.totalGames || 0,
+      stats: {
+        totalPoints: gameStats[0]?.totalPoints || 0,
+        totalAssists: gameStats[0]?.totalAssists || 0,
+        totalRebounds: gameStats[0]?.totalRebounds || 0,
+        ...sportSpecificStats,
+      },
+    };
+
+    res.status(200).json(response);
+  } catch (error) {
+    next(error);
+  }
+});
+
 // Get a single league by ID
 router.get('/:leagueId', authMiddleware, async (req, res) => {
   try {
