@@ -112,41 +112,23 @@ const PublicFacingLeaguePage = () => {
                   .map((game) => (
                     <tr
                       key={game._id || game.date}
-                      className={game.isCompleted ? 'hover:bg-gray-100 cursor-pointer transition-colors' : ''}
+                      className={game.isCompleted ? 'hover:bg-gray-100 transition-colors' : ''}
                     >
                       {game.isCompleted ? (
                         <>
                           <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">
-                            <Link
-                              to={`/leagues/${leagueId}/games/${game._id}`}
-                              className="block w-full"
-                              aria-label={`View details for game on ${new Date(game.date).toLocaleDateString()} between ${game.teams.map((t) => t.name || 'Unknown').join(' and ')}`}
-                            >
-                              {new Date(game.date).toLocaleDateString()}
-                            </Link>
+                            {new Date(game.date).toLocaleDateString()}
                           </td>
                           <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">
-                            <Link
-                              to={`/leagues/${leagueId}/games/${game._id}`}
-                              className="block w-full"
-                              aria-label={`View score for game on ${new Date(game.date).toLocaleDateString()}`}
-                            >
-                              {game.teamScores
-                                .map((ts) => {
-                                  const team = game.teams.find((t) => t._id === ts.team);
-                                  return `${team?.name || 'Unknown'}: ${ts.score}`;
-                                })
-                                .join(' - ')}
-                            </Link>
+                            {game.teamScores
+                              .map((ts) => {
+                                const team = game.teams.find((t) => t._id === ts.team);
+                                return `${team?.name || 'Unknown'}: ${ts.score}`;
+                              })
+                              .join(' - ')}
                           </td>
                           <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">
-                            <Link
-                              to={`/leagues/${leagueId}/games/${game._id}`}
-                              className="block w-full"
-                              aria-label={`View status for game on ${new Date(game.date).toLocaleDateString()}`}
-                            >
-                              Completed
-                            </Link>
+                            Completed
                           </td>
                         </>
                       ) : (

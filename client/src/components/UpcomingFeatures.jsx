@@ -10,7 +10,7 @@ export default function UpcomingFeatures() {
     // Difficulty 1: Simple UI changes or notifications
     {
       title: "As a non logged in user, I want to disable being able to view completed games.",
-      status: "todo"
+      status: "done"
     },
     {
       title: "As a user, I want to receive a confirmation or error toast when creating a game so that I know the answer.",
