@@ -347,7 +347,7 @@ export default function PlayerProfile() {
             <p className="text-gray-700">
               Team:{' '}
               <Link
-                to={`/league/${team.league._id}/team/${team._id}`}
+                to={`/leagues/${team.league._id}/team/${team._id}`}
                 className="text-blue-600 hover:underline"
                 aria-label={`View team ${team.name}`}
               >
@@ -383,7 +383,7 @@ export default function PlayerProfile() {
         <p>
           Team:{' '}
           <Link
-            to={`/league/${team.league._id}/team/${team._id}`}
+            to={`/leagues/${team.league._id}/team/${team._id}`}
             className="text-blue-600 hover:underline"
             aria-label={`View team ${team.name}`}
           >

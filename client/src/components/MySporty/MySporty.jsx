@@ -256,7 +256,7 @@ export default function MySporty() {
                   key={team?._id}
                   className="relative bg-gradient-to-br from-white to-blue-50 shadow-md rounded-2xl p-6 flex flex-col border border-blue-200 hover:shadow-xl transition-shadow duration-300"
                   aria-label={`Team card for ${team?.name}`}
-                  onClick={() => navigate(`/league/${team?.league?._id}/team/${team?._id}`)}
+                  onClick={() => navigate(`/leagues/${team?.league?._id}/team/${team?._id}`)}
                 >
                   {team?.logo ? (
                     <img
