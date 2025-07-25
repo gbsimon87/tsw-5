@@ -13,6 +13,42 @@ export default function UpcomingFeatures() {
       status: "done"
     },
     {
+      title: "As a user, I want to see skeleton placeholders instead of a 'Loading data...' message during data fetching so that the UI feels more responsive and consistent.",
+      status: "done"
+    },
+    {
+      title: "As a user, I want the NextGame section to display all relevant game details (team names, logos, date, time, venue, league, match type, and event type) so that I have complete information about the upcoming game.",
+      status: "done"
+    },
+    {
+      title: "As a user, I want the countdown timer in the NextGame section to update every second with days, hours, minutes, and seconds displayed so that I can see a live countdown to the game.",
+      status: "done"
+    },
+    {
+      title: "As a user, I want to be redirected to the game page 5 seconds after the countdown timer reaches zero so that I can view game details immediately after the game starts.",
+      status: "done"
+    },
+    {
+      title: "As a user, I want the countdown timer updates to be announced to screen readers so that the component is accessible to visually impaired users.",
+      status: "done"
+    },
+    {
+      title: "As a user, I want the NextGame section skeleton to accurately mimic the layout of team logos and game details during loading so that the transition to loaded content is seamless.",
+      status: "done"
+    },
+    {
+      title: "As a user, I want chart data calculations to be memoized to prevent unnecessary re-renders and improve performance.",
+      status: "done"
+    },
+    {
+      title: "As a user, I want the loading and error states to include ARIA attributes (role='status', role='alert') so that the component is accessible to screen reader users.",
+      status: "done"
+    },
+    {
+      title: "As a user, I want team cards to have role='article' and proper ARIA labels to improve accessibility and semantic structure.",
+      status: "done"
+    },
+    {
       title: "As a user, I want to receive a confirmation or error toast when creating a league so that I know the answer.",
       status: "done"
     },
