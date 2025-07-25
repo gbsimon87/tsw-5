@@ -1,9 +1,15 @@
-import { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import Skeleton from 'react-loading-skeleton';
+import { Line } from 'react-chartjs-2';
+import { Chart as ChartJS, LineElement, PointElement, LinearScale, CategoryScale, Title, Tooltip, Legend } from 'chart.js';
 import { useAuth } from '../../context/AuthContext';
+
+ChartJS.register(LineElement, PointElement, LinearScale, CategoryScale, Title, Tooltip, Legend);
+
+// console.log('[PlayerProfile] Chart.js controllers:', Object.keys(ChartJS.registry.controllers));
 
 export default function PlayerProfile() {
   const { user } = useAuth();
@@ -79,10 +85,15 @@ export default function PlayerProfile() {
       if (sortConfig.key === 'date') {
         return direction * (new Date(a.date) - new Date(b.date));
       }
+      if (sortConfig.key === 'result') {
+        const aResult = (a.teamScores.find(ts => ts.team === player?.team._id)?.score || 0) > (a.teamScores.find(ts => ts.team !== player?.team._id)?.score || 0) ? 'W' : 'L';
+        const bResult = (b.teamScores.find(ts => ts.team === player?.team._id)?.score || 0) > (b.teamScores.find(ts => ts.team !== player?.team._id)?.score || 0) ? 'W' : 'L';
+        return direction * aResult.localeCompare(bResult);
+      }
       return direction * ((a[sortConfig.key] || 0) - (b[sortConfig.key] || 0));
     });
     return sorted;
-  }, [player?.gameStats, sortConfig]);
+  }, [player?.gameStats, sortConfig, player?.team._id]);
 
   const handleSort = (key) => {
     setSortConfig((prev) => ({
@@ -91,10 +102,63 @@ export default function PlayerProfile() {
     }));
   };
 
+  // Chart data and options for points
+  const chartData = useMemo(() => {
+    if (!player?.gameStats || player.gameStats.length === 0) {
+      console.log('[PlayerProfile] No gameStats available for chart');
+      return null;
+    }
+    const labels = sortedGameStats.map(game => {
+      const date = new Date(game.date);
+      return date instanceof Date && !isNaN(date)
+        ? date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+        : 'Invalid Date';
+    });
+    const data = sortedGameStats.map(game => game.points || 0);
+    console.log('[PlayerProfile] Chart data:', { labels, data });
+    return {
+      labels,
+      datasets: [{
+        label: 'Points per Game',
+        data,
+        borderColor: '#3b82f6',
+        backgroundColor: 'rgba(59, 130, 246, 0.2)',
+        fill: true,
+        tension: 0.4,
+      }],
+    };
+  }, [sortedGameStats]);
+
+  console.log('[PlayerProfile] chartData:', chartData);
+
+
+  const chartOptions = {
+    responsive: true,
+    plugins: {
+      legend: { display: true, position: 'top' },
+      tooltip: { enabled: true },
+    },
+    scales: {
+      x: {
+        type: 'category',
+        title: { display: true, text: 'Game Date' },
+      },
+      y: {
+        type: 'linear',
+        beginAtZero: true,
+        title: { display: true, text: 'Points' },
+      },
+    },
+  };
+
   if (loading) {
     return (
       <div className="w-full max-w-4xl mx-auto p-4" role="region" aria-label="Player Profile">
         <Skeleton height={40} width={200} className="mb-4" />
+        <section className="bg-white border rounded-md shadow-sm p-4 mb-4">
+          <Skeleton height={24} width={150} className="mb-2" />
+          <Skeleton count={2} height={20} />
+        </section>
         <section className="bg-white border rounded-md shadow-sm p-4 mb-4">
           <Skeleton height={24} width={150} className="mb-2" />
           <Skeleton count={3} height={20} />
@@ -113,6 +177,10 @@ export default function PlayerProfile() {
             </div>
           </section>
         </div>
+        <section className="bg-white border rounded-md shadow-sm p-4 mb-4">
+          <Skeleton height={24} width={150} className="mb-2" />
+          <Skeleton height={200} />
+        </section>
         <section className="bg-white border rounded-md shadow-sm p-4">
           <Skeleton height={24} width={150} className="mb-2" />
           <div className="overflow-x-auto">
@@ -128,11 +196,47 @@ export default function PlayerProfile() {
   }
 
   const stats = calculateSeasonStats;
-  const team = player.team || { name: 'No Team', league: { _id: '', name: 'Unknown League' }, season: 'Unknown Season' };
+  const team = player.team || { _id: '', name: 'No Team', league: { _id: '', name: 'Unknown League' }, season: 'Unknown Season' };
 
   return (
     <div className="w-full max-w-4xl mx-auto p-4" role="region" aria-label="Player Profile">
-      <h2 className="text-2xl font-bold mb-4">{player.name}</h2>
+      <section
+        className="bg-gradient-to-r from-blue-100 to-gray-100 border rounded-lg shadow-lg p-6 mb-6"
+        role="region"
+        aria-label="Player Card"
+      >
+        <div className="flex flex-col sm:flex-row sm:items-start gap-4">
+          <div className="flex-1">
+            <h2 className="text-3xl font-bold text-gray-900">{player.name}</h2>
+            <p className="text-lg font-semibold text-gray-700">
+              #{player.jerseyNumber ?? 'N/A'} | {player.position ?? 'N/A'}
+            </p>
+          </div>
+          <div className="flex-1">
+            <p className="text-gray-700">
+              Team:{' '}
+              <Link
+                to={`/league/${team.league._id}/team/${team._id}`}
+                className="text-blue-600 hover:underline"
+                aria-label={`View team ${team.name}`}
+              >
+                {team.name}
+              </Link>
+            </p>
+            <p className="text-gray-700">
+              League:{' '}
+              <Link
+                to={`/leagues/public/${team.league._id}`}
+                className="text-blue-600 hover:underline"
+                aria-label={`View league ${team.league.name}`}
+              >
+                {team.league.name}
+              </Link>
+            </p>
+            <p className="text-gray-700">Season: {team.season}</p>
+          </div>
+        </div>
+      </section>
       <section className="bg-white border rounded-md shadow-sm p-4 mb-4">
         <h3 className="text-lg font-semibold mb-2">Team Information</h3>
         <p>
@@ -193,6 +297,12 @@ export default function PlayerProfile() {
           </div>
         </section>
       </div>
+      {chartData && (
+        <section className="bg-white border rounded-md shadow-sm p-4 mb-4" aria-label="Points trend chart">
+          <h3 className="text-lg font-semibold mb-2">Points Trend</h3>
+          <Line data={chartData} options={chartOptions} />
+        </section>
+      )}
       <section className="bg-white border rounded-md shadow-sm p-4">
         <h3 className="text-lg font-semibold mb-2">Game Log</h3>
         {sortedGameStats.length === 0 ? (
@@ -236,20 +346,33 @@ export default function PlayerProfile() {
                   >
                     Assists {sortConfig.key === 'assists' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
                   </th>
+                  <th
+                    scope="col"
+                    className="border-b px-3 py-2 text-center font-semibold text-gray-700 cursor-pointer"
+                    onClick={() => handleSort('result')}
+                  >
+                    Result {sortConfig.key === 'result' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {sortedGameStats.map((game, index) => (
-                  <tr key={game.date} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                    <td className="border-b px-3 py-2 text-gray-900">
-                      {new Date(game.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                    </td>
-                    <td className="border-b px-3 py-2 text-gray-900">{game.opponentName}</td>
-                    <td className="border-b px-3 py-2 text-center text-gray-900">{game.points}</td>
-                    <td className="border-b px-3 py-2 text-center text-gray-900">{game.rebounds}</td>
-                    <td className="border-b px-3 py-2 text-center text-gray-900">{game.assists}</td>
-                  </tr>
-                ))}
+                {sortedGameStats.map((game, index) => {
+                  const playerTeamScore = game.teamScores.find(ts => ts.team === player.team._id)?.score || 0;
+                  const opponentScore = game.teamScores.find(ts => ts.team !== player.team._id)?.score || 0;
+                  const result = playerTeamScore > opponentScore ? 'W' : playerTeamScore < opponentScore ? 'L' : 'T';
+                  return (
+                    <tr key={game.date} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                      <td className="border-b px-3 py-2 text-gray-900">
+                        {new Date(game.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                      </td>
+                      <td className="border-b px-3 py-2 text-gray-900">{game.opponentName}</td>
+                      <td className="border-b px-3 py-2 text-center text-gray-900">{game.points}</td>
+                      <td className="border-b px-3 py-2 text-center text-gray-900">{game.rebounds}</td>
+                      <td className="border-b px-3 py-2 text-center text-gray-900">{game.assists}</td>
+                      <td className="border-b px-3 py-2 text-center text-gray-900">{result}</td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
