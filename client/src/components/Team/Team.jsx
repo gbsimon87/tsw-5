@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import Modal from 'react-modal';
 import { useAuth } from '../../context/AuthContext';
@@ -17,6 +17,8 @@ export default function Team() {
   const [pointsLeaderboard, setPointsLeaderboard] = useState([]);
   const [assistsLeaderboard, setAssistsLeaderboard] = useState([]);
   const [reboundsLeaderboard, setReboundsLeaderboard] = useState([]);
+
+  const navigate = useNavigate();
 
   // Function to extract YouTube video ID
   const getYouTubeVideoId = (url) => {
@@ -56,6 +58,8 @@ export default function Team() {
   // Replace renderLeaderboard function with updated version
   const renderLeaderboards = () => (
     <div className="mb-8">
+
+      {/* Team Leaders - Points */}
       <h3 className="text-lg font-bold mb-2">Team Leaders - Points</h3>
       {pointsLeaderboard.length === 0 ? (
         <div className="text-gray-400 mb-4">No points stats available.</div>
@@ -72,18 +76,74 @@ export default function Team() {
           <tbody className="divide-y divide-gray-100">
             {pointsLeaderboard.map((player, index) => {
               const isGreyRow = index % 2 !== 0;
+              // Defensive check for valid data
+              if (!player?._id || !team?.league?._id) {
+                console.warn('Invalid player data for navigation:', { player, team });
+                return (
+                  <tr
+                    key={player._id || `fallback-${index}`}
+                    className={isGreyRow ? 'bg-gray-50' : 'bg-white'}
+                  >
+                    <td className="border-b border-gray-100 px-3 py-2 text-gray-900">
+                      {player.playerName || 'Unknown'}
+                    </td>
+                    <td className="text-center border-b border-gray-200 px-3 py-2 text-gray-900">
+                      {player.jerseyNumber || 'N/A'}
+                    </td>
+                    <td className="text-center border-b border-gray-200 px-3 py-2 text-gray-900">
+                      {player.totalPoints || 0}
+                    </td>
+                    <td className="text-center border-b border-gray-200 px-3 py-2 text-gray-900">
+                      {player.pointsPerGame ? player.pointsPerGame.toFixed(1) : '0.0'}
+                    </td>
+                  </tr>
+                );
+              }
               return (
-                <tr key={player._id} className={isGreyRow ? 'bg-gray-50' : 'bg-white'}>
-                  <td className="border-b border-gray-100 px-3 py-2 text-gray-900">{player.playerName || 'Unknown'}</td>
-                  <td className="text-center border-b border-gray-200 px-3 py-2 text-gray-900">{player.jerseyNumber || 'N/A'}</td>
-                  <td className="text-center border-b border-gray-200 px-3 py-2 text-gray-900">{player.totalPoints}</td>
-                  <td className="text-center border-b border-gray-200 px-3 py-2 text-gray-900">{player.pointsPerGame.toFixed(1)}</td>
+                <tr
+                  key={player._id}
+                  className={`${isGreyRow ? 'bg-gray-50 hover:bg-gray-100' : 'bg-white hover:bg-gray-50'} cursor-pointer`}
+                  onClick={() => {
+                    if (team?.league?._id && player._id && teamId) {
+                      navigate(`/leagues/${team.league._id}/team/${teamId}/players/${player._id}`);
+                    } else {
+                      console.warn('Invalid navigation data:', { leagueId: team?.league?._id, player, teamId });
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === 'Space') {
+                      e.preventDefault();
+                      if (team?.league?._id && player._id && teamId) {
+                        navigate(`/leagues/${team.league._id}/team/${teamId}/players/${player._id}`);
+                      } else {
+                        console.warn('Invalid navigation data:', { leagueId: team?.league?._id, player, teamId });
+                      }
+                    }
+                  }}
+                  role="link"
+                  tabIndex={0}
+                  aria-label={`View profile for ${player.playerName || 'Unknown'}`}
+                >
+                  <td className="border-b border-gray-100 px-3 py-2 text-gray-900">
+                    {player.playerName || 'Unknown'}
+                  </td>
+                  <td className="text-center border-b border-gray-200 px-3 py-2 text-gray-900">
+                    {player.jerseyNumber || 'N/A'}
+                  </td>
+                  <td className="text-center border-b border-gray-200 px-3 py-2 text-gray-900">
+                    {player.totalPoints || 0}
+                  </td>
+                  <td className="text-center border-b border-gray-200 px-3 py-2 text-gray-900">
+                    {player.pointsPerGame ? player.pointsPerGame.toFixed(1) : '0.0'}
+                  </td>
                 </tr>
               );
             })}
           </tbody>
         </table>
       )}
+
+      {/* Team Leaders - Assists */}
       <h3 className="text-lg font-bold mb-2">Team Leaders - Assists</h3>
       {assistsLeaderboard.length === 0 ? (
         <div className="text-gray-400 mb-4">No assists stats available.</div>
@@ -100,18 +160,74 @@ export default function Team() {
           <tbody className="divide-y divide-gray-100">
             {assistsLeaderboard.map((player, index) => {
               const isGreyRow = index % 2 !== 0;
+              // Defensive check for valid data
+              if (!player?._id || !team?.league?._id) {
+                console.warn('Invalid player data for navigation:', { player, team });
+                return (
+                  <tr
+                    key={player._id || `fallback-${index}`}
+                    className={isGreyRow ? 'bg-gray-50' : 'bg-white'}
+                  >
+                    <td className="border-b border-gray-100 px-3 py-2 text-gray-900">
+                      {player.playerName || 'Unknown'}
+                    </td>
+                    <td className="text-center border-b border-gray-200 px-3 py-2 text-gray-900">
+                      {player.jerseyNumber || 'N/A'}
+                    </td>
+                    <td className="text-center border-b border-gray-200 px-3 py-2 text-gray-900">
+                      {player.totalAssists || 0}
+                    </td>
+                    <td className="text-center border-b border-gray-200 px-3 py-2 text-gray-900">
+                      {player.assistsPerGame ? player.assistsPerGame.toFixed(1) : '0.0'}
+                    </td>
+                  </tr>
+                );
+              }
               return (
-                <tr key={player._id} className={isGreyRow ? 'bg-gray-50' : 'bg-white'}>
-                  <td className="border-b border-gray-100 px-3 py-2 text-gray-900">{player.playerName || 'Unknown'}</td>
-                  <td className="text-center border-b border-gray-200 px-3 py-2 text-gray-900">{player.jerseyNumber || 'N/A'}</td>
-                  <td className="text-center border-b border-gray-200 px-3 py-2 text-gray-900">{player.totalAssists}</td>
-                  <td className="text-center border-b border-gray-200 px-3 py-2 text-gray-900">{player.assistsPerGame.toFixed(1)}</td>
+                <tr
+                  key={player._id}
+                  className={`${isGreyRow ? 'bg-gray-50 hover:bg-gray-100' : 'bg-white hover:bg-gray-50'} cursor-pointer`}
+                  onClick={() => {
+                    if (team?.league?._id && player._id && teamId) {
+                      navigate(`/leagues/${team.league._id}/team/${teamId}/players/${player._id}`);
+                    } else {
+                      console.warn('Invalid navigation data:', { leagueId: team?.league?._id, player, teamId });
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === 'Space') {
+                      e.preventDefault();
+                      if (team?.league?._id && player._id && teamId) {
+                        navigate(`/leagues/${team.league._id}/team/${teamId}/players/${player._id}`);
+                      } else {
+                        console.warn('Invalid navigation data:', { leagueId: team?.league?._id, player, teamId });
+                      }
+                    }
+                  }}
+                  role="link"
+                  tabIndex={0}
+                  aria-label={`View profile for ${player.playerName || 'Unknown'}`}
+                >
+                  <td className="border-b border-gray-100 px-3 py-2 text-gray-900">
+                    {player.playerName || 'Unknown'}
+                  </td>
+                  <td className="text-center border-b border-gray-200 px-3 py-2 text-gray-900">
+                    {player.jerseyNumber || 'N/A'}
+                  </td>
+                  <td className="text-center border-b border-gray-200 px-3 py-2 text-gray-900">
+                    {player.totalAssists || 0}
+                  </td>
+                  <td className="text-center border-b border-gray-200 px-3 py-2 text-gray-900">
+                    {player.assistsPerGame ? player.assistsPerGame.toFixed(1) : '0.0'}
+                  </td>
                 </tr>
               );
             })}
           </tbody>
         </table>
       )}
+
+      {/* Team Leaders - Rebounds */}
       <h3 className="text-lg font-bold mb-2">Team Leaders - Rebounds</h3>
       {reboundsLeaderboard.length === 0 ? (
         <div className="text-gray-400">No rebounds stats available.</div>
@@ -128,12 +244,66 @@ export default function Team() {
           <tbody className="divide-y divide-gray-100">
             {reboundsLeaderboard.map((player, index) => {
               const isGreyRow = index % 2 !== 0;
+              // Defensive check for valid data
+              if (!player?._id || !team?.league?._id) {
+                console.warn('Invalid player data for navigation:', { player, team });
+                return (
+                  <tr
+                    key={player._id || `fallback-${index}`}
+                    className={isGreyRow ? 'bg-gray-50' : 'bg-white'}
+                  >
+                    <td className="border-b border-gray-100 px-3 py-2 text-gray-900">
+                      {player.playerName || 'Unknown'}
+                    </td>
+                    <td className="text-center border-b border-gray-200 px-3 py-2 text-gray-900">
+                      {player.jerseyNumber || 'N/A'}
+                    </td>
+                    <td className="text-center border-b border-gray-200 px-3 py-2 text-gray-900">
+                      {player.totalRebounds || 0}
+                    </td>
+                    <td className="text-center border-b border-gray-200 px-3 py-2 text-gray-900">
+                      {player.reboundsPerGame ? player.reboundsPerGame.toFixed(1) : '0.0'}
+                    </td>
+                  </tr>
+                );
+              }
               return (
-                <tr key={player._id} className={isGreyRow ? 'bg-gray-50' : 'bg-white'}>
-                  <td className="border-b border-gray-100 px-3 py-2 text-gray-900">{player.playerName || 'Unknown'}</td>
-                  <td className="text-center border-b border-gray-200 px-3 py-2 text-gray-900">{player.jerseyNumber || 'N/A'}</td>
-                  <td className="text-center border-b border-gray-200 px-3 py-2 text-gray-900">{player.totalRebounds}</td>
-                  <td className="text-center border-b border-gray-200 px-3 py-2 text-gray-900">{player.reboundsPerGame.toFixed(1)}</td>
+                <tr
+                  key={player._id}
+                  className={`${isGreyRow ? 'bg-gray-50 hover:bg-gray-100' : 'bg-white hover:bg-gray-50'} cursor-pointer`}
+                  onClick={() => {
+                    if (team?.league?._id && player._id && teamId) {
+                      navigate(`/leagues/${team.league._id}/team/${teamId}/players/${player._id}`);
+                    } else {
+                      console.warn('Invalid navigation data:', { leagueId: team?.league?._id, player, teamId });
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === 'Space') {
+                      e.preventDefault();
+                      if (team?.league?._id && player._id && teamId) {
+                        navigate(`/leagues/${team.league._id}/team/${teamId}/players/${player._id}`);
+                      } else {
+                        console.warn('Invalid navigation data:', { leagueId: team?.league?._id, player, teamId });
+                      }
+                    }
+                  }}
+                  role="link"
+                  tabIndex={0}
+                  aria-label={`View profile for ${player.playerName || 'Unknown'}`}
+                >
+                  <td className="border-b border-gray-100 px-3 py-2 text-gray-900">
+                    {player.playerName || 'Unknown'}
+                  </td>
+                  <td className="text-center border-b border-gray-200 px-3 py-2 text-gray-900">
+                    {player.jerseyNumber || 'N/A'}
+                  </td>
+                  <td className="text-center border-b border-gray-200 px-3 py-2 text-gray-900">
+                    {player.totalRebounds || 0}
+                  </td>
+                  <td className="text-center border-b border-gray-200 px-3 py-2 text-gray-900">
+                    {player.reboundsPerGame ? player.reboundsPerGame.toFixed(1) : '0.0'}
+                  </td>
                 </tr>
               );
             })}
@@ -312,43 +482,53 @@ export default function Team() {
                   return (
                     <tr
                       key={member?.player?._id}
-                      className={isGreyRow ? 'bg-gray-50 hover:bg-gray-100' : 'bg-white hover:bg-gray-50'}
+                      className={`${isGreyRow ? 'bg-gray-50 hover:bg-gray-100' : 'bg-white hover:bg-gray-50'} cursor-pointer`}
+                      onClick={() => {
+                        // Defensive check for valid data
+                        if (member?.player?._id && team?.league?._id) {
+                          navigate(`/leagues/${team.league._id}/team/${teamId}/players/${member.player._id}`);
+                        } else {
+                          console.warn('Invalid navigation data:', { member, team });
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === 'Space') {
+                          e.preventDefault();
+                          if (member?.player?._id && team?.league?._id) {
+                            navigate(`/leagues/${team.league._id}/team/${teamId}/players/${member.player._id}`);
+                          } else {
+                            console.warn('Invalid navigation data:', { member, team });
+                          }
+                        }
+                      }}
+                      role="link"
+                      tabIndex={0}
+                      aria-label={`View profile for ${member?.player?.user?.name || member?.player?.name || 'Unknown'}`}
                     >
                       <td
-                        className={`sticky left-0 border-b border-gray-100 px-2 py-2 font-medium whitespace-normal z-10 ${isGreyRow ? 'bg-gray-50 text-gray-900' : 'bg-white text-gray-900'}`}
+                        className={`sticky left-0 border-b border-gray-100 px-2 py-2 font-medium whitespace-normal z-10 ${isGreyRow ? 'bg-gray-50 text-gray-900' : 'bg-white text-gray-900'
+                          }`}
                         style={{ maxWidth: 150 }}
                       >
                         {index + 1}
                       </td>
                       <td
-                        className={`border-b border-gray-100 px-2 py-2 font-medium ${isGreyRow ? 'bg-gray-50' : 'bg-white'}`}
+                        className={`border-b border-gray-100 px-2 py-2 font-medium ${isGreyRow ? 'bg-gray-50' : 'bg-white'
+                          }`}
                       >
-                        {member?.player?._id && team?.league?._id ? (
-                          <Link
-                            to={`/league/${team.league._id}/team/${teamId}/players/${member.player._id}`}
-                            className="text-gray-900 hover:text-blue-600 hover:underline"
-                            aria-label={`View profile for ${member?.player?.user?.name || member?.player?.name || 'Unknown'}`}
-                          >
-                            {member?.player?.user?.name || member?.player?.name || 'Unknown'}
-                          </Link>
-                        ) : (
-                          <span className="text-gray-900">
-                            {member?.player?.user?.name || member?.player?.name || 'Unknown'}
-                          </span>
-                        )}
+                        <span className="text-gray-900">
+                          {member?.player?.user?.name || member?.player?.name || 'Unknown'}
+                        </span>
                       </td>
-                      <td
-                        className="border-b border-gray-100 px-3 py-2 text-center text-sm text-gray-700"
-                      >
+                      <td className="border-b border-gray-100 px-3 py-2 text-center text-sm text-gray-700">
                         {member?.player?.position || 'N/A'}
                       </td>
-                      <td
-                        className="border-b border-gray-100 px-3 py-2 text-center text-sm text-gray-700"
-                      >
+                      <td className="border-b border-gray-100 px-3 py-2 text-center text-sm text-gray-700">
                         {member?.role}
                       </td>
                       <td
-                        className={`border-b border-gray-100 px-3 py-2 text-center text-sm ${member.isActive ? 'text-green-600' : 'text-red-600'}`}
+                        className={`border-b border-gray-100 px-3 py-2 text-center text-sm ${member.isActive ? 'text-green-600' : 'text-red-600'
+                          }`}
                       >
                         {member?.isActive ? 'Active' : 'Inactive'}
                       </td>

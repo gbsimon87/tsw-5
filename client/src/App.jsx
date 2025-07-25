@@ -40,16 +40,19 @@ function AppContent() {
       {/* <main style={{ paddingTop: showNavbar ? '64px' : '0' }}> */}
       <main>
         <Routes>
+          {/* Public Routes */}
           <Route path="/" element={<Home />} />
           <Route path="/about" element={<About />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/upcoming-features" element={<UpcomingFeatures />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/leagues/public/:leagueId" element={<PublicFacingLeaguePage />} />
-          <Route path="/league/:leagueId/team/:teamId/players/:playerId" element={<PlayerProfile />} />
-          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/leagues/:leagueId/team/:teamId/players/:playerId" element={<PlayerProfile />} />
+
+          {/* Protected Routes */}
           <Route
-            path="/league/:leagueId/team/:teamId"
+            path="/leagues/:leagueId/team/:teamId"
             element={
               <ProtectedRoute>
                 <Team />
@@ -57,10 +60,42 @@ function AppContent() {
             }
           />
           <Route
-            path="/leagues/:leagueId/games/:gameId"
+            path="/leagues/:leagueId/game/:gameId"
             element={
               <ProtectedRoute>
                 <CompletedGamePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/leagues/:leagueId/games/:gameId/tracking"
+            element={
+              <ProtectedRoute>
+                <GameTracking />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/leagues/:leagueId/games"
+            element={
+              <ProtectedRoute>
+                <ManageGames />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/leagues/:leagueId/teams"
+            element={
+              <ProtectedRoute>
+                <ManageTeams />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/leagues/:leagueId"
+            element={
+              <ProtectedRoute>
+                <ManageLeagueEdit />
               </ProtectedRoute>
             }
           />
@@ -88,40 +123,11 @@ function AppContent() {
               </ProtectedRoute>
             }
           />
-          <Route
-            path="/leagues/:leagueId"
-            element={
-              <ProtectedRoute>
-                <ManageLeagueEdit />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/leagues/:leagueId/games"
-            element={
-              <ProtectedRoute>
-                <ManageGames />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/leagues/:leagueId/teams"
-            element={
-              <ProtectedRoute>
-                <ManageTeams />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/leagues/:leagueId/games/:gameId/tracking"
-            element={
-              <ProtectedRoute>
-                <GameTracking />
-              </ProtectedRoute>
-            }
-          />
+
+          {/* Fallback */}
           <Route path="*" element={<NotFound />} />
         </Routes>
+
       </main>
     </div>
   );

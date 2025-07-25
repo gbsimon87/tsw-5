@@ -78,12 +78,12 @@ export default function Login() {
             onError={() => setError('Google Login Failed')}
           />
         </div>
-        {/* <p className="mt-4 text-center">
+        <p className="mt-4 text-center">
           Don't have an account?{' '}
           <Link to="/register" className="text-blue-500 hover:underline">
             Register
           </Link>
-        </p> */}
+        </p>
       </div>
     </div>
   );

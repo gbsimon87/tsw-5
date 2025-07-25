@@ -13,6 +13,7 @@ import {
   ClipboardIcon,
   UsersIcon,
 } from '@heroicons/react/24/outline';
+import Unauthorized from './Unauthorized';
 import AdminPanelPageHeader from './AdminPanelPageHeader';
 
 export default function ManageTeams() {
@@ -46,6 +47,17 @@ export default function ManageTeams() {
           headers: { Authorization: `Bearer ${user.token}` },
         });
         setLeague(response.data);
+
+        const isAdmin = response.data.admins?.some(admin => admin._id === user._id) || false;
+        const isManager = response.data.managers?.some(manager => manager._id === user._id) || false;
+        console.log({ isAdmin, isManager });
+
+        if (!isAdmin) {
+          setError('You are not authorized to manage teams for this league');
+          setLoading(false);
+          return;
+        }
+
         const activeSeason = response.data.seasons.find(s => s.isActive)?.name || '';
         setSelectedSeason(activeSeason);
         if (activeSeason) {
@@ -278,6 +290,18 @@ export default function ManageTeams() {
       });
     }
   };
+
+  if (error === 'You are not authorized to manage teams for this league') {
+    return <Unauthorized />;
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-[var(--page-height)] bg-gray-50 flex items-center justify-center">
+        <p className="text-center text-red-500 text-lg">{error}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-[var(--page-height)] bg-gray-50 py-4 px-4">
