@@ -484,7 +484,6 @@ export default function ManageGames() {
     );
   }
 
-
   return (
     <div className="min-h-[var(--page-height)] bg-gray-50 py-4 px-4">
       <div className="max-w-4xl mx-auto">
