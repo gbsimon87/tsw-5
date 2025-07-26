@@ -61,11 +61,16 @@ const PublicFacingLeaguePage = () => {
           <p className="text-white text-left font-medium break-words" role="alert" aria-live="assertive">Unable to load league details</p>
         ) : (
           <>
-            {league.logo && (
+            {league.logo ? (
               <img
                 src={league.logo}
                 alt={`${league.name} logo`}
-                className="w-16 h-16 object-cover rounded-full mb-4 border border-gray-200"
+                className="w-16 h-16 object-cover rounded-full mb-4 border border-gray-800"
+              />
+            ) : (
+              <div
+                className="w-16 h-16 bg-gray-300 rounded-full mb-4 border border-gray-800"
+                aria-hidden="true"
               />
             )}
             <h1 className="text-xl md:text-3xl font-extrabold tracking-tight break-words">{league.name || 'Unknown League'}</h1>
