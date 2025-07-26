@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { debounce } from 'lodash';
 import axios from 'axios';
 import {
-  ShieldExclamationIcon,
   TrashIcon,
   UserGroupIcon,
   UserCircleIcon,
@@ -18,6 +17,7 @@ import Skeleton from 'react-loading-skeleton';
 import Unauthorized from './Unauthorized';
 import AdminPanelPageHeader from './AdminPanelPageHeader';
 import { useAuth } from '../context/AuthContext';
+import { positionOptions } from '../utils/positionOptions';
 
 export default function ManageTeams() {
   const { leagueId } = useParams();
@@ -134,6 +134,29 @@ export default function ManageTeams() {
     } catch (err) {
       console.error('Update jersey number error:', err.response || err);
       const errorMessage = err.response?.data?.error || 'Failed to update jersey number';
+      setError(errorMessage);
+      toast.error(errorMessage, {
+        position: 'top-right',
+        autoClose: 3000,
+      });
+    }
+  }, 500);
+
+  const handlePositionChange = debounce(async (teamId, playerId, position) => {
+    try {
+      await axios.patch(
+        `/api/players/${playerId}`,
+        { position: position || null, leagueId },
+        { headers: { Authorization: `Bearer ${user.token}` } }
+      );
+      toast.success('Position updated successfully!', {
+        position: 'top-right',
+        autoClose: 3000,
+      });
+      fetchTeams(selectedSeason);
+    } catch (err) {
+      console.error('Update position error:', err.response || err);
+      const errorMessage = err.response?.data?.error || 'Failed to update position';
       setError(errorMessage);
       toast.error(errorMessage, {
         position: 'top-right',
@@ -574,18 +597,6 @@ export default function ManageTeams() {
                                   </dd>
                                 </dl>
                                 <div className="flex items-center gap-2">
-                                  <button
-                                    type="button"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      copyToClipboard(team?.secretKey);
-                                    }}
-                                    className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition focus:ring-2 focus:ring-green-600 focus:outline-none"
-                                    aria-label={`Copy secret key for ${team?.name || 'Unknown'}`}
-                                  >
-                                    <ClipboardIcon className="w-4 h-4" aria-hidden="true" />
-                                    {copiedKey === team?.secretKey ? 'Copied!' : 'Copy Key'}
-                                  </button>
                                   {team?.isActive && (
                                     <button
                                       type="button"
@@ -600,6 +611,17 @@ export default function ManageTeams() {
                                       <TrashIcon className="w-5 h-5" aria-hidden="true" />
                                     </button>
                                   )}
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      copyToClipboard(team?.secretKey);
+                                    }}
+                                    className="flex items-center justify-center w-8 h-8 text-gray-600 transition focus:ring-2 focus:outline-none"
+                                    aria-label={`Copy secret key for ${team?.name || 'Unknown'}`}
+                                  >
+                                    <ClipboardIcon className="w-5 h-5" aria-hidden="true" />
+                                  </button>
                                 </div>
                                 <div className="flex items-center justify-end">
                                   {openTeamId === team?._id ? (
@@ -631,81 +653,99 @@ export default function ManageTeams() {
                               </p>
                             ) : (
                               <ul className="space-y-4" role="list" aria-label="Team members">
-                                {team?.members?.map((member, idx) => (
-                                  <li
-                                    key={member?.player?._id || `member-${idx}`}
-                                    className={`flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between py-4 ${idx !== team.members.length - 1 ? 'border-b border-gray-200' : ''
-                                      }`}
-                                    aria-label={`Member ${member?.player?.user?.name || 'Unknown'}`}
-                                  >
-                                    <div className="flex items-center gap-4">
-                                      {member?.player?.user?.picture ? (
-                                        <img
-                                          src={member.player.user.picture}
-                                          alt={`${member?.player?.user?.name || 'Unknown'} profile`}
-                                          className="w-10 h-10 rounded-full shadow border-2 border-gray-200 bg-white"
-                                          onError={(e) => (e.target.src = '/placeholder.png')}
-                                        />
-                                      ) : (
-                                        <div
-                                          className="w-10 h-10 rounded-full bg-gray-100 border-2 border-gray-200 flex items-center justify-center shadow"
-                                          aria-hidden="true"
+                                {team?.members?.map((member, idx) => {
+                                  return (
+                                    <li
+                                      key={member?.player?._id || `member-${idx}`}
+                                      className={`flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between py-4 ${idx !== team.members.length - 1 ? 'border-b border-gray-200' : ''
+                                        }`}
+                                      aria-label={`Member ${member?.player?.user?.name || 'Unknown'}`}
+                                    >
+                                      <div className="flex items-center gap-4">
+                                        {member?.player?.user?.picture ? (
+                                          <img
+                                            src={member.player.user.picture}
+                                            alt={`${member?.player?.user?.name || 'Unknown'} profile`}
+                                            className="w-10 h-10 rounded-full shadow border-2 border-gray-200 bg-white"
+                                            onError={(e) => (e.target.src = '/placeholder.png')}
+                                          />
+                                        ) : (
+                                          <div
+                                            className="w-10 h-10 rounded-full bg-gray-100 border-2 border-gray-200 flex items-center justify-center shadow"
+                                            aria-hidden="true"
+                                          >
+                                            <UserCircleIcon className="w-6 h-6 text-gray-400" aria-hidden="true" />
+                                          </div>
+                                        )}
+                                        <span
+                                          className={`text-base ${member?.isActive ? 'font-bold text-gray-800' : 'text-gray-400 italic'
+                                            }`}
                                         >
-                                          <UserCircleIcon className="w-6 h-6 text-gray-400" aria-hidden="true" />
-                                        </div>
-                                      )}
-                                      <span
-                                        className={`text-base ${member?.isActive ? 'font-bold text-gray-800' : 'text-gray-400 italic'
-                                          }`}
-                                      >
-                                        {member?.player?.user?.name || 'Unknown'}
-                                        {!member?.isActive && <span className="ml-2">(Inactive)</span>}
-                                      </span>
-                                    </div>
-                                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
-                                      <select
-                                        value={member?.player?.jerseyNumber ?? ''}
-                                        onChange={(e) =>
-                                          handleJerseyNumberChange(team?._id, member?.player?._id, e.target.value)
-                                        }
-                                        className="p-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-600 focus:outline-none w-full sm:w-20"
-                                        disabled={!member?.isActive}
-                                        aria-label={`Jersey number for ${member?.player?.user?.name || 'Unknown'}`}
-                                      >
-                                        <option value="">No Jersey</option>
-                                        {[...Array(100).keys()].map((num) => (
-                                          <option key={num} value={num}>{num}</option>
-                                        ))}
-                                      </select>
-                                      <select
-                                        value={member?.role || 'player'}
-                                        onChange={(e) =>
-                                          handleChangeRole(team?._id, member?.player?._id, e.target.value)
-                                        }
-                                        className="p-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-600 focus:outline-none w-full sm:w-auto"
-                                        disabled={!member?.isActive}
-                                        aria-label={`Role for ${member?.player?.user?.name || 'Unknown'}`}
-                                      >
-                                        <option value="player">Player</option>
-                                        <option value="manager">Manager</option>
-                                      </select>
-                                      {member?.isActive && (
-                                        <button
-                                          type="button"
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleDeactivateMember(team?._id, member?.player?._id);
-                                          }}
-                                          className="flex items-center justify-center w-8 h-8 text-gray-600 hover:text-red-600 transition focus:ring-2 focus:ring-red-600 focus:outline-none rounded-full"
-                                          aria-label={`Deactivate member ${member?.player?.user?.name || 'Unknown'} from team ${team?.name || 'Unknown'}`}
-                                          title="Deactivate Member"
+                                          {member?.player?.user?.name || 'Unknown'}
+                                          {!member?.isActive && <span className="ml-2">(Inactive)</span>}
+                                        </span>
+                                      </div>
+                                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+                                        <select
+                                          value={member?.player?.jerseyNumber ?? ''}
+                                          onChange={(e) =>
+                                            handleJerseyNumberChange(team?._id, member?.player?._id, e.target.value)
+                                          }
+                                          className="p-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-600 focus:outline-none w-full sm:w-20"
+                                          disabled={!member?.isActive}
+                                          aria-label={`Jersey number for ${member?.player?.user?.name || 'Unknown'}`}
                                         >
-                                          <TrashIcon className="w-5 h-5" aria-hidden="true" />
-                                        </button>
-                                      )}
-                                    </div>
-                                  </li>
-                                ))}
+                                          <option value="">No Jersey</option>
+                                          {[...Array(100).keys()].map((num) => (
+                                            <option key={num} value={num}>{num}</option>
+                                          ))}
+                                        </select>
+                                        <select
+                                          value={member?.role || 'player'}
+                                          onChange={(e) =>
+                                            handleChangeRole(team?._id, member?.player?._id, e.target.value)
+                                          }
+                                          className="p-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-600 focus:outline-none w-full sm:w-auto"
+                                          disabled={!member?.isActive}
+                                          aria-label={`Role for ${member?.player?.user?.name || 'Unknown'}`}
+                                        >
+                                          <option value="player">Player</option>
+                                          <option value="manager">Manager</option>
+                                        </select>
+                                        <select
+                                          value={member?.player?.position || ''}
+                                          onChange={(e) =>
+                                            handlePositionChange(team?._id, member?.player?._id, e.target.value)
+                                          }
+                                          className="p-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-600 focus:outline-none w-full sm:w-auto"
+                                          disabled={!member?.isActive}
+                                          aria-label={`Position for ${member?.player?.user?.name || 'Unknown'}`}
+                                        >
+                                          <option value="">No Position</option>
+                                          {positionOptions[league?.sportType]?.map((pos) => (
+                                            <option key={pos.value} value={pos.value}>
+                                              {pos.label}
+                                            </option>
+                                          ))}
+                                        </select>
+                                        {member?.isActive && (
+                                          <button
+                                            type="button"
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              handleDeactivateMember(team?._id, member?.player?._id);
+                                            }}
+                                            className="flex items-center justify-center w-8 h-8 text-gray-600 hover:text-red-600 transition focus:ring-2 focus:ring-red-600 focus:outline-none rounded-full"
+                                            aria-label={`Deactivate member ${member?.player?.user?.name || 'Unknown'} from team ${team?.name || 'Unknown'}`}
+                                            title="Deactivate Member"
+                                          >
+                                            <TrashIcon className="w-5 h-5" aria-hidden="true" />
+                                          </button>
+                                        )}
+                                      </div>
+                                    </li>
+                                  );
+                                })}
                               </ul>
                             )}
                           </section>
