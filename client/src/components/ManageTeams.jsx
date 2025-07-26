@@ -11,6 +11,8 @@ import {
   PlusIcon,
   ClipboardIcon,
   UsersIcon,
+  ChevronDownIcon,
+  ChevronUpIcon
 } from '@heroicons/react/24/outline';
 import Skeleton from 'react-loading-skeleton';
 import Unauthorized from './Unauthorized';
@@ -28,6 +30,7 @@ export default function ManageTeams() {
   const [copiedKey, setCopiedKey] = useState(null);
   const [activeTab, setActiveTab] = useState('create');
   const [loading, setLoading] = useState(true);
+  const [openTeamId, setOpenTeamId] = useState(null);
 
   const tabs = [
     {
@@ -529,61 +532,98 @@ export default function ManageTeams() {
                       {teams.map((team) => (
                         <article
                           key={team?._id || `team-${Math.random()}`}
-                          className="bg-white p-4 rounded-md border border-gray-100"
+                          className="bg-white rounded-md shadow-sm"
                           aria-label={`Team card for ${team?.name || 'Unknown'}`}
                         >
-                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                            <div className="flex items-center gap-5">
-                              {team?.logo ? (
-                                <img
-                                  src={team.logo}
-                                  alt={`${team?.name || 'Unknown'} logo`}
-                                  className="w-12 h-12 rounded-full shadow object-cover border-2 border-gray-200 bg-white"
-                                  onError={(e) => (e.target.src = '/placeholder.png')}
-                                />
-                              ) : (
-                                <div
-                                  className="w-12 h-12 rounded-full bg-gray-100 border-2 border-gray-200 flex items-center justify-center shadow"
-                                  aria-hidden="true"
-                                >
-                                  <UserGroupIcon className="w-6 h-6 text-gray-400" aria-hidden="true" />
-                                </div>
-                              )}
-                              <h3 className="text-xl font-medium flex items-center gap-2">
-                                {team?.name || 'Unknown'}
-                                {!team?.isActive && (
-                                  <span className="text-sm text-gray-400 font-normal">(Inactive)</span>
+                          <header>
+                            <button
+                              className="w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-600 rounded-md p-4 transition-colors hover:bg-gray-50"
+                              onClick={() => setOpenTeamId(openTeamId === team?._id ? null : team?._id)}
+                              aria-label={`Toggle team details for ${team?.name || 'Unknown'}`}
+                              aria-expanded={openTeamId === team?._id}
+                              aria-controls={`members-${team?._id || `team-${Math.random()}`}`}
+                            >
+                              <div className="flex items-center gap-5">
+                                {team?.logo ? (
+                                  <img
+                                    src={team.logo}
+                                    alt={`${team?.name || 'Unknown'} logo`}
+                                    className="w-12 h-12 rounded-full shadow object-cover border-2 border-gray-200 bg-white"
+                                    onError={(e) => (e.target.src = '/placeholder.png')}
+                                  />
+                                ) : (
+                                  <div
+                                    className="w-12 h-12 rounded-full bg-gray-100 border-2 border-gray-200 flex items-center justify-center shadow"
+                                    aria-hidden="true"
+                                  >
+                                    <UserGroupIcon className="w-6 h-6 text-gray-400" aria-hidden="true" />
+                                  </div>
                                 )}
-                              </h3>
-                            </div>
-                            {team?.isActive && (
-                              <button
-                                onClick={() => handleDeactivateTeam(team?._id)}
-                                className="w-fit flex items-center gap-2 text-dark px-3 py-2 rounded-md hover:bg-red-700 hover:text-white transition focus:ring-2 focus:ring-red-600 focus:outline-none"
-                                aria-label={`Deactivate team ${team?.name || 'Unknown'}`}
-                              >
-                                <TrashIcon className="w-4 h-4" aria-hidden="true" />
-                                Deactivate
-                              </button>
-                            )}
-                          </div>
-                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-4">
-                            <div className="flex flex-col">
-                              <span className="text-xs text-gray-500 font-mono">Secret Key:</span>
-                              <span className="text-sm text-gray-600 font-mono break-all">
-                                {team?.secretKey || 'N/A'}
-                              </span>
-                              <button
-                                onClick={() => copyToClipboard(team?.secretKey)}
-                                className="w-fit mt-4 flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition focus:ring-2 focus:ring-green-600 focus:outline-none"
-                                aria-label={`Copy secret key for ${team?.name || 'Unknown'}`}
-                              >
-                                <ClipboardIcon className="w-4 h-4" aria-hidden="true" />
-                                {copiedKey === team?.secretKey ? 'Copied!' : 'Copy Key'}
-                              </button>
-                            </div>
-                          </div>
-                          <div className="mt-6">
+                                <h3 className="text-xl font-medium flex items-center gap-2">
+                                  {team?.name || 'Unknown'}
+                                  {!team?.isActive && (
+                                    <span className="text-sm text-gray-400 font-normal">(Inactive)</span>
+                                  )}
+                                </h3>
+                              </div>
+                              <div className="flex items-center gap-4">
+                                <dl className="flex flex-col">
+                                  <dt className="text-xs text-gray-500 font-mono sr-only">Secret Key</dt>
+                                  <dd className="text-sm text-left text-gray-600 font-mono break-all max-w-[200px] sm:max-w-[300px]">
+                                    {team?.secretKey || 'N/A'}
+                                  </dd>
+                                </dl>
+                                <div className="flex items-center gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      copyToClipboard(team?.secretKey);
+                                    }}
+                                    className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition focus:ring-2 focus:ring-green-600 focus:outline-none"
+                                    aria-label={`Copy secret key for ${team?.name || 'Unknown'}`}
+                                  >
+                                    <ClipboardIcon className="w-4 h-4" aria-hidden="true" />
+                                    {copiedKey === team?.secretKey ? 'Copied!' : 'Copy Key'}
+                                  </button>
+                                  {team?.isActive && (
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleDeactivateTeam(team?._id);
+                                      }}
+                                      className="flex items-center justify-center w-8 h-8 text-gray-600 hover:text-red-600 transition focus:ring-2 focus:ring-red-600 focus:outline-none rounded-full"
+                                      aria-label={`Deactivate team ${team?.name || 'Unknown'}`}
+                                      title="Deactivate Team"
+                                    >
+                                      <TrashIcon className="w-5 h-5" aria-hidden="true" />
+                                    </button>
+                                  )}
+                                </div>
+                                <div className="flex items-center justify-end">
+                                  {openTeamId === team?._id ? (
+                                    <ChevronUpIcon
+                                      className="w-5 h-5 text-gray-600 transform transition-transform duration-200"
+                                      aria-hidden="true"
+                                    />
+                                  ) : (
+                                    <ChevronDownIcon
+                                      className="w-5 h-5 text-gray-600 transform transition-transform duration-200"
+                                      aria-hidden="true"
+                                    />
+                                  )}
+                                </div>
+                              </div>
+                            </button>
+                          </header>
+                          <section
+                            id={`members-${team?._id || `team-${Math.random()}`}`}
+                            className={`p-4 ${openTeamId === team?._id ? '' : 'hidden'}`}
+                            aria-hidden={openTeamId !== team?._id}
+                            role="region"
+                            aria-labelledby={`team-header-${team?._id || `team-${Math.random()}`}`}
+                          >
                             <h4 className="text-lg font-medium mb-2">Members</h4>
                             {team?.members?.length === 0 ? (
                               <p className="text-gray-600" role="alert" aria-live="polite">
@@ -615,9 +655,7 @@ export default function ManageTeams() {
                                         </div>
                                       )}
                                       <span
-                                        className={`text-base ${member?.isActive
-                                          ? 'font-bold text-gray-800'
-                                          : 'text-gray-400 italic'
+                                        className={`text-base ${member?.isActive ? 'font-bold text-gray-800' : 'text-gray-400 italic'
                                           }`}
                                       >
                                         {member?.player?.user?.name || 'Unknown'}
@@ -628,11 +666,7 @@ export default function ManageTeams() {
                                       <select
                                         value={member?.player?.jerseyNumber ?? ''}
                                         onChange={(e) =>
-                                          handleJerseyNumberChange(
-                                            team?._id,
-                                            member?.player?._id,
-                                            e.target.value
-                                          )
+                                          handleJerseyNumberChange(team?._id, member?.player?._id, e.target.value)
                                         }
                                         className="p-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-600 focus:outline-none w-full sm:w-20"
                                         disabled={!member?.isActive}
@@ -640,9 +674,7 @@ export default function ManageTeams() {
                                       >
                                         <option value="">No Jersey</option>
                                         {[...Array(100).keys()].map((num) => (
-                                          <option key={num} value={num}>
-                                            {num}
-                                          </option>
+                                          <option key={num} value={num}>{num}</option>
                                         ))}
                                       </select>
                                       <select
@@ -659,14 +691,16 @@ export default function ManageTeams() {
                                       </select>
                                       {member?.isActive && (
                                         <button
-                                          onClick={() =>
-                                            handleDeactivateMember(team?._id, member?.player?._id)
-                                          }
-                                          className="w-fit flex items-center gap-2 text-dark px-3 py-2 rounded-md hover:bg-red-700 hover:text-white transition focus:ring-2 focus:ring-red-600 focus:outline-none"
+                                          type="button"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleDeactivateMember(team?._id, member?.player?._id);
+                                          }}
+                                          className="flex items-center justify-center w-8 h-8 text-gray-600 hover:text-red-600 transition focus:ring-2 focus:ring-red-600 focus:outline-none rounded-full"
                                           aria-label={`Deactivate member ${member?.player?.user?.name || 'Unknown'} from team ${team?.name || 'Unknown'}`}
+                                          title="Deactivate Member"
                                         >
-                                          <ShieldExclamationIcon className="w-4 h-4" aria-hidden="true" />
-                                          Deactivate
+                                          <TrashIcon className="w-5 h-5" aria-hidden="true" />
                                         </button>
                                       )}
                                     </div>
@@ -674,7 +708,7 @@ export default function ManageTeams() {
                                 ))}
                               </ul>
                             )}
-                          </div>
+                          </section>
                         </article>
                       ))}
                     </div>
