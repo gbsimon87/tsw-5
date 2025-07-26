@@ -751,6 +751,13 @@ export default function Team() {
                   <div
                     key={game?._id || game.date}
                     className="border border-gray-200 rounded-lg p-4 bg-white"
+                    onClick={() => {
+                      if (team?.league?._id && game._id) {
+                        navigate(`/leagues/${team.league._id}/game/${game._id}`);
+                      } else {
+                        console.warn('Invalid navigation data:', { team, game });
+                      }
+                    }}
                   >
                     <div className="flex justify-between items-center mb-2">
                       <p className="text-sm text-gray-500">
