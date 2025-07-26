@@ -79,13 +79,6 @@ const PublicFacingLeaguePage = () => {
             </p>
             {league.season && <p className="text-base md:text-lg mt-1 break-words">Season: {league.season}</p>}
             {league.location && <p className="text-base md:text-lg mt-1 break-words">Location: {league.location}</p>}
-            <Link
-              to={`/teams/join`}
-              className="mt-4 inline-block bg-white text-blue-600 font-semibold py-2 px-4 rounded-lg hover:bg-gray-100 focus:ring-2 focus:ring-white focus:outline-none"
-              aria-label="Join this league"
-            >
-              Join League
-            </Link>
           </>
         )}
       </section>
@@ -176,7 +169,6 @@ const PublicFacingLeaguePage = () => {
           </div>
         )}
       </section>
-
 
       {/* League Leaders - Points */}
       <section className="bg-white shadow-lg rounded-xl p-6 border border-gray-100" role="region" aria-label="League Leaders - Points">
