@@ -58,29 +58,41 @@ const PublicFacingLeaguePage = () => {
       {/* League Header */}
       <section className="bg-gradient-to-r from-blue-600 to-blue-800 text-white shadow-lg rounded-xl p-4 sm:p-6 border border-gray-100" role="region" aria-label="League Header">
         {error || !league ? (
-          <p className="text-white text-left font-medium truncate" role="alert" aria-live="assertive">Unable to load league details</p>
+          <p className="text-white text-left font-medium break-words" role="alert" aria-live="assertive">Unable to load league details</p>
         ) : (
           <>
-            {league.logo && (
+            {league.logo ? (
               <img
                 src={league.logo}
                 alt={`${league.name} logo`}
-                className="w-16 h-16 object-cover rounded-full mb-4 border border-gray-200"
+                className="w-16 h-16 object-cover rounded-full mb-4 border border-gray-800"
+              />
+            ) : (
+              <div
+                className="w-16 h-16 bg-gray-300 rounded-full mb-4 border border-gray-800"
+                aria-hidden="true"
               />
             )}
-            <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight truncate">{league.name || 'Unknown League'}</h1>
-            <p className="text-lg sm:text-xl font-medium mt-2 truncate">
+            <h1 className="text-xl md:text-3xl font-extrabold tracking-tight break-words">{league.name || 'Unknown League'}</h1>
+            <p className="text-base md:text-lg font-medium mt-2 break-words">
               Sport: {league.sportType ? league.sportType.charAt(0).toUpperCase() + league.sportType.slice(1) : 'Unknown'}
             </p>
-            {league.season && <p className="text-base sm:text-lg mt-1 truncate">Season: {league.season}</p>}
-            {league.location && <p className="text-base sm:text-lg mt-1 truncate">Location: {league.location}</p>}
+            {league.season && <p className="text-base md:text-lg mt-1 break-words">Season: {league.season}</p>}
+            {league.location && <p className="text-base md:text-lg mt-1 break-words">Location: {league.location}</p>}
+            <Link
+              to={`/teams/join`}
+              className="mt-4 inline-block bg-white text-blue-600 font-semibold py-2 px-4 rounded-lg hover:bg-gray-100 focus:ring-2 focus:ring-white focus:outline-none"
+              aria-label="Join this league"
+            >
+              Join League
+            </Link>
           </>
         )}
       </section>
 
       {/* Team Standings */}
       <section className="bg-white shadow-lg rounded-xl p-6 border border-gray-100" role="region" aria-label="Team Standings">
-        <h2 className="text-3xl font-bold text-gray-900 mb-4">Team Standings</h2>
+        <h2 className="text-base md:text-2xl font-bold text-gray-900 mb-4 break-words">Team Standings</h2>
         {error || !league || league.standings?.length === 0 ? (
           <p className="text-gray-700 text-left font-medium" role="alert" aria-live="assertive">No standings available. Check back later.</p>
         ) : (
@@ -88,33 +100,25 @@ const PublicFacingLeaguePage = () => {
             <table className="min-w-full divide-y divide-gray-200" aria-label="Team standings table">
               <thead className="bg-gray-100 sticky top-0 z-10">
                 <tr>
-                  <th scope="col" className="px-4 sm:px-6 py-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider snap-start">Team</th>
-                  <th scope="col" className="px-4 sm:px-6 py-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider snap-start">W</th>
-                  <th scope="col" className="px-4 sm:px-6 py-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider snap-start">L</th>
-                  <th scope="col" className="px-4 sm:px-6 py-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider snap-start">PCT</th>
+                  <th scope="col" className="px-4 sm:px-6 py-3 text-center text-sm font-semibold text-gray-700 uppercase tracking-wider snap-start">Team</th>
+                  <th scope="col" className="px-4 sm:px-6 py-3 text-center text-sm font-semibold text-gray-700 uppercase tracking-wider snap-start">W</th>
+                  <th scope="col" className="px-4 sm:px-6 py-3 text-center text-sm font-semibold text-gray-700 uppercase tracking-wider snap-start">L</th>
+                  <th scope="col" className="px-4 sm:px-6 py-3 text-center text-sm font-semibold text-gray-700 uppercase tracking-wider snap-start">PCT</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {league.standings.map((team) => (
-                  <tr
-                    key={team._id}
-                    className="hover:bg-gray-50 cursor-pointer transition-colors"
-                    onClick={() => navigate(`/leagues/${leagueId}/team/${team._id}`)}
-                    tabIndex={0}
-                    onKeyDown={(e) => e.key === 'Enter' && navigate(`/leagues/${leagueId}/team/${team._id}`)}
-                    role="button"
-                    aria-label={`View details for team ${team.name || 'Unnamed Team'}`}
-                  >
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  <tr key={team._id}>
+                    <td className="px-2 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                       {team.name || 'Unnamed Team'}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                    <td className="px-2 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-center text-sm text-gray-700">
                       {team.wins || 0}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                    <td className="px-2 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-center text-sm text-gray-700">
                       {team.losses || 0}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                    <td className="px-2 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-center text-sm text-gray-700">
                       {(team.pct ? (team.pct * 100).toFixed(1) : 0)}%
                     </td>
                   </tr>
@@ -127,78 +131,78 @@ const PublicFacingLeaguePage = () => {
 
       {/* Games */}
       <section className="bg-white shadow-lg rounded-xl p-6 border border-gray-100" role="region" aria-label="Games">
-        <h2 className="text-3xl font-bold text-gray-900 mb-4">Games</h2>
+        <h2 className="text-base md:text-2xl font-bold text-gray-900 mb-4 break-words">Games</h2>
         {error || !league || league.games?.length === 0 ? (
-          <p className="text-gray-700 text-left font-medium" role="alert" aria-live="assertive">No games found. Check back later.</p>
+          <p className="text-gray-600 text-left font-medium" role="alert" aria-live="true">
+            No games found. Check back later.
+          </p>
         ) : (
-          <div className="overflow-x-auto snap-x">
-            <table className="min-w-full divide-y divide-gray-200" aria-label="Team standings table">
-              <thead className="bg-gray-100 sticky top-0 z-10">
-                <tr>
-                  <th scope="col" className="px-4 sm:px-6 py-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider snap-start">Team</th>
-                  <th scope="col" className="px-4 sm:px-6 py-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider snap-start">W</th>
-                  <th scope="col" className="px-4 sm:px-6 py-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider snap-start">L</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {league.games
-                  .sort((a, b) => new Date(b.date) - new Date(a.date))
-                  .map((game) => (
-                    <tr
-                      key={game._id || game.date}
-                      className="hover:bg-gray-50 transition-colors"
-                      tabIndex={0}
-                      onKeyDown={(e) => e.key === 'Enter' && navigate(`/leagues/${leagueId}/game/${game._id}`)}
-                      role="button"
-                      aria-label={`View details for game on ${new Date(game.date).toLocaleDateString()}`}
+          <div className="space-y-4">
+            {league.games
+              .sort((a, b) => new Date(b.date) - new Date(a.date))
+              .map((game) => (
+                <div
+                  key={game._id || game.date}
+                  className="border border-gray-200 rounded-lg p-4 bg-white"
+                >
+                  <div className="flex justify-between items-center mb-2">
+                    <p className="text-sm text-gray-500">
+                      {new Date(game.date).toLocaleDateString('en-US', {
+                        weekday: 'short',
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                      })}
+                    </p>
+                    <span
+                      className={`text-xs font-semibold px-2 py-1 rounded-full ${game.isCompleted ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}
                     >
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                        {new Date(game.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                        {game.teamScores
-                          .map((ts) => {
-                            const team = game.teams.find((t) => t._id === ts.team);
-                            return `${team?.name || 'Unknown'}: ${ts.score}`;
-                          })
-                          .join(' - ')}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                        {game.isCompleted ? 'Completed' : 'Scheduled'}
-                      </td>
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
+                      {game.isCompleted ? 'Completed' : 'Scheduled'}
+                    </span>
+                  </div>
+                  <div className="flex flex-col divide-y divide-gray-200">
+                    {game.teamScores.map((ts, idx) => {
+                      const team = game.teams.find((t) => t._id === ts.team);
+                      return (
+                        <div key={ts.team} className="flex justify-between py-2">
+                          <span className="text-sm font-medium text-gray-900 truncate max-w-[60%]">{team?.name || 'Unknown'}</span>
+                          <span className="text-sm font-bold text-gray-900">{ts.score || 0}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
           </div>
         )}
       </section>
 
+
       {/* League Leaders - Points */}
       <section className="bg-white shadow-lg rounded-xl p-6 border border-gray-100" role="region" aria-label="League Leaders - Points">
-        <h2 className="text-3xl font-bold text-gray-900 mb-4">League Leaders - Points</h2>
+        <h2 className="text-base md:text-2xl font-bold text-gray-900 mb-4 break-words">League Leaders - Points</h2>
         {error || !league || league.leagueLeaders?.length === 0 ? (
           <p className="text-gray-700 text-left font-medium" role="alert" aria-live="assertive">No league leaders available. Check back later.</p>
         ) : (
           <div className="overflow-x-auto snap-x">
-            <table className="min-w-full divide-y divide-gray-200" aria-label="Team standings table">
+            <table className="min-w-full divide-y divide-gray-200" aria-label="League leaders points table">
               <thead className="bg-gray-100 sticky top-0 z-10">
                 <tr>
-                  <th scope="col" className="px-4 sm:px-6 py-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider snap-start">Team</th>
-                  <th scope="col" className="px-4 sm:px-6 py-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider snap-start">W</th>
-                  <th scope="col" className="px-4 sm:px-6 py-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider snap-start">L</th>
+                  <th scope="col" className="px-4 sm:px-6 py-3 text-center text-sm font-semibold text-gray-700 uppercase tracking-wider snap-start">Player</th>
+                  <th scope="col" className="px-4 sm:px-6 py-3 text-center text-sm font-semibold text-gray-700 uppercase tracking-wider snap-start">Team</th>
+                  <th scope="col" className="px-4 sm:px-6 py-3 text-center text-sm font-semibold text-gray-700 uppercase tracking-wider snap-start">Points</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {league.leagueLeaders.map((leader) => (
                   <tr key={leader._id}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    <td className="px-2 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                       {leader.name || 'Unknown Player'}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                    <td className="px-2 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-center text-sm text-gray-700">
                       {leader.team || 'Unknown Team'}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                    <td className="px-2 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-center text-sm text-gray-700">
                       {leader.points || 0}
                     </td>
                   </tr>
@@ -211,29 +215,29 @@ const PublicFacingLeaguePage = () => {
 
       {/* League Leaders - Assists */}
       <section className="bg-white shadow-lg rounded-xl p-6 border border-gray-100" role="region" aria-label="League Leaders - Assists">
-        <h2 className="text-3xl font-bold text-gray-900 mb-4">League Leaders - Assists</h2>
+        <h2 className="text-base md:text-2xl font-bold text-gray-900 mb-4 break-words">League Leaders - Assists</h2>
         {error || !league || league.leagueAssistLeaders?.length === 0 ? (
           <p className="text-gray-700 text-left font-medium" role="alert" aria-live="assertive">No league leaders available. Check back later.</p>
         ) : (
           <div className="overflow-x-auto snap-x">
-            <table className="min-w-full divide-y divide-gray-200" aria-label="Team standings table">
+            <table className="min-w-full divide-y divide-gray-200" aria-label="League leaders assists table">
               <thead className="bg-gray-100 sticky top-0 z-10">
                 <tr>
-                  <th scope="col" className="px-4 sm:px-6 py-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider snap-start">Team</th>
-                  <th scope="col" className="px-4 sm:px-6 py-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider snap-start">W</th>
-                  <th scope="col" className="px-4 sm:px-6 py-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider snap-start">L</th>
+                  <th scope="col" className="px-4 sm:px-6 py-3 text-center text-sm font-semibold text-gray-700 uppercase tracking-wider snap-start">Player</th>
+                  <th scope="col" className="px-4 sm:px-6 py-3 text-center text-sm font-semibold text-gray-700 uppercase tracking-wider snap-start">Team</th>
+                  <th scope="col" className="px-4 sm:px-6 py-3 text-center text-sm font-semibold text-gray-700 uppercase tracking-wider snap-start">Assists</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {league.leagueAssistLeaders.map((leader) => (
                   <tr key={leader._id}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    <td className="px-2 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                       {leader.name || 'Unknown Player'}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                    <td className="px-2 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-center text-sm text-gray-700">
                       {leader.team || 'Unknown Team'}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                    <td className="px-2 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-center text-sm text-gray-700">
                       {leader.assists || 0}
                     </td>
                   </tr>
@@ -246,29 +250,29 @@ const PublicFacingLeaguePage = () => {
 
       {/* League Leaders - Rebounds */}
       <section className="bg-white shadow-lg rounded-xl p-6 border border-gray-100" role="region" aria-label="League Leaders - Rebounds">
-        <h2 className="text-3xl font-bold text-gray-900 mb-4">League Leaders - Rebounds</h2>
+        <h2 className="text-base md:text-2xl font-bold text-gray-900 mb-4 break-words">League Leaders - Rebounds</h2>
         {error || !league || league.leagueReboundLeaders?.length === 0 ? (
           <p className="text-gray-700 text-left font-medium" role="alert" aria-live="assertive">No league leaders available. Check back later.</p>
         ) : (
           <div className="overflow-x-auto snap-x">
-            <table className="min-w-full divide-y divide-gray-200" aria-label="Team standings table">
+            <table className="min-w-full divide-y divide-gray-200" aria-label="League leaders rebounds table">
               <thead className="bg-gray-100 sticky top-0 z-10">
                 <tr>
-                  <th scope="col" className="px-4 sm:px-6 py-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider snap-start">Team</th>
-                  <th scope="col" className="px-4 sm:px-6 py-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider snap-start">W</th>
-                  <th scope="col" className="px-4 sm:px-6 py-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider snap-start">L</th>
+                  <th scope="col" className="px-4 sm:px-6 py-3 text-center text-sm font-semibold text-gray-700 uppercase tracking-wider snap-start">Player</th>
+                  <th scope="col" className="px-4 sm:px-6 py-3 text-center text-sm font-semibold text-gray-700 uppercase tracking-wider snap-start">Team</th>
+                  <th scope="col" className="px-4 sm:px-6 py-3 text-center text-sm font-semibold text-gray-700 uppercase tracking-wider snap-start">Rebounds</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {league.leagueReboundLeaders.map((leader) => (
                   <tr key={leader._id}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    <td className="px-2 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                       {leader.name || 'Unknown Player'}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                    <td className="px-2 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-center text-sm text-gray-700">
                       {leader.team || 'Unknown Team'}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                    <td className="px-2 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-center text-sm text-gray-700">
                       {leader.rebounds || 0}
                     </td>
                   </tr>
@@ -282,7 +286,7 @@ const PublicFacingLeaguePage = () => {
 
       {/* League Statistics */}
       <section className="bg-white shadow-lg rounded-xl p-4 sm:p-6 border border-gray-100" role="region" aria-label="League Statistics">
-        <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">League Statistics</h2>
+        <h2 className="text-base md:text-2xl font-bold text-gray-900 mb-4 break-words">League Statistics</h2>
         {error || !league || !leagueStats ? (
           <p className="text-gray-700 text-left font-medium" role="alert" aria-live="assertive">No statistics available. Check back later.</p>
         ) : (
