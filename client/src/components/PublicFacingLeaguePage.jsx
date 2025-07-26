@@ -58,7 +58,7 @@ const PublicFacingLeaguePage = () => {
       {/* League Header */}
       <section className="bg-gradient-to-r from-blue-600 to-blue-800 text-white shadow-lg rounded-xl p-4 sm:p-6 border border-gray-100" role="region" aria-label="League Header">
         {error || !league ? (
-          <p className="text-white text-left font-medium truncate" role="alert" aria-live="assertive">Unable to load league details</p>
+          <p className="text-white text-left font-medium break-words" role="alert" aria-live="assertive">Unable to load league details</p>
         ) : (
           <>
             {league.logo && (
@@ -68,19 +68,26 @@ const PublicFacingLeaguePage = () => {
                 className="w-16 h-16 object-cover rounded-full mb-4 border border-gray-200"
               />
             )}
-            <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight truncate">{league.name || 'Unknown League'}</h1>
-            <p className="text-lg sm:text-xl font-medium mt-2 truncate">
+            <h1 className="text-xl md:text-3xl font-extrabold tracking-tight break-words">{league.name || 'Unknown League'}</h1>
+            <p className="text-base md:text-lg font-medium mt-2 break-words">
               Sport: {league.sportType ? league.sportType.charAt(0).toUpperCase() + league.sportType.slice(1) : 'Unknown'}
             </p>
-            {league.season && <p className="text-base sm:text-lg mt-1 truncate">Season: {league.season}</p>}
-            {league.location && <p className="text-base sm:text-lg mt-1 truncate">Location: {league.location}</p>}
+            {league.season && <p className="text-base md:text-lg mt-1 break-words">Season: {league.season}</p>}
+            {league.location && <p className="text-base md:text-lg mt-1 break-words">Location: {league.location}</p>}
+            <Link
+              to={`/leagues/${leagueId}/join`}
+              className="mt-4 inline-block bg-white text-blue-600 font-semibold py-2 px-4 rounded-lg hover:bg-gray-100 focus:ring-2 focus:ring-white focus:outline-none"
+              aria-label="Join this league"
+            >
+              Join League
+            </Link>
           </>
         )}
       </section>
 
       {/* Team Standings */}
       <section className="bg-white shadow-lg rounded-xl p-6 border border-gray-100" role="region" aria-label="Team Standings">
-        <h2 className="text-3xl font-bold text-gray-900 mb-4">Team Standings</h2>
+        <h2 className="text-base md:text-2xl font-bold text-gray-900 mb-4 break-words">Team Standings</h2>
         {error || !league || league.standings?.length === 0 ? (
           <p className="text-gray-700 text-left font-medium" role="alert" aria-live="assertive">No standings available. Check back later.</p>
         ) : (
@@ -127,7 +134,7 @@ const PublicFacingLeaguePage = () => {
 
       {/* Games */}
       <section className="bg-white shadow-lg rounded-xl p-6 border border-gray-100" role="region" aria-label="Games">
-        <h2 className="text-3xl font-bold text-gray-900 mb-4">Games</h2>
+        <h2 className="text-base md:text-2xl font-bold text-gray-900 mb-4 break-words">Games</h2>
         {error || !league || league.games?.length === 0 ? (
           <p className="text-gray-700 text-left font-medium" role="alert" aria-live="assertive">No games found. Check back later.</p>
         ) : (
@@ -176,7 +183,7 @@ const PublicFacingLeaguePage = () => {
 
       {/* League Leaders - Points */}
       <section className="bg-white shadow-lg rounded-xl p-6 border border-gray-100" role="region" aria-label="League Leaders - Points">
-        <h2 className="text-3xl font-bold text-gray-900 mb-4">League Leaders - Points</h2>
+        <h2 className="text-base md:text-2xl font-bold text-gray-900 mb-4 break-words">League Leaders - Points</h2>
         {error || !league || league.leagueLeaders?.length === 0 ? (
           <p className="text-gray-700 text-left font-medium" role="alert" aria-live="assertive">No league leaders available. Check back later.</p>
         ) : (
@@ -211,7 +218,7 @@ const PublicFacingLeaguePage = () => {
 
       {/* League Leaders - Assists */}
       <section className="bg-white shadow-lg rounded-xl p-6 border border-gray-100" role="region" aria-label="League Leaders - Assists">
-        <h2 className="text-3xl font-bold text-gray-900 mb-4">League Leaders - Assists</h2>
+        <h2 className="text-base md:text-2xl font-bold text-gray-900 mb-4 break-words">League Leaders - Assists</h2>
         {error || !league || league.leagueAssistLeaders?.length === 0 ? (
           <p className="text-gray-700 text-left font-medium" role="alert" aria-live="assertive">No league leaders available. Check back later.</p>
         ) : (
@@ -246,7 +253,7 @@ const PublicFacingLeaguePage = () => {
 
       {/* League Leaders - Rebounds */}
       <section className="bg-white shadow-lg rounded-xl p-6 border border-gray-100" role="region" aria-label="League Leaders - Rebounds">
-        <h2 className="text-3xl font-bold text-gray-900 mb-4">League Leaders - Rebounds</h2>
+        <h2 className="text-base md:text-2xl font-bold text-gray-900 mb-4 break-words">League Leaders - Rebounds</h2>
         {error || !league || league.leagueReboundLeaders?.length === 0 ? (
           <p className="text-gray-700 text-left font-medium" role="alert" aria-live="assertive">No league leaders available. Check back later.</p>
         ) : (
@@ -282,7 +289,7 @@ const PublicFacingLeaguePage = () => {
 
       {/* League Statistics */}
       <section className="bg-white shadow-lg rounded-xl p-4 sm:p-6 border border-gray-100" role="region" aria-label="League Statistics">
-        <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">League Statistics</h2>
+        <h2 className="text-base md:text-2xl font-bold text-gray-900 mb-4 break-words">League Statistics</h2>
         {error || !league || !leagueStats ? (
           <p className="text-gray-700 text-left font-medium" role="alert" aria-live="assertive">No statistics available. Check back later.</p>
         ) : (
