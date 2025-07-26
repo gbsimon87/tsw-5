@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { debounce } from 'lodash';
-import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import {
   ShieldExclamationIcon,
@@ -13,8 +12,10 @@ import {
   ClipboardIcon,
   UsersIcon,
 } from '@heroicons/react/24/outline';
+import Skeleton from 'react-loading-skeleton';
 import Unauthorized from './Unauthorized';
 import AdminPanelPageHeader from './AdminPanelPageHeader';
+import { useAuth } from '../context/AuthContext';
 
 export default function ManageTeams() {
   const { leagueId } = useParams();
@@ -26,6 +27,7 @@ export default function ManageTeams() {
   const [error, setError] = useState(null);
   const [copiedKey, setCopiedKey] = useState(null);
   const [activeTab, setActiveTab] = useState('create');
+  const [loading, setLoading] = useState(true);
 
   const tabs = [
     {
@@ -41,6 +43,7 @@ export default function ManageTeams() {
   ];
 
   useEffect(() => {
+    setLoading(true);
     const fetchLeague = async () => {
       try {
         const response = await axios.get(`/api/leagues/${leagueId}`, {
@@ -49,8 +52,6 @@ export default function ManageTeams() {
         setLeague(response.data);
 
         const isAdmin = response.data.admins?.some(admin => admin._id === user._id) || false;
-        const isManager = response.data.managers?.some(manager => manager._id === user._id) || false;
-        console.log({ isAdmin, isManager });
 
         if (!isAdmin) {
           setError('You are not authorized to manage teams for this league');
@@ -65,6 +66,7 @@ export default function ManageTeams() {
         } else {
           setTeams([]);
         }
+        setLoading(false);
       } catch (err) {
         const errorMessage = err.response?.status === 403
           ? 'You are not authorized to manage teams in this league'
@@ -78,6 +80,7 @@ export default function ManageTeams() {
           draggable: true,
           theme: 'light',
         });
+        setLoading(false);
       }
     };
     fetchLeague();
@@ -305,232 +308,383 @@ export default function ManageTeams() {
 
   return (
     <div className="min-h-[var(--page-height)] bg-gray-50 py-4 px-4">
-      <div className="max-w-4xl mx-auto">
-        {!league && (
-          <p className="text-center text-gray-600 text-lg mb-4">Loading...</p>
-        )}
-        <AdminPanelPageHeader
-          backButtonLink={`/leagues/${leagueId}`}
-          backButtonText="Back to League"
-          pageTitle="Manage Teams"
-          subHeader="Predovic, Deckow and Reichert Baseball League"
-          tabs={tabs}
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-        />
-
-        {/* Create Team Form */}
-        {activeTab === 'create' && (
-          <section className="bg-white shadow-xl rounded-2xl p-4 border border-gray-200 mb-8">
-            <div className="flex items-center gap-3 mb-4">
-              <PlusIcon className="w-6 h-6 text-blue-500" />
-              <h2 className="text-2xl font-semibold text-gray-800">New Team</h2>
+      {loading ? (
+        <div className="max-w-4xl mx-auto flex flex-col gap-4" role="status" aria-live="assertive">
+          {/* Header Skeleton */}
+          <div className="mb-4">
+            <Skeleton height={36} width={200} baseColor="#e5e7eb" highlightColor="#f3f4f6" className="mb-2" aria-hidden="true" />
+            <Skeleton height={16} width={300} baseColor="#e5e7eb" highlightColor="#f3f4f6" aria-hidden="true" />
+            <div className="flex gap-2 mt-2">
+              {[...Array(2)].map((_, i) => (
+                <Skeleton key={`tab-${i}`} height={40} width={100} baseColor="#e5e7eb" highlightColor="#f3f4f6" aria-hidden="true" />
+              ))}
             </div>
-            {error && <p className="text-red-500 mb-4 text-center">{error}</p>}
-            {selectedSeason ? (
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="flex flex-col">
-                  <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                    <UserGroupIcon className="w-5 h-5 text-gray-500" />
-                    Team Name:
-                  </label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleInputChange}
-                    required
-                    className="mt-1 max-w-full w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                  />
-                </div>
-                <div className="flex flex-col">
-                  <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                    <UserGroupIcon className="w-5 h-5 text-gray-500" />
-                    Logo URL (optional):
-                  </label>
-                  <input
-                    type="url"
-                    name="logo"
-                    value={formData.logo}
-                    onChange={handleInputChange}
-                    className="mt-1 max-w-full w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                  />
-                </div>
-                <button
-                  type="submit"
-                  className="flex-1 flex items-center justify-center gap-2 bg-green-600 text-white px-5 py-2 rounded-lg font-semibold shadow hover:bg-green-700 transition focus:ring-2 focus:ring-green-500 focus:outline-none"
-                >
-                  <PlusIcon className="w-5 h-5" />
-                  Create Team
-                </button>
-              </form>
-            ) : (
-              <p className="text-center text-gray-600">Please select a season to create a team.</p>
-            )}
+          </div>
+
+          {/* Create Team Skeleton */}
+          <section className="bg-white shadow-lg rounded-xl p-6 border border-gray-100 mb-8" role="region" aria-label="Create Team">
+            <Skeleton height={28} width={150} baseColor="#e5e7eb" highlightColor="#f3f4f6" className="mb-4" aria-hidden="true" />
+            <div className="space-y-6">
+              <div className="flex flex-col">
+                <Skeleton height={16} width={100} baseColor="#e5e7eb" highlightColor="#f3f4f6" className="mb-1" aria-hidden="true" />
+                <Skeleton height={40} width="100%" baseColor="#e5e7eb" highlightColor="#f3f4f6" aria-hidden="true" />
+              </div>
+              <div className="flex flex-col">
+                <Skeleton height={16} width={100} baseColor="#e5e7eb" highlightColor="#f3f4f6" className="mb-1" aria-hidden="true" />
+                <Skeleton height={40} width="100%" baseColor="#e5e7eb" highlightColor="#f3f4f6" aria-hidden="true" />
+              </div>
+              <Skeleton height={44} width="100%" baseColor="#e5e7eb" highlightColor="#f3f4f6" aria-hidden="true" />
+            </div>
           </section>
-        )}
 
-        {/* View All Teams */}
-        {activeTab === 'view' && (
-          <section className="bg-white shadow-xl rounded-2xl p-4 border border-gray-200">
-            <div className="flex flex-col items-end gap-2 justify-end sm:flex-row sm:items-center mb-4">
-              {/* <div className="flex items-center gap-3">
-                <UserGroupIcon className="w-6 h-6 text-blue-500" />
-                <h2 className="text-2xl font-semibold text-gray-800">All Teams</h2>
-              </div> */}
-              {/* <div className="flex items-center"> */}
-              {/* <label className="mr-2 text-sm font-medium text-gray-700">Season:</label> */}
-              <select
-                value={selectedSeason}
-                onChange={handleSeasonChange}
-                className="p-2 border border-gray-200 rounded-md max-w-full focus:ring-2 focus:ring-blue-500 focus:outline-none"
-              >
-                {league.seasons.map((season) => (
-                  <option key={season.name} value={season.name}>
-                    {season.name} {season.isActive ? '(Active)' : ''}
-                  </option>
-                ))}
-              </select>
-              {/* </div> */}
+          {/* View Teams Skeleton */}
+          <section className="bg-white shadow-lg rounded-xl p-6 border border-gray-100" role="region" aria-label="View All Teams">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">
+              <Skeleton height={28} width={150} baseColor="#e5e7eb" highlightColor="#f3f4f6" className="mb-2" aria-hidden="true" />
+              <Skeleton height={40} width={150} baseColor="#e5e7eb" highlightColor="#f3f4f6" aria-hidden="true" />
             </div>
-            <div className='mb-4 flex flex-col items-end gap-2 justify-end sm:flex-row sm:items-center'>
-              <button
-                onClick={copyAllSecretKeys}
-                className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition focus:ring-2 focus:ring-green-500 focus:outline-none"
-                aria-label="Copy all team secret keys"
-              >
-                <ClipboardIcon className="w-5 h-5" />
-                Copy All Secret Keys
-              </button>
-
-            </div>
-            {teams.length === 0 ? (
-              <p className="text-center text-gray-600">No teams found for this season.</p>
-            ) : (
-              <div className="space-y-6">
-                {teams.map((team) => (
-                  <div key={team._id} className="bg-white p-3 rounded-md border border-gray-200">
-                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                      <div className="flex items-center gap-5">
-                        {team.logo ? (
-                          <img
-                            src={team.logo}
-                            alt={team.name}
-                            className="w-12 h-12 rounded-full shadow object-cover border-2 border-gray-200 bg-white"
-                          />
-                        ) : (
-                          <div className="w-12 h-12 rounded-full bg-gray-100 border-2 border-gray-200 flex items-center justify-center shadow">
-                            <UserGroupIcon className="w-6 h-6 text-gray-400" aria-hidden="true" />
-                          </div>
-                        )}
-                        <h3 className="text-xl font-medium flex items-center gap-2">
-                          {team.name}
-                          {!team.isActive && (
-                            <span className="text-sm text-gray-400 font-normal">(Inactive)</span>
-                          )}
-                        </h3>
-                      </div>
-                      {team.isActive && (
-                        <button
-                          onClick={() => handleDeactivateTeam(team._id)}
-                          className="bg-red-600 hover:bg-red-700 focus:ring-red-500 mt-2 flex items-center gap-2 text-white px-3 py-1 rounded-md transition focus:ring-2 focus:outline-none self-start"
-                          aria-label={`Deactivate team ${team.name}`}
-                          title="Deactivate Team"
-                        >
-                          <TrashIcon className="w-4 h-4" />
-                          Deactivate
-                        </button>
-                      )}
+            <Skeleton height={44} width={200} baseColor="#e5e7eb" highlightColor="#f3f4f6" className="mb-4 self-end" aria-hidden="true" />
+            <div className="space-y-6">
+              {[...Array(3)].map((_, i) => (
+                <div key={`team-skeleton-${i}`} className="bg-white p-3 rounded-md border border-gray-100">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex items-center gap-5">
+                      <Skeleton circle height={48} width={48} baseColor="#e5e7eb" highlightColor="#f3f4f6" aria-hidden="true" />
+                      <Skeleton height={24} width={150} baseColor="#e5e7eb" highlightColor="#f3f4f6" aria-hidden="true" />
                     </div>
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mt-4">
+                    <Skeleton height={36} width={120} baseColor="#e5e7eb" highlightColor="#f3f4f6" aria-hidden="true" />
+                  </div>
+                  <div className="mt-4">
+                    <Skeleton height={16} width={100} baseColor="#e5e7eb" highlightColor="#f3f4f6" className="mb-2" aria-hidden="true" />
+                    <Skeleton height={16} width="80%" baseColor="#e5e7eb" highlightColor="#f3f4f6" className="mb-2" aria-hidden="true" />
+                    <Skeleton height={36} width={120} baseColor="#e5e7eb" highlightColor="#f3f4f6" aria-hidden="true" />
+                  </div>
+                  <div className="mt-4">
+                    <Skeleton height={20} width={100} baseColor="#e5e7eb" highlightColor="#f3f4f6" className="mb-2" aria-hidden="true" />
+                    {[...Array(2)].map((_, j) => (
+                      <div key={`member-skeleton-${j}`} className="py-4 border-b border-gray-200 flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex items-center gap-4">
+                          <Skeleton circle height={40} width={40} baseColor="#e5e7eb" highlightColor="#f3f4f6" aria-hidden="true" />
+                          <Skeleton height={16} width={150} baseColor="#e5e7eb" highlightColor="#f3f4f6" aria-hidden="true" />
+                        </div>
+                        <div className="flex gap-2 mt-2 sm:mt-0">
+                          <Skeleton height={36} width={80} baseColor="#e5e7eb" highlightColor="#f3f4f6" aria-hidden="true" />
+                          <Skeleton height={36} width={100} baseColor="#e5e7eb" highlightColor="#f3f4f6" aria-hidden="true" />
+                          <Skeleton height={36} width={120} baseColor="#e5e7eb" highlightColor="#f3f4f6" aria-hidden="true" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        </div>
+      ) : (
+        <>
+          {error === 'Unauthorized' ? (
+            <Unauthorized />
+          ) : error ? (
+            <div
+              className="min-h-[var(--page-height)] bg-gray-100 flex items-center justify-center"
+              role="alert"
+              aria-live="assertive"
+            >
+              <p className="text-center text-red-600 text-lg py-4 px-6 bg-white rounded-xl shadow-sm">{error}</p>
+            </div>
+          ) : (
+            <div className="max-w-4xl mx-auto">
+              <AdminPanelPageHeader
+                backButtonLink={`/leagues/${leagueId}`}
+                backButtonText="Back to League"
+                pageTitle="Manage Teams"
+                subHeader={league?.name || 'Loading League...'}
+                tabs={tabs}
+                activeTab={activeTab}
+                onTabChange={setActiveTab}
+                aria-label="Manage Teams Header"
+              />
+
+              {/* Create Team Form */}
+              {activeTab === 'create' && (
+                <section
+                  className="bg-white shadow-lg rounded-xl p-6 border border-gray-100 mb-8"
+                  role="region"
+                  aria-labelledby="create-team"
+                >
+                  <div className="flex items-center gap-3 mb-6">
+                    <PlusIcon className="w-6 h-6 text-gray-700" aria-hidden="true" />
+                    <h2 id="create-team" className="text-xl md:text-2xl font-bold text-gray-900">
+                      New Team
+                    </h2>
+                  </div>
+                  {selectedSeason ? (
+                    <form onSubmit={handleSubmit} className="space-y-6">
                       <div className="flex flex-col">
-                        <span className="text-xs text-gray-500 font-mono">Secret Key:</span>
-                        <span className="text-sm text-gray-600 font-mono break-all">{team.secretKey}</span>
-                        <button
-                          onClick={() => copyToClipboard(team.secretKey)}
-                          className="mt-4 inline-flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition focus:ring-2 focus:ring-green-500 focus:outline-none self-start"
-                          aria-label={`Copy secret key for ${team.name}`}
+                        <label
+                          htmlFor="team-name"
+                          className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"
                         >
-                          <ClipboardIcon className="w-4 h-4" />
-                          {copiedKey === team.secretKey ? 'Copied!' : 'Copy Key'}
-                        </button>
-
+                          <UserGroupIcon className="w-5 h-5 text-gray-600" aria-hidden="true" />
+                          Team Name
+                        </label>
+                        <input
+                          id="team-name"
+                          type="text"
+                          name="name"
+                          value={formData?.name || ''}
+                          onChange={handleInputChange}
+                          required
+                          className="w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-600 focus:outline-none"
+                          aria-required="true"
+                        />
                       </div>
+                      <div className="flex flex-col">
+                        <label
+                          htmlFor="team-logo"
+                          className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"
+                        >
+                          <UserGroupIcon className="w-5 h-5 text-gray-600" aria-hidden="true" />
+                          Logo URL (optional)
+                        </label>
+                        <input
+                          id="team-logo"
+                          type="url"
+                          name="logo"
+                          value={formData?.logo || ''}
+                          onChange={handleInputChange}
+                          className="w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-600 focus:outline-none"
+                        />
+                      </div>
+                      <button
+                        type="submit"
+                        className="flex items-center justify-center gap-2 bg-green-600 text-white px-5 py-3 rounded-lg font-semibold hover:bg-green-700 transition focus:ring-2 focus:ring-green-600 focus:outline-none w-full"
+                        aria-label="Create new team"
+                      >
+                        <PlusIcon className="w-5 h-5" aria-hidden="true" />
+                        Create Team
+                      </button>
+                    </form>
+                  ) : (
+                    <p className="text-center text-gray-600" role="alert" aria-live="polite">
+                      Please select a season to create a team.
+                    </p>
+                  )}
+                </section>
+              )}
+
+              {/* View All Teams */}
+              {activeTab === 'view' && (
+                <section
+                  className="bg-white shadow-lg rounded-xl p-6 border border-gray-100"
+                  role="region"
+                  aria-labelledby="view-teams"
+                >
+                  <div className="flex items-center justify-between flex-wrap gap-4 mb-6">
+                    {/* Left: Icon + Text */}
+                    <div className="flex items-center gap-3">
+                      <UserGroupIcon className="w-6 h-6 text-gray-700" aria-hidden="true" />
+                      <h2 id="view-teams" className="text-xl md:text-2xl font-bold text-gray-900">
+                        All Teams
+                      </h2>
                     </div>
-                    <div className="mt-4">
-                      <h4 className="text-lg font-medium mb-2">Members</h4>
-                      {team?.members?.length === 0 ? (
-                        <p className="text-gray-600">No members in this team.</p>
-                      ) : (
-                        <ul className="space-y-4">
-                          {team.members.map((member, idx) => (
-                            <li
-                              key={member.player._id}
-                              className={`flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between py-4 mb-4 ${idx !== team.members.length - 1 ? 'border-b border-gray-200' : ''
-                                }`}
-                            >
-                              <div className="flex items-center gap-4">
-                                {member.player?.user?.picture ? (
-                                  <img
-                                    src={member.player.user.picture}
-                                    alt={member.player.user.name || 'Member'}
-                                    className="w-10 h-10 rounded-full shadow border-2 border-gray-200 bg-white"
-                                  />
-                                ) : (
-                                  <div className="w-10 h-10 rounded-full bg-gray-100 border-2 border-gray-200 flex items-center justify-center shadow">
-                                    <UserCircleIcon className="w-6 h-6 text-gray-400" aria-hidden="true" />
-                                  </div>
-                                )}
-                                <span className={`text-base ${member.isActive ? 'font-bold text-gray-800' : 'text-gray-400 italic'}`}>
-                                  {member.player?.user?.name || 'Unknown'}
-                                  {!member.isActive && <span className="ml-2">(Inactive)</span>}
-                                </span>
-                              </div>
-                              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                                <select
-                                  value={member.player.jerseyNumber ?? ''}
-                                  onChange={(e) => handleJerseyNumberChange(team._id, member.player._id, e.target.value)}
-                                  className="p-1 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none w-20"
-                                  disabled={!member.isActive}
-                                >
-                                  <option value="">No Jersey</option>
-                                  {[...Array(100).keys()].map(num => (
-                                    <option key={num} value={num}>{num}</option>
-                                  ))}
-                                </select>
-                                <select
-                                  value={member.role}
-                                  onChange={(e) => handleChangeRole(team._id, member.player._id, e.target.value)}
-                                  className="p-1 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                                  disabled={!member.isActive}
-                                >
-                                  <option value="player">Player</option>
-                                  <option value="manager">Manager</option>
-                                </select>
-                                {member.isActive && (
-                                  <button
-                                    onClick={() => handleDeactivateMember(team._id, member.player._id)}
-                                    className="flex items-center gap-2 bg-red-600 text-white px-3 py-1 rounded-md hover:bg-red-700 transition focus:ring-2 focus:ring-red-500 focus:outline-none self-start"
-                                    aria-label={`Deactivate member ${member.player?.user?.name || 'Unknown'}`}
-                                    title="Deactivate Member"
-                                  >
-                                    <ShieldExclamationIcon className="w-4 h-4" />
-                                    Deactivate
-                                  </button>
-                                )}
-                              </div>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
+
+                    {/* Right: Label + Select */}
+                    <div className="flex items-center gap-2">
+                      <label htmlFor="season-select" className="text-sm font-medium text-gray-700">
+                        Season:
+                      </label>
+                      <select
+                        id="season-select"
+                        value={selectedSeason || ''}
+                        onChange={handleSeasonChange}
+                        className="p-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-600 focus:outline-none max-w-[200px]"
+                        aria-label="Select season"
+                      >
+                        {league?.seasons?.map((season) => (
+                          <option key={season?.name || `season-${Math.random()}`} value={season?.name}>
+                            {season?.name} {season?.isActive ? '(Active)' : ''}
+                          </option>
+                        ))}
+                      </select>
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
-          </section>
-        )}
-      </div>
+
+                  <div className="flex gap-2 mb-6">
+                    <button
+                      onClick={copyAllSecretKeys}
+                      className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition focus:ring-2 focus:ring-green-600 focus:outline-none"
+                      aria-label="Copy secret keys for all teams"
+                    >
+                      <ClipboardIcon className="w-5 h-5" aria-hidden="true" />
+                      Copy All Secret Keys
+                    </button>
+                  </div>
+                  {teams?.length === 0 ? (
+                    <p className="text-center text-gray-600" role="alert" aria-live="polite">
+                      No teams found for this season.
+                    </p>
+                  ) : (
+                    <div className="space-y-6">
+                      {teams.map((team) => (
+                        <article
+                          key={team?._id || `team-${Math.random()}`}
+                          className="bg-white p-4 rounded-md border border-gray-100"
+                          aria-label={`Team card for ${team?.name || 'Unknown'}`}
+                        >
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                            <div className="flex items-center gap-5">
+                              {team?.logo ? (
+                                <img
+                                  src={team.logo}
+                                  alt={`${team?.name || 'Unknown'} logo`}
+                                  className="w-12 h-12 rounded-full shadow object-cover border-2 border-gray-200 bg-white"
+                                  onError={(e) => (e.target.src = '/placeholder.png')}
+                                />
+                              ) : (
+                                <div
+                                  className="w-12 h-12 rounded-full bg-gray-100 border-2 border-gray-200 flex items-center justify-center shadow"
+                                  aria-hidden="true"
+                                >
+                                  <UserGroupIcon className="w-6 h-6 text-gray-400" aria-hidden="true" />
+                                </div>
+                              )}
+                              <h3 className="text-xl font-medium flex items-center gap-2">
+                                {team?.name || 'Unknown'}
+                                {!team?.isActive && (
+                                  <span className="text-sm text-gray-400 font-normal">(Inactive)</span>
+                                )}
+                              </h3>
+                            </div>
+                            {team?.isActive && (
+                              <button
+                                onClick={() => handleDeactivateTeam(team?._id)}
+                                className="w-fit flex items-center gap-2 text-dark px-3 py-2 rounded-md hover:bg-red-700 hover:text-white transition focus:ring-2 focus:ring-red-600 focus:outline-none"
+                                aria-label={`Deactivate team ${team?.name || 'Unknown'}`}
+                              >
+                                <TrashIcon className="w-4 h-4" aria-hidden="true" />
+                                Deactivate
+                              </button>
+                            )}
+                          </div>
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-4">
+                            <div className="flex flex-col">
+                              <span className="text-xs text-gray-500 font-mono">Secret Key:</span>
+                              <span className="text-sm text-gray-600 font-mono break-all">
+                                {team?.secretKey || 'N/A'}
+                              </span>
+                              <button
+                                onClick={() => copyToClipboard(team?.secretKey)}
+                                className="w-fit mt-4 flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition focus:ring-2 focus:ring-green-600 focus:outline-none"
+                                aria-label={`Copy secret key for ${team?.name || 'Unknown'}`}
+                              >
+                                <ClipboardIcon className="w-4 h-4" aria-hidden="true" />
+                                {copiedKey === team?.secretKey ? 'Copied!' : 'Copy Key'}
+                              </button>
+                            </div>
+                          </div>
+                          <div className="mt-6">
+                            <h4 className="text-lg font-medium mb-2">Members</h4>
+                            {team?.members?.length === 0 ? (
+                              <p className="text-gray-600" role="alert" aria-live="polite">
+                                No members in this team.
+                              </p>
+                            ) : (
+                              <ul className="space-y-4" role="list" aria-label="Team members">
+                                {team?.members?.map((member, idx) => (
+                                  <li
+                                    key={member?.player?._id || `member-${idx}`}
+                                    className={`flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between py-4 ${idx !== team.members.length - 1 ? 'border-b border-gray-200' : ''
+                                      }`}
+                                    aria-label={`Member ${member?.player?.user?.name || 'Unknown'}`}
+                                  >
+                                    <div className="flex items-center gap-4">
+                                      {member?.player?.user?.picture ? (
+                                        <img
+                                          src={member.player.user.picture}
+                                          alt={`${member?.player?.user?.name || 'Unknown'} profile`}
+                                          className="w-10 h-10 rounded-full shadow border-2 border-gray-200 bg-white"
+                                          onError={(e) => (e.target.src = '/placeholder.png')}
+                                        />
+                                      ) : (
+                                        <div
+                                          className="w-10 h-10 rounded-full bg-gray-100 border-2 border-gray-200 flex items-center justify-center shadow"
+                                          aria-hidden="true"
+                                        >
+                                          <UserCircleIcon className="w-6 h-6 text-gray-400" aria-hidden="true" />
+                                        </div>
+                                      )}
+                                      <span
+                                        className={`text-base ${member?.isActive
+                                          ? 'font-bold text-gray-800'
+                                          : 'text-gray-400 italic'
+                                          }`}
+                                      >
+                                        {member?.player?.user?.name || 'Unknown'}
+                                        {!member?.isActive && <span className="ml-2">(Inactive)</span>}
+                                      </span>
+                                    </div>
+                                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+                                      <select
+                                        value={member?.player?.jerseyNumber ?? ''}
+                                        onChange={(e) =>
+                                          handleJerseyNumberChange(
+                                            team?._id,
+                                            member?.player?._id,
+                                            e.target.value
+                                          )
+                                        }
+                                        className="p-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-600 focus:outline-none w-full sm:w-20"
+                                        disabled={!member?.isActive}
+                                        aria-label={`Jersey number for ${member?.player?.user?.name || 'Unknown'}`}
+                                      >
+                                        <option value="">No Jersey</option>
+                                        {[...Array(100).keys()].map((num) => (
+                                          <option key={num} value={num}>
+                                            {num}
+                                          </option>
+                                        ))}
+                                      </select>
+                                      <select
+                                        value={member?.role || 'player'}
+                                        onChange={(e) =>
+                                          handleChangeRole(team?._id, member?.player?._id, e.target.value)
+                                        }
+                                        className="p-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-600 focus:outline-none w-full sm:w-auto"
+                                        disabled={!member?.isActive}
+                                        aria-label={`Role for ${member?.player?.user?.name || 'Unknown'}`}
+                                      >
+                                        <option value="player">Player</option>
+                                        <option value="manager">Manager</option>
+                                      </select>
+                                      {member?.isActive && (
+                                        <button
+                                          onClick={() =>
+                                            handleDeactivateMember(team?._id, member?.player?._id)
+                                          }
+                                          className="w-fit flex items-center gap-2 text-dark px-3 py-2 rounded-md hover:bg-red-700 hover:text-white transition focus:ring-2 focus:ring-red-600 focus:outline-none"
+                                          aria-label={`Deactivate member ${member?.player?.user?.name || 'Unknown'} from team ${team?.name || 'Unknown'}`}
+                                        >
+                                          <ShieldExclamationIcon className="w-4 h-4" aria-hidden="true" />
+                                          Deactivate
+                                        </button>
+                                      )}
+                                    </div>
+                                  </li>
+                                ))}
+                              </ul>
+                            )}
+                          </div>
+                        </article>
+                      ))}
+                    </div>
+                  )}
+                </section>
+              )}
+            </div>
+          )}
+        </>
+      )}
     </div>
-  );
+  )
 }
