@@ -233,7 +233,7 @@ export default function MySporty() {
               aria-hidden="true"
             />
             <div className="bg-white shadow-md rounded-2xl p-6 border border-blue-200">
-              <div className="flex items-center gap-4 mb-2">
+              <div className="flex items-center justify-between gap-4 mb-2">
                 <Skeleton
                   circle
                   height={40}
@@ -369,7 +369,7 @@ export default function MySporty() {
           <section className="mb-6" role="region" aria-label="Next Game">
             <h2 className="text-2xl font-bold text-white mb-4">Next Game</h2>
             <div className="bg-white shadow-md rounded-2xl p-6 border border-blue-200">
-              <div className="flex items-center gap-4 mb-2">
+              <div className="flex items-center justify-between gap-4 mb-2">
                 {nextGame.userTeam?.logo ? (
                   <img
                     src={nextGame.userTeam.logo}
