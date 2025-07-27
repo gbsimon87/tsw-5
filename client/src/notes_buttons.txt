@@ -1,7 +1,0 @@
-Button	Heroicon Component	Import Example
-Edit League	PencilSquareIcon	import { PencilSquareIcon } from '@heroicons/react/24/solid'
-Manage Teams	UsersIcon	import { UsersIcon } from '@heroicons/react/24/solid'
-Manage Games	CalendarDaysIcon	import { CalendarDaysIcon } from '@heroicons/react/24/solid'
-Cancel	XMarkIcon	import { XMarkIcon } from '@heroicons/react/24/solid'
-Save Changes	CheckCircleIcon/CheckIcon	import { CheckCircleIcon } from '@heroicons/react/24/solid' or import { CheckIcon } from '@heroicons/react/24/solid'
-Back to League	ArrowLeftIcon	import { ArrowLeftIcon } from '@heroicons/react/24/solid'
