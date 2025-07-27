@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-do
 import { ToastContainer } from 'react-toastify';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { AuthProvider } from './context/AuthContext';
+import useAnalytics from './hooks/useAnalytics';
 import ProtectedRoute from './components/ProtectedRoute';
 import Login from './components/Login';
 import Register from './components/Register';
@@ -134,6 +135,7 @@ function AppContent() {
 }
 
 function App() {
+  useAnalytics();
   return (
     <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
       <AuthProvider>

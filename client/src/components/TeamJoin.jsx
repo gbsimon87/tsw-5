@@ -2,16 +2,19 @@ import { useState, useEffect, useRef } from 'react';
 import Skeleton from 'react-loading-skeleton';
 import { toast } from 'react-toastify';
 import axios from 'axios';
-import { useAuth } from '../context/AuthContext';
 import { validateSecretKey } from '../utils/validateSecretKey';
+import useAnalytics from '../hooks/useAnalytics';
+import { useAuth } from '../context/AuthContext';
 
 export default function TeamJoin() {
-  const { user } = useAuth();
+  const { trackEvent } = useAnalytics();
   const [joinFormData, setJoinFormData] = useState({ secretKey: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const secretKeyInputRef = useRef(null);
+  
+  const { user } = useAuth();
 
   // Focus input on mount
   useEffect(() => {
@@ -57,6 +60,8 @@ export default function TeamJoin() {
 
       setSuccess(`Successfully joined team: ${response.data.team.name}`);
       toast.success(`Successfully joined team: ${response.data.team.name}`, { toastId: 'join-success' });
+      trackEvent('join_team', { method: 'secret_key' });
+
       setJoinFormData({ secretKey: '' });
       setError(null);
     } catch (err) {

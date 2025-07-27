@@ -2,10 +2,13 @@ import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
+import useAnalytics from '../hooks/useAnalytics';
 
 export default function Register() {
-  const { login } = useAuth();
   const navigate = useNavigate();
+  const { trackEvent } = useAnalytics();
+
+  const { login } = useAuth();
   const [formData, setFormData] = useState({ email: '', password: '', name: '' });
   const [error, setError] = useState(null);
 
@@ -19,7 +22,8 @@ export default function Register() {
     try {
       const response = await axios.post('/auth/register', formData);
       await login(response.data.token, false);
-      navigate('/my-sporty');
+      trackEvent('register', { method: 'email' });
+      navigate('/');
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to register');
     }

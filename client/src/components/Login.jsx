@@ -3,12 +3,14 @@ import { GoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
+import useAnalytics from '../hooks/useAnalytics';
 
 export default function Login() {
-  const { login } = useAuth();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [error, setError] = useState(null);
+  const { login } = useAuth();
+  const { trackEvent } = useAnalytics();
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -20,7 +22,8 @@ export default function Login() {
     try {
       const response = await axios.post('/auth/login', formData);
       await login(response.data.token, false);
-      navigate('/my-sporty');
+      trackEvent('login', { method: 'email' });
+      navigate('/');
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to login');
     }
@@ -29,7 +32,8 @@ export default function Login() {
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
       await login(credentialResponse.credential, true);
-      navigate('/my-sporty');
+      trackEvent('login', { method: 'google' });
+      navigate('/');
     } catch (error) {
       setError('Google Login Failed');
     }
