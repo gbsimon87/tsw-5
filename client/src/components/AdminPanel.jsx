@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
-import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
+import Skeleton from 'react-loading-skeleton';
+import { useAuth } from '../context/AuthContext';
 
 const scoringRulesMap = {
   basketball: { twoPointFGM: 2, threePointFGM: 3, freeThrowM: 1 },
@@ -57,15 +58,21 @@ export default function AdminPanel() {
     },
   });
   const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    setLoading(true);
     axios.get('/api/leagues', {
       headers: { Authorization: `Bearer ${user.token}` }
     })
-      .then(response => setLeagues(response.data))
+      .then(response => {
+        setLeagues(response.data);
+        setLoading(false);
+      })
       .catch(err => {
         const errorMessage = err.response?.data?.error || 'Failed to fetch leagues';
         setError(errorMessage);
+        setLoading(false);
         toast.error(errorMessage, {
           position: 'top-right',
           autoClose: 3000,
@@ -183,225 +190,338 @@ export default function AdminPanel() {
 
   return (
     <div className="min-h-[var(--page-height)] flex items-center justify-center bg-gradient-to-br from-blue-900 via-blue-700 to-slate-800 py-10 px-4">
-      <div className="w-full max-w-3xl">
-        <header className="mb-10">
-          <h1 className="text-3xl font-extrabold mb-2 text-center text-white drop-shadow">
-            Admin Panel
-          </h1>
-          <p className="text-blue-100 text-center">
-            Manage your leagues and create new ones
-          </p>
-        </header>
+      <div className="w-full max-w-5xl">
+        {loading ? (
+          <div className="flex flex-col gap-4" role="status" aria-live="assertive">
+            {/* Header Skeleton */}
+            <div className="text-center mb-10">
+              <Skeleton height={36} width={200} baseColor="#e5e7eb" highlightColor="#f3f4f6" className="mx-auto mb-2" aria-hidden="true" />
+              <Skeleton height={16} width={300} baseColor="#e5e7eb" highlightColor="#f3f4f6" className="mx-auto" aria-hidden="true" />
+            </div>
 
-        <div className="flex flex-col gap-8">
-          {/* Your Leagues Card */}
-          <section
-            aria-labelledby="your-leagues"
-            className="bg-gradient-to-br from-blue-50 to-slate-100 border border-blue-200 shadow-lg rounded-2xl p-8"
-          >
-            <h2 id="your-leagues" className="text-xl font-semibold mb-6 text-blue-800">
-              Your Leagues
-            </h2>
-            {error && <p className="text-red-500 mb-6 text-center">{error}</p>}
-            {leagues.length === 0 ? (
-              <p className="text-gray-500">You do not manage any leagues.</p>
-            ) : (
+            {/* Your Leagues Skeleton */}
+            <section className="bg-white shadow-lg rounded-xl p-6 border border-gray-100" role="region" aria-label="Your Leagues">
+              <Skeleton height={28} width={150} baseColor="#e5e7eb" highlightColor="#f3f4f6" className="mb-6" aria-hidden="true" />
               <div className="space-y-6">
-                {leagues.map(league => (
-                  <article
-                    key={league._id}
-                    className="bg-gradient-to-br from-white to-blue-50 border border-blue-100 rounded-lg shadow flex flex-col p-6 hover:shadow-xl transition"
-                    aria-label={`League card for ${league.name}`}
-                  >
-                    <header className="mb-3 flex items-center justify-between">
-                      <h3 className="text-lg font-bold text-blue-700">
-                        {league.admins.includes(user._id) ? (
-                          <Link to={`/leagues/${league._id}`} className="hover:underline">
-                            {league.name}
-                          </Link>
-                        ) : (
-                          league.name
-                        )}
-                      </h3>
-                      <span className={`px-2 py-1 rounded text-xs font-semibold
-                        ${league.visibility === 'public'
-                          ? 'bg-blue-100 text-blue-700 border border-blue-200'
-                          : 'bg-slate-200 text-slate-700 border border-slate-300'}
-                      `}>
-                        {league.visibility.charAt(0).toUpperCase() + league.visibility.slice(1)}
-                      </span>
-                    </header>
-                    <dl className="space-y-2">
-                      <div className="flex gap-3 items-center">
-                        <dt className="text-slate-500 font-medium min-w-[100px]">Sport:</dt>
-                        <dd className="text-slate-800">{league.sportType}</dd>
-                      </div>
-                      <div className="flex gap-3 items-center">
-                        <dt className="text-slate-500 font-medium min-w-[100px]">Role:</dt>
-                        <dd className={league.admins.includes(user._id)
-                          ? "text-green-700 font-semibold"
-                          : "text-amber-700 font-semibold"}>
-                          {league.admins.includes(user._id) ? 'Admin' : 'Manager'}
-                        </dd>
-                      </div>
-                    </dl>
-                  </article>
+                {[...Array(3)].map((_, index) => (
+                  <div key={`league-skeleton-${index}`} className="bg-white border border-gray-100 rounded-lg p-6 flex flex-col">
+                    <div className="flex items-center justify-between mb-3">
+                      <Skeleton height={20} width={150} baseColor="#e5e7eb" highlightColor="#f3f4f6" aria-hidden="true" />
+                      <Skeleton height={20} width={80} baseColor="#e5e7eb" highlightColor="#f3f4f6" aria-hidden="true" />
+                    </div>
+                    <div className="space-y-2">
+                      <Skeleton height={16} width={200} baseColor="#e5e7eb" highlightColor="#f3f4f6" aria-hidden="true" />
+                      <Skeleton height={16} width={150} baseColor="#e5e7eb" highlightColor="#f3f4f6" aria-hidden="true" />
+                    </div>
+                  </div>
                 ))}
               </div>
-            )}
-          </section>
+            </section>
 
-          {/* Create League Card */}
-          {/* <section
-            aria-labelledby="create-league"
-            className="bg-gradient-to-br from-green-50 to-blue-100 border border-green-200 shadow-lg rounded-2xl p-8"
-          >
-            <h2 id="create-league" className="text-xl font-semibold mb-6 text-green-800">
-              Create New League
-            </h2>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Name</label>
-                <input
-                  type="text"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full p-3 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                />
+            {/* Create League Skeleton */}
+            <section className="bg-white shadow-lg rounded-xl p-6 border border-gray-100" role="region" aria-label="Create New League">
+              <Skeleton height={28} width={150} baseColor="#e5e7eb" highlightColor="#f3f4f6" className="mb-6" aria-hidden="true" />
+              <div className="space-y-6">
+                {[...Array(8)].map((_, index) => (
+                  <div key={`form-skeleton-${index}`} className="flex items-center gap-3">
+                    <Skeleton height={16} width={100} baseColor="#e5e7eb" highlightColor="#f3f4f6" aria-hidden="true" />
+                    <Skeleton height={40} width="100%" baseColor="#e5e7eb" highlightColor="#f3f4f6" aria-hidden="true" />
+                  </div>
+                ))}
+                <Skeleton height={44} width="100%" baseColor="#e5e7eb" highlightColor="#f3f4f6" aria-hidden="true" />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Sport Type</label>
-                <select
-                  name="sportType"
-                  value={formData.sportType}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full p-3 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                >
-                  <option value="basketball">Basketball</option>
-                  <option value="football">Football</option>
-                  <option value="baseball">Baseball</option>
-                  <option value="hockey">Hockey</option>
-                  <option value="americanFootball">Ame. Football</option>
-                </select>
+            </section>
+          </div>
+        ) : (
+          <>
+            {error && (
+              <div className="max-w-5xl mx-auto mt-4 bg-white rounded-xl p-4" role="alert" aria-live="assertive">
+                <p className="text-red-600 text-sm">{error}</p>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Visibility</label>
-                <select
-                  name="visibility"
-                  value={formData.visibility}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full p-3 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                >
-                  <option value="public">Public</option>
-                  <option value="private">Private</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Period Type</label>
-                <select
-                  name="settings.periodType"
-                  value={formData.settings.periodType}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full p-3 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                >
-                  <option value="halves">Halves</option>
-                  <option value="quarters">Quarters</option>
-                  <option value="periods">Periods</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Period Duration (minutes)</label>
-                <input
-                  type="number"
-                  name="settings.periodDuration"
-                  value={formData.settings.periodDuration}
-                  onChange={handleInputChange}
-                  required
-                  min="1"
-                  className="w-full p-3 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Overtime Duration (minutes)</label>
-                <input
-                  type="number"
-                  name="settings.overtimeDuration"
-                  value={formData.settings.overtimeDuration}
-                  onChange={handleInputChange}
-                  required
-                  min="1"
-                  className="w-full p-3 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                />
-              </div>
-              {formData.sportType === 'basketball' && (
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Foul Out Limit</label>
-                  <input
-                    type="number"
-                    name="settings.foulOutLimit"
-                    value={formData.settings.foulOutLimit || ''}
-                    onChange={handleInputChange}
-                    required
-                    min="1"
-                    className="w-full p-3 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                  />
-                </div>
-              )}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Logo URL (optional)</label>
-                <input
-                  type="url"
-                  name="logo"
-                  value={formData.logo}
-                  onChange={handleInputChange}
-                  className="w-full p-3 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Location (optional)</label>
-                <input
-                  type="text"
-                  name="location"
-                  value={formData.location}
-                  onChange={handleInputChange}
-                  className="w-full p-3 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Scoring Rules (optional)</label>
-                <div className="space-y-2">
-                  {Object.keys(formData.settings.scoringRules).map((rule) => (
-                    <div key={rule} className="flex items-center">
-                      <span className="text-sm text-slate-600 min-w-[200px]">
-                        {semanticScoringRulesMap[formData.sportType][rule] || rule} (optional):
-                      </span>
+            )}
+            <header className="mb-10">
+              <h1 className="text-3xl font-extrabold mb-2 text-center text-white drop-shadow" id="admin-panel-title">
+                Admin Panel
+              </h1>
+              <p className="text-blue-100 text-center">Manage your leagues and create new ones</p>
+            </header>
+
+            <div className="flex flex-col gap-8">
+              {/* Your Leagues Card */}
+              <section
+                className="bg-white shadow-lg rounded-xl p-6 border border-gray-100"
+                role="region"
+                aria-labelledby="your-leagues"
+              >
+                <h2 id="your-leagues" className="text-base md:text-2xl font-bold text-gray-900 mb-6 break-words">
+                  Your Leagues
+                </h2>
+                {leagues?.length === 0 ? (
+                  <p className="text-gray-600" role="alert" aria-live="polite">
+                    You do not manage any leagues.
+                  </p>
+                ) : (
+                  <div className="space-y-6">
+                    {leagues.map((league) => (
+                      <article
+                        key={league?._id || `league-${Math.random()}`}
+                        className="bg-white border border-gray-100 rounded-lg p-6 flex flex-col hover:shadow-xl transition"
+                        aria-label={`League card for ${league?.name || 'Unknown'}`}
+                      >
+                        <header className="mb-3 flex items-center justify-between">
+                          <h3 className="text-lg font-bold text-gray-900 break-words">
+                            {league?.admins?.includes(user?._id) ? (
+                              <Link
+                                to={`/leagues/${league?._id}`}
+                                className="hover:underline focus:outline-none focus:ring-2 focus:ring-blue-600"
+                                aria-label={`View details for ${league?.name || 'Unknown'} league`}
+                              >
+                                {league?.name || 'Unknown'}
+                              </Link>
+                            ) : (
+                              league?.name || 'Unknown'
+                            )}
+                          </h3>
+                          <span
+                            className={`px-2 py-1 rounded text-xs font-semibold ${league?.visibility === 'public'
+                              ? 'bg-blue-100 text-blue-700 border border-blue-200'
+                              : 'bg-gray-100 text-gray-700 border border-gray-200'
+                              }`}
+                            aria-label={`Visibility: ${league?.visibility || 'Unknown'}`}
+                          >
+                            {league?.visibility
+                              ? league.visibility.charAt(0).toUpperCase() + league.visibility.slice(1)
+                              : 'Unknown'}
+                          </span>
+                        </header>
+                        <dl className="space-y-2" role="definition">
+                          <div className="flex gap-3 items-center">
+                            <dt className="text-gray-600 font-medium min-w-[100px]">Sport:</dt>
+                            <dd className="text-gray-900">{league?.sportType || 'Not specified'}</dd>
+                          </div>
+                          <div className="flex gap-3 items-center">
+                            <dt className="text-gray-600 font-medium min-w-[100px]">Role:</dt>
+                            <dd
+                              className={
+                                league?.admins?.includes(user?._id)
+                                  ? 'text-green-700 font-semibold'
+                                  : 'text-amber-700 font-semibold'
+                              }
+                            >
+                              {league?.admins?.includes(user?._id) ? 'Admin' : 'Manager'}
+                            </dd>
+                          </div>
+                        </dl>
+                      </article>
+                    ))}
+                  </div>
+                )}
+              </section>
+
+              {/* Create League Card */}
+              {/* <section
+                className="bg-white shadow-lg rounded-xl p-6 border border-gray-100"
+                role="region"
+                aria-labelledby="create-league"
+              >
+                <h2 id="create-league" className="text-base md:text-2xl font-bold text-gray-900 mb-6 break-words">
+                  Create New League
+                </h2>
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  <div>
+                    <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                      Name
+                    </label>
+                    <input
+                      id="name"
+                      type="text"
+                      name="name"
+                      value={formData?.name || ''}
+                      onChange={handleInputChange}
+                      required
+                      className="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 bg-white"
+                      aria-required="true"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="sportType" className="block text-sm font-medium text-gray-700 mb-1">
+                      Sport Type
+                    </label>
+                    <select
+                      id="sportType"
+                      name="sportType"
+                      value={formData?.sportType || 'basketball'}
+                      onChange={handleInputChange}
+                      required
+                      className="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 bg-white"
+                      aria-required="true"
+                    >
+                      <option value="basketball">Basketball</option>
+                      <option value="football">Football</option>
+                      <option value="baseball">Baseball</option>
+                      <option value="hockey">Hockey</option>
+                      <option value="americanFootball">American Football</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label htmlFor="visibility" className="block text-sm font-medium text-gray-700 mb-1">
+                      Visibility
+                    </label>
+                    <select
+                      id="visibility"
+                      name="visibility"
+                      value={formData?.visibility || 'public'}
+                      onChange={handleInputChange}
+                      required
+                      className="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 bg-white"
+                      aria-required="true"
+                    >
+                      <option value="public">Public</option>
+                      <option value="private">Private</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label htmlFor="periodType" className="block text-sm font-medium text-gray-700 mb-1">
+                      Period Type
+                    </label>
+                    <select
+                      id="periodType"
+                      name="settings.periodType"
+                      value={formData?.settings?.periodType || 'halves'}
+                      onChange={handleInputChange}
+                      required
+                      className="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 bg-white"
+                      aria-required="true"
+                    >
+                      <option value="halves">Halves</option>
+                      <option value="quarters">Quarters</option>
+                      <option value="periods">Periods</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="periodDuration"
+                      className="block text-sm font-medium text-gray-700 mb-1"
+                    >
+                      Period Duration (minutes)
+                    </label>
+                    <input
+                      id="periodDuration"
+                      type="number"
+                      name="settings.periodDuration"
+                      value={formData?.settings?.periodDuration || ''}
+                      onChange={handleInputChange}
+                      required
+                      min="1"
+                      className="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 bg-white"
+                      aria-required="true"
+                    />
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="overtimeDuration"
+                      className="block text-sm font-medium text-gray-700 mb-1"
+                    >
+                      Overtime Duration (minutes)
+                    </label>
+                    <input
+                      id="overtimeDuration"
+                      type="number"
+                      name="settings.overtimeDuration"
+                      value={formData?.settings?.overtimeDuration || ''}
+                      onChange={handleInputChange}
+                      required
+                      min="1"
+                      className="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 bg-white"
+                      aria-required="true"
+                    />
+                  </div>
+                  {formData?.sportType === 'basketball' && (
+                    <div>
+                      <label
+                        htmlFor="foulOutLimit"
+                        className="block text-sm font-medium text-gray-700 mb-1"
+                      >
+                        Foul Out Limit
+                      </label>
                       <input
+                        id="foulOutLimit"
                         type="number"
-                        name="settings.scoringRules"
-                        data-rule={rule}
-                        value={formData.settings.scoringRules[rule]}
+                        name="settings.foulOutLimit"
+                        value={formData?.settings?.foulOutLimit || ''}
                         onChange={handleInputChange}
-                        min="0"
-                        className="w-24 p-2 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                        required
+                        min="1"
+                        className="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 bg-white"
+                        aria-required="true"
                       />
                     </div>
-                  ))}
-                </div>
-              </div>
-              <button
-                type="submit"
-                className="w-full bg-blue-700 text-white py-3 rounded-lg font-semibold hover:bg-blue-800 transition focus:ring-2 focus:ring-blue-500 focus:outline-none"
-              >
-                Create League
-              </button>
-            </form>
-          </section> */}
-        </div>
+                  )}
+                  <div>
+                    <label htmlFor="logo" className="block text-sm font-medium text-gray-700 mb-1">
+                      Logo URL (optional)
+                    </label>
+                    <input
+                      id="logo"
+                      type="url"
+                      name="logo"
+                      value={formData?.logo || ''}
+                      onChange={handleInputChange}
+                      className="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 bg-white"
+                    />
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="location"
+                      className="block text-sm font-medium text-gray-700 mb-1"
+                    >
+                      Location (optional)
+                    </label>
+                    <input
+                      id="location"
+                      type="text"
+                      name="location"
+                      value={formData?.location || ''}
+                      onChange={handleInputChange}
+                      className="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 bg-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Scoring Rules (optional)
+                    </label>
+                    <div className="space-y-2">
+                      {Object.keys(formData?.settings?.scoringRules || {}).map((rule) => (
+                        <div key={rule} className="flex items-center gap-3">
+                          <span className="text-sm text-gray-600 min-w-[200px]">
+                            {semanticScoringRulesMap[formData?.sportType]?.[rule] || rule} (optional):
+                          </span>
+                          <input
+                            id={`scoringRule-${rule}`}
+                            type="number"
+                            name="settings.scoringRules"
+                            data-rule={rule}
+                            value={formData?.settings?.scoringRules?.[rule] || ''}
+                            onChange={handleInputChange}
+                            min="0"
+                            className="w-24 p-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 bg-white"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <button
+                    type="submit"
+                    className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition focus:ring-2 focus:ring-blue-600 focus:outline-none"
+                    aria-label="Create new league"
+                  >
+                    Create League
+                  </button>
+                </form>
+              </section> */}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

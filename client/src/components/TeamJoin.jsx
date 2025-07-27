@@ -176,7 +176,7 @@ export default function TeamJoin() {
                   ref={secretKeyInputRef}
                 />
                 <p id="secretKeyHelp" className="mt-1 text-xs text-gray-300">
-                  Enter the 32-character hexadecimal key provided by your team admin
+                  Enter the 32-character secret key provided by your team administrator.
                 </p>
               </div>
               <div className="flex space-x-4">
