@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Skeleton from 'react-loading-skeleton';
+import { motion, AnimatePresence, useScroll, useTransform, useReducedMotion } from 'framer-motion';
 import {
   SparklesIcon,
   UsersIcon,
@@ -122,8 +123,25 @@ const whyChooseSporty = [
   },
 ];
 
+/* Add this custom hook and animation variants after the whyChooseSporty array */
+function useParallax() {
+  const ref = useRef(null);
+  const { scrollYProgress } = useScroll({ target: ref });
+  const y = useTransform(scrollYProgress, [0, 1], ['0%', '20%']);
+  return { ref, y };
+}
+
+const cardVariants = {
+  hidden: { opacity: 0, y: 50 },
+  visible: (i) => ({
+    opacity: 1,
+    y: 0,
+    transition: { delay: i * 0.2, duration: 0.6, ease: 'easeOut' },
+  }),
+};
+
 // Helper to render feature cards
-function renderFeatures(features, isAuthenticated) {
+function renderFeatures(features, isAuthenticated, shouldReduceMotion) {
   if (!Array.isArray(features)) {
     console.error('Features is not an array:', features);
     return (
@@ -135,23 +153,32 @@ function renderFeatures(features, isAuthenticated) {
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-      {features.map((feature) => {
+      {features.map((feature, index) => {
         const Icon = feature?.icon;
         return (
-          <article
+          <motion.article
             key={feature?.title || `feature-${Math.random()}`}
             className={`
               bg-gradient-to-br ${feature?.bg || 'from-gray-100 to-gray-300'}
               glass rounded-xl shadow-lg p-5 border border-gray-100
-              flex flex-col items-start transition-all hover:shadow-xl
+              flex flex-col items-start
               ${feature?.comingSoon ? 'opacity-70' : ''}
             `}
             role="article"
             aria-label={feature?.title || 'Feature card'}
+            variants={shouldReduceMotion ? {} : cardVariants}
+            initial="hidden"
+            animate="visible"
+            custom={index}
+            whileHover={shouldReduceMotion ? {} : { scale: 1.05, boxShadow: '0 10px 20px rgba(0,0,0,0.2)' }}
+            whileTap={shouldReduceMotion ? {} : { scale: 0.95 }}
           >
-            <div className="flex justify-center items-center w-full mb-3">
+            <motion.div
+              className="flex justify-center items-center w-full mb-3"
+              animate={shouldReduceMotion ? {} : { rotate: [0, 5, -5, 0], transition: { repeat: Infinity, duration: 3 } }}
+            >
               {Icon ? <Icon className={`w-14 h-14 ${feature?.iconColor || 'text-gray-600'}`} aria-hidden="true" /> : <Skeleton circle height={56} width={56} baseColor="#e5e7eb" highlightColor="#f3f4f6" aria-hidden="true" />}
-            </div>
+            </motion.div>
             <h3 className="text-lg font-bold text-gray-900 mb-1">{feature?.title || 'Untitled Feature'}</h3>
             <p className="text-gray-700 mb-2">{feature?.description || 'No description available'}</p>
             {feature?.comingSoon ? (
@@ -167,7 +194,7 @@ function renderFeatures(features, isAuthenticated) {
                 {isAuthenticated ? feature?.linkLabel || 'Learn More' : 'Login to Start'}
               </Link>
             )}
-          </article>
+          </motion.article>
         );
       })}
     </div>
@@ -175,7 +202,7 @@ function renderFeatures(features, isAuthenticated) {
 }
 
 // Helper to render discover leagues
-function DiscoverLeagues({ leagues }) {
+function DiscoverLeagues({ leagues, shouldReduceMotion }) {
   const navigate = useNavigate();
 
   if (!Array.isArray(leagues)) {
@@ -194,25 +221,32 @@ function DiscoverLeagues({ leagues }) {
           No active leagues found.
         </p>
       ) : (
-        leagues.map((league) => (
-          <article
+        leagues.map((league, index) => (
+          <motion.article
             key={league?._id || `league-${Math.random()}`}
-            className="bg-gradient-to-br from-blue-100 to-slate-100 glass rounded-xl shadow-lg p-5 border border-gray-100 flex flex-col items-center transition-all hover:shadow-xl hover:cursor-pointer"
+            className="bg-gradient-to-br from-blue-100 to-slate-100 glass rounded-xl shadow-lg p-5 border border-gray-100 flex flex-col items-center cursor-pointer"
             role="article"
             aria-label={`League: ${league?.name || 'Unknown League'}`}
-            onClick={() => { navigate(`/leagues/public/${league?._id || ''}`) }}
+            variants={shouldReduceMotion ? {} : cardVariants}
+            initial="hidden"
+            animate="visible"
+            custom={index}
+            whileHover={shouldReduceMotion ? {} : { scale: 1.05, boxShadow: '0 10px 20px rgba(0,0,0,0.2)' }}
+            whileTap={shouldReduceMotion ? {} : { scale: 0.95 }}
+            onClick={() => navigate(`/leagues/public/${league?._id || ''}`)}
           >
             {league?.logo ? (
-              <img
+              <motion.img
                 src={league.logo}
                 alt={`${league?.name || 'Unknown League'} Logo`}
                 className="w-16 h-16 rounded-full mb-3 object-cover"
+                animate={shouldReduceMotion ? {} : { scale: [1, 1.1, 1], transition: { repeat: Infinity, duration: 2 } }}
               />
             ) : (
               <div className="w-16 h-16 bg-gray-300 rounded-full mb-3" aria-hidden="true" />
             )}
             <h3 className="text-lg font-bold text-gray-900 mb-1 text-center">{league?.name || 'Unknown League'}</h3>
-          </article>
+          </motion.article>
         ))
       )}
     </div>
@@ -225,6 +259,8 @@ export default function Home() {
   const [leagues, setLeagues] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const { ref: parallaxRef, y: parallaxY } = useParallax();
+  const shouldReduceMotion = useReducedMotion();
 
   useEffect(() => {
     if (isAuthenticated) return; // Only fetch leagues for unauthenticated users
@@ -325,190 +361,278 @@ export default function Home() {
     <>
       <style>
         {`
-          .glass {
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-          }
-          @keyframes marquee-left {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(-50%); }
-          }
-        `}
+        .glass {
+          backdrop-filter: blur(10px);
+          -webkit-backdrop-filter: blur(10px);
+        }
+        @keyframes marquee-left {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
+        }
+      `}
       </style>
-      {/* Welcome Section */}
-      <section
-        className="bg-gradient-to-br from-blue-900 via-blue-700 to-slate-800 text-white py-20 text-center"
+      {/* Welcome Section with Parallax */}
+      <motion.section
+        ref={parallaxRef}
+        className="relative bg-gradient-to-br from-blue-900 via-blue-700 to-slate-800 text-white py-20 text-center overflow-hidden"
         role="region"
         aria-labelledby="welcome-heading"
+        initial={shouldReduceMotion ? {} : { opacity: 0, y: -50 }}
+        animate={shouldReduceMotion ? {} : { opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, ease: 'easeOut' }}
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h1 id="welcome-heading" className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 flex items-center justify-center drop-shadow-lg">
+        <motion.div
+          className="absolute inset-0 bg-gradient-to-br from-blue-900 to-slate-800 opacity-50"
+          style={{ y: shouldReduceMotion ? 0 : parallaxY }}
+        />
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 z-10">
+          <motion.h1
+            id="welcome-heading"
+            className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 flex items-center justify-center drop-shadow-lg"
+            animate={shouldReduceMotion ? {} : { scale: [1, 1.05, 1], transition: { repeat: Infinity, duration: 3 } }}
+          >
             <SparklesIcon className="w-8 h-8 sm:w-10 mr-2 text-blue-300" aria-hidden="true" />
             The Sporty Way
-          </h1>
-          <p className="text-lg sm:text-xl mb-8 text-blue-100 drop-shadow">Connect, manage, and track your sports leagues with ease.</p>
+          </motion.h1>
+          <motion.p
+            className="text-lg sm:text-xl mb-8 text-blue-100 drop-shadow"
+            initial={shouldReduceMotion ? {} : { opacity: 0 }}
+            animate={shouldReduceMotion ? {} : { opacity: 1 }}
+            transition={{ delay: 0.3, duration: 0.6 }}
+          >
+            Connect, manage, and track your sports leagues with ease.
+          </motion.p>
           <div className="flex justify-center gap-4">
             {isAuthenticated ? (
               <>
-                <Link
-                  to="/my-sporty"
-                  className="inline-flex items-center bg-blue-700 text-white px-6 sm:px-8 py-3 rounded-lg font-semibold shadow-lg hover:bg-blue-800 transition focus:ring-2 focus:ring-blue-600 focus:outline-none"
-                  aria-label="Navigate to My Sporty dashboard"
-                >
-                  <UserCircleIcon className="w-5 h-5 sm:w-6 mr-2 text-blue-200" aria-hidden="true" />
-                  My Sporty
-                </Link>
-                <Link
-                  to="/admin"
-                  className="inline-flex items-center bg-white text-blue-800 px-6 sm:px-8 py-3 rounded-lg font-semibold shadow-lg border border-blue-400 hover:bg-blue-50 transition focus:ring-2 focus:ring-blue-600 focus:outline-none"
-                  aria-label="Navigate to Admin Panel"
-                >
-                  <Cog6ToothIcon className="w-5 h-5 sm:w-6 mr-2 text-blue-400" aria-hidden="true" />
-                  Admin Panel
-                </Link>
+                <motion.div whileHover={shouldReduceMotion ? {} : { scale: 1.1 }} whileTap={shouldReduceMotion ? {} : { scale: 0.9 }}>
+                  <Link
+                    to="/my-sporty"
+                    className="inline-flex items-center bg-blue-700 text-white px-6 sm:px-8 py-3 rounded-lg font-semibold shadow-lg hover:bg-blue-800 transition focus:ring-2 focus:ring-blue-600 focus:outline-none"
+                    aria-label="Navigate to My Sporty dashboard"
+                  >
+                    <UserCircleIcon className="w-5 h-5 sm:w-6 mr-2 text-blue-200" aria-hidden="true" />
+                    My Sporty
+                  </Link>
+                </motion.div>
+                <motion.div whileHover={shouldReduceMotion ? {} : { scale: 1.1 }} whileTap={shouldReduceMotion ? {} : { scale: 0.9 }}>
+                  <Link
+                    to="/admin"
+                    className="inline-flex items-center bg-white text-blue-800 px-6 sm:px-8 py-3 rounded-lg font-semibold shadow-lg border border-blue-400 hover:bg-blue-50 transition focus:ring-2 focus:ring-blue-600 focus:outline-none"
+                    aria-label="Navigate to Admin Panel"
+                  >
+                    <Cog6ToothIcon className="w-5 h-5 sm:w-6 mr-2 text-blue-400" aria-hidden="true" />
+                    Admin Panel
+                  </Link>
+                </motion.div>
               </>
             ) : (
-              <Link
-                to="/login"
-                className="inline-flex items-center bg-blue-700 text-white px-6 sm:px-8 py-3 rounded-lg font-semibold shadow-lg hover:bg-blue-800 transition focus:ring-2 focus:ring-blue-600 focus:outline-none"
-                aria-label="Navigate to Login page"
-              >
-                <ArrowRightEndOnRectangleIcon className="w-5 h-5 sm:w-6 mr-2 text-blue-200" aria-hidden="true" />
-                Pave Your Path
-              </Link>
+              <motion.div whileHover={shouldReduceMotion ? {} : { scale: 1.1 }} whileTap={shouldReduceMotion ? {} : { scale: 0.9 }}>
+                <Link
+                  to="/login"
+                  className="inline-flex items-center bg-blue-700 text-white px-6 sm:px-8 py-3 rounded-lg font-semibold shadow-lg hover:bg-blue-800 transition focus:ring-2 focus:ring-blue-600 focus:outline-none"
+                  aria-label="Navigate to Login page"
+                >
+                  <ArrowRightEndOnRectangleIcon className="w-5 h-5 sm:w-6 mr-2 text-blue-200" aria-hidden="true" />
+                  Pave Your Path
+                </Link>
+              </motion.div>
             )}
           </div>
         </div>
-      </section>
+      </motion.section>
 
       {/* Conditional Sections */}
-      {isAuthenticated ? (
-        <>
-          {/* Admin Features Section */}
-          <section className="py-12 bg-gradient-to-br from-blue-50 to-slate-100" role="region" aria-labelledby="admin-features">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              <h2 id="admin-features" className="text-2xl sm:text-3xl font-bold text-blue-800 text-center mb-10 flex items-center justify-center">
-                <Cog6ToothIcon className="w-6 h-6 sm:w-7 mr-2 text-blue-700" aria-hidden="true" />
-                Admin Features
-              </h2>
-              {renderFeatures(adminFeatures, isAuthenticated)}
-            </div>
-          </section>
+      <AnimatePresence>
+        {isAuthenticated ? (
+          <>
+            {/* Admin Features Section */}
+            <motion.section
+              className="py-12 bg-gradient-to-br from-blue-50 to-slate-100"
+              role="region"
+              aria-labelledby="admin-features"
+              initial={shouldReduceMotion ? {} : { opacity: 0, y: 50 }}
+              animate={shouldReduceMotion ? {} : { opacity: 1, y: 0 }}
+              exit={shouldReduceMotion ? {} : { opacity: 0 }}
+              transition={{ duration: 0.6 }}
+            >
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <h2 id="admin-features" className="text-2xl sm:text-3xl font-bold text-blue-800 text-center mb-10 flex items-center justify-center">
+                  <Cog6ToothIcon className="w-6 h-6 sm:w-7 mr-2 text-blue-700" aria-hidden="true" />
+                  Admin Features
+                </h2>
+                {renderFeatures(adminFeatures, isAuthenticated, shouldReduceMotion)}
+              </div>
+            </motion.section>
 
-          {/* Player Features Section */}
-          <section className="py-12 bg-gradient-to-br from-green-50 to-slate-100" role="region" aria-labelledby="player-features">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              <h2 id="player-features" className="text-2xl sm:text-3xl font-bold text-green-800 text-center mb-10 flex items-center justify-center">
-                <UsersIcon className="w-6 h-6 sm:w-7 mr-2 text-green-700" aria-hidden="true" />
-                Player Features
-              </h2>
-              {renderFeatures(playerFeatures, isAuthenticated)}
-            </div>
-          </section>
+            {/* Player Features Section */}
+            <motion.section
+              className="py-12 bg-gradient-to-br from-green-50 to-slate-100"
+              role="region"
+              aria-labelledby="player-features"
+              initial={shouldReduceMotion ? {} : { opacity: 0, y: 50 }}
+              animate={shouldReduceMotion ? {} : { opacity: 1, y: 0 }}
+              exit={shouldReduceMotion ? {} : { opacity: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+            >
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <h2 id="player-features" className="text-2xl sm:text-3xl font-bold text-green-800 text-center mb-10 flex items-center justify-center">
+                  <UsersIcon className="w-6 h-6 sm:w-7 mr-2 text-green-700" aria-hidden="true" />
+                  Player Features
+                </h2>
+                {renderFeatures(playerFeatures, isAuthenticated, shouldReduceMotion)}
+              </div>
+            </motion.section>
 
-          {/* Why Choose Section (Marquee) */}
-          <section className="bg-white py-16" role="region" aria-labelledby="why-choose">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              <h2 id="why-choose" className="text-2xl sm:text-3xl font-bold text-blue-800 text-center mb-12 flex items-center justify-center">
-                <UsersIcon className="w-7 h-7 sm:w-8 mr-2 text-blue-700" aria-hidden="true" />
-                Why Choose The Sporty Way?
-              </h2>
-              <div className="overflow-hidden relative w-full" aria-hidden="true">
-                <div
-                  className="flex w-max py-4"
-                  style={{
-                    animation: 'marquee-left 45s linear infinite',
-                  }}
-                >
-                  {Array.isArray(whyChooseSporty) ? (
-                    [...whyChooseSporty, ...whyChooseSporty].map((reason, idx) => (
-                      <article
-                        key={reason?.title ? `${reason.title}-${idx}` : `reason-${idx}`}
-                        className="min-w-[220px] max-w-xs mx-3 text-center bg-gradient-to-br bg-opacity-80 glass rounded-xl shadow-lg p-4 border border-gray-100 flex-shrink-0"
-                        style={{ backgroundImage: `linear-gradient(to bottom right, var(--tw-gradient-stops))` }}
-                        role="article"
-                        aria-label={`Reason: ${reason?.title || 'Unknown'}`}
-                      >
-                        <div
-                          className={`h-16 w-16 bg-gradient-to-br ${reason?.iconBg || 'from-gray-200 to-gray-400'} rounded-full mx-auto mb-3`}
-                          aria-hidden="true"
-                        />
-                        <h3 className="text-base font-semibold text-gray-800 mb-1">{reason?.title || 'Untitled'}</h3>
-                        <p className="text-gray-700 text-sm">{reason?.description || 'No description available'}</p>
-                      </article>
-                    ))
-                  ) : (
-                    <div className="text-red-600 text-center" role="alert" aria-live="assertive">
-                      Error: Unable to display reasons. Please try again later.
-                    </div>
-                  )}
+            {/* Why Choose Section (Unchanged) */}
+            <section className="bg-white py-16" role="region" aria-labelledby="why-choose">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <h2 id="why-choose" className="text-2xl sm:text-3xl font-bold text-blue-800 text-center mb-12 flex items-center justify-center">
+                  <UsersIcon className="w-7 h-7 sm:w-8 mr-2 text-blue-700" aria-hidden="true" />
+                  Why Choose The Sporty Way?
+                </h2>
+                <div className="overflow-hidden relative w-full" aria-hidden="true">
+                  <div
+                    className="flex w-max py-4"
+                    style={{
+                      animation: 'marquee-left 45s linear infinite',
+                    }}
+                  >
+                    {Array.isArray(whyChooseSporty) ? (
+                      [...whyChooseSporty, ...whyChooseSporty].map((reason, idx) => (
+                        <article
+                          key={reason?.title ? `${reason.title}-${idx}` : `reason-${idx}`}
+                          className="min-w-[220px] max-w-xs mx-3 text-center bg-gradient-to-br bg-opacity-80 glass rounded-xl shadow-lg p-4 border border-gray-100 flex-shrink-0"
+                          style={{ backgroundImage: `linear-gradient(to bottom right, var(--tw-gradient-stops))` }}
+                          role="article"
+                          aria-label={`Reason: ${reason?.title || 'Unknown'}`}
+                        >
+                          <div
+                            className={`h-16 w-16 bg-gradient-to-br ${reason?.iconBg || 'from-gray-200 to-gray-400'} rounded-full mx-auto mb-3`}
+                            aria-hidden="true"
+                          />
+                          <h3 className="text-base font-semibold text-gray-800 mb-1">{reason?.title || 'Untitled'}</h3>
+                          <p className="text-gray-700 text-sm">{reason?.description || 'No description available'}</p>
+                        </article>
+                      ))
+                    ) : (
+                      <div className="text-red-600 text-center" role="alert" aria-live="assertive">
+                        Error: Unable to display reasons. Please try again later.
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          </section>
+            </section>
 
-          {/* Testimonials Section */}
-          <section className="bg-gradient-to-br from-slate-50 to-gray-100 py-16" role="region" aria-labelledby="testimonials">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              <h2 id="testimonials" className="text-2xl sm:text-3xl font-bold text-blue-800 text-center mb-12 flex items-center justify-center">
-                <ChatBubbleLeftRightIcon className="w-7 h-7 sm:w-8 mr-2 text-amber-600" aria-hidden="true" />
-                What Users Say
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <article className="bg-gradient-to-br from-blue-100 to-slate-100 glass rounded-xl shadow-lg p-6 border border-gray-100" role="article" aria-label="Testimonial from Jane, Parent">
-                  <p className="text-gray-700 italic">“The Sporty Way makes it so easy to follow my son’s games!”</p>
-                  <p className="mt-4 font-semibold text-gray-900">— Jane, Parent</p>
-                </article>
-                <article className="bg-gradient-to-br from-green-100 to-slate-100 glass rounded-xl shadow-lg p-6 border border-gray-100" role="article" aria-label="Testimonial from Mike, League Manager">
-                  <p className="text-gray-700 italic">“Managing my league has never been simpler. Love the tools!”</p>
-                  <p className="mt-4 font-semibold text-gray-900">— Mike, League Manager</p>
-                </article>
+            {/* Testimonials Section */}
+            <motion.section
+              className="bg-gradient-to-br from-slate-50 to-gray-100 py-16"
+              role="region"
+              aria-labelledby="testimonials"
+              initial={shouldReduceMotion ? {} : { opacity: 0, y: 50 }}
+              animate={shouldReduceMotion ? {} : { opacity: 1, y: 0 }}
+              exit={shouldReduceMotion ? {} : { opacity: 0 }}
+              transition={{ duration: 0.6, delay: 0.6 }}
+            >
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <h2 id="testimonials" className="text-2xl sm:text-3xl font-bold text-blue-800 text-center mb-12 flex items-center justify-center">
+                  <ChatBubbleLeftRightIcon className="w-7 h-7 sm:w-8 mr-2 text-amber-600" aria-hidden="true" />
+                  What Users Say
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <motion.article
+                    className="bg-gradient-to-br from-blue-100 to-slate-100 glass rounded-xl shadow-lg p-6 border border-gray-100"
+                    role="article"
+                    aria-label="Testimonial from Jane, Parent"
+                    variants={shouldReduceMotion ? {} : cardVariants}
+                    initial="hidden"
+                    animate="visible"
+                    custom={0}
+                  >
+                    <p className="text-gray-700 italic">“The Sporty Way makes it so easy to follow my son’s games!”</p>
+                    <p className="mt-4 font-semibold text-gray-900">— Jane, Parent</p>
+                  </motion.article>
+                  <motion.article
+                    className="bg-gradient-to-br from-green-100 to-slate-100 glass rounded-xl shadow-lg p-6 border border-gray-100"
+                    role="article"
+                    aria-label="Testimonial from Mike, League Manager"
+                    variants={shouldReduceMotion ? {} : cardVariants}
+                    initial="hidden"
+                    animate="visible"
+                    custom={1}
+                  >
+                    <p className="text-gray-700 italic">“Managing my league has never been simpler. Love the tools!”</p>
+                    <p className="mt-4 font-semibold text-gray-900">— Mike, League Manager</p>
+                  </motion.article>
+                </div>
               </div>
+            </motion.section>
+          </>
+        ) : (
+          /* Discover Section */
+          <motion.section
+            className="py-12 bg-gradient-to-br from-blue-50 to-slate-100"
+            role="region"
+            aria-labelledby="discover-leagues"
+            initial={shouldReduceMotion ? {} : { opacity: 0, y: 50 }}
+            animate={shouldReduceMotion ? {} : { opacity: 1, y: 0 }}
+            exit={shouldReduceMotion ? {} : { opacity: 0 }}
+            transition={{ duration: 0.6 }}
+          >
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <h2 id="discover-leagues" className="text-2xl sm:text-3xl font-bold text-blue-800 text-center mb-10 flex items-center justify-center">
+                <SparklesIcon className="w-6 h-6 sm:w-7 mr-2 text-blue-700" aria-hidden="true" />
+                Discover Leagues
+              </h2>
+              <DiscoverLeagues leagues={leagues} shouldReduceMotion={shouldReduceMotion} />
             </div>
-          </section>
-        </>
-      ) : (
-        /* Discover Section */
-        <section className="py-12 bg-gradient-to-br from-blue-50 to-slate-100" role="region" aria-labelledby="discover-leagues">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 id="discover-leagues" className="text-2xl sm:text-3xl font-bold text-blue-800 text-center mb-10 flex items-center justify-center">
-              <SparklesIcon className="w-6 h-6 sm:w-7 mr-2 text-blue-700" aria-hidden="true" />
-              Discover Leagues
-            </h2>
-            <DiscoverLeagues leagues={leagues} />
-          </div>
-        </section>
-      )}
+          </motion.section>
+        )}
 
-      {/* Footer Section */}
-      <footer className="bg-gradient-to-br from-blue-800 to-slate-900 text-white py-8 text-center" role="contentinfo" aria-labelledby="footer-content">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <p id="footer-content" className="mb-4 text-lg">Join the sports community today!</p>
-          <div className="flex align-center justify-center space-x-6">
-            <Link
-              to="/about"
-              className="text-white hover:text-amber-300 focus:ring-2 focus:ring-amber-600 focus:outline-none"
-              aria-label="Navigate to About page"
-            >
-              About
-            </Link>
-            <Link
-              to={isAuthenticated ? '/admin' : '/register'}
-              className="text-white hover:text-amber-300 focus:ring-2 focus:ring-amber-600 focus:outline-none"
-              aria-label={isAuthenticated ? 'Navigate to Manage Leagues' : 'Navigate to Join Now'}
-            >
-              {isAuthenticated ? 'Manage Leagues' : 'Join Now'}
-            </Link>
-            <Link
-              to="/privacy-policy"
-              className="text-white hover:text-amber-300 focus:ring-2 focus:ring-amber-600 focus:outline-none"
-              aria-label="Navigate to Privacy Policy page"
-            >
-              Privacy Policy
-            </Link>
+        {/* Footer Section */}
+        <motion.footer
+          className="bg-gradient-to-br from-blue-800 to-slate-900 text-white py-8 text-center"
+          role="contentinfo"
+          aria-labelledby="footer-content"
+          initial={shouldReduceMotion ? {} : { opacity: 0, y: 50 }}
+          animate={shouldReduceMotion ? {} : { opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.8 }}
+        >
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <p id="footer-content" className="mb-4 text-lg">Join the sports community today!</p>
+            <div className="flex align-center justify-center space-x-6">
+              <motion.div whileHover={shouldReduceMotion ? {} : { scale: 1.1 }} whileTap={shouldReduceMotion ? {} : { scale: 0.9 }}>
+                <Link
+                  to="/about"
+                  className="text-white hover:text-amber-300 focus:ring-2 focus:ring-amber-600 focus:outline-none"
+                  aria-label="Navigate to About page"
+                >
+                  About
+                </Link>
+              </motion.div>
+              <motion.div whileHover={shouldReduceMotion ? {} : { scale: 1.1 }} whileTap={shouldReduceMotion ? {} : { scale: 0.9 }}>
+                <Link
+                  to={isAuthenticated ? '/admin' : '/register'}
+                  className="text-white hover:text-amber-300 focus:ring-2 focus:ring-amber-600 focus:outline-none"
+                  aria-label={isAuthenticated ? 'Navigate to Manage Leagues' : 'Navigate to Join Now'}
+                >
+                  {isAuthenticated ? 'Manage Leagues' : 'Join Now'}
+                </Link>
+              </motion.div>
+              <motion.div whileHover={shouldReduceMotion ? {} : { scale: 1.1 }} whileTap={shouldReduceMotion ? {} : { scale: 0.9 }}>
+                <Link
+                  to="/privacy-policy"
+                  className="text-white hover:text-amber-300 focus:ring-2 focus:ring-amber-600 focus:outline-none"
+                  aria-label="Navigate to Privacy Policy page"
+                >
+                  Privacy Policy
+                </Link>
+              </motion.div>
+            </div>
           </div>
-        </div>
-      </footer>
+        </motion.footer>
+      </AnimatePresence>
     </>
   );
 }
