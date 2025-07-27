@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import Skeleton from 'react-loading-skeleton';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import Modal from 'react-modal';
@@ -464,526 +465,715 @@ export default function ManageGames() {
     setEditError(null);
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-[var(--page-height)] bg-gray-50 flex items-center justify-center">
-        <p className="text-center text-gray-600 text-lg">Loading...</p>
-      </div>
-    );
-  }
-
-  if (error === 'You are not authorized to manage games for this league') {
-    return <Unauthorized />;
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-[var(--page-height)] bg-gray-50 flex items-center justify-center">
-        <p className="text-center text-red-500 text-lg">{error}</p>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-[var(--page-height)] bg-gray-50 py-4 px-4">
-      <div className="max-w-4xl mx-auto">
-        <AdminPanelPageHeader
-          backButtonLink={`/leagues/${leagueId}`}
-          backButtonText="Back to League"
-          pageTitle="Manage Games"
-          subHeader={league?.name || 'Unnamed League'}
-          tabs={tabs}
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-        />
 
-        {/* Create Game Form */}
-        {activeTab === 'create' && (
-          <section className="bg-white shadow-xl rounded-2xl p-4 border border-gray-200 mb-8">
-            <div className="flex items-center gap-3 mb-4">
-              <PlusIcon className="w-6 h-6 text-blue-500" />
-              <h2 className="text-2xl font-semibold text-gray-800">
-                {editingGameId ? 'Edit Game' : 'Create New Game'}
-              </h2>
+    <div className="min-h-[var(--page-height)] bg-gray-50 py-4 px-4">
+      {loading ? (
+        <div className="max-w-4xl mx-auto flex flex-col gap-4" role="status" aria-live="assertive">
+          {/* Header Skeleton */}
+          <div className="mb-4">
+            <Skeleton height={36} width={200} baseColor="#e5e7eb" highlightColor="#f3f4f6" className="mb-2" aria-hidden="true" />
+            <Skeleton height={16} width={300} baseColor="#e5e7eb" highlightColor="#f3f4f6" aria-hidden="true" />
+            <div className="flex gap-2 mt-2">
+              {[...Array(2)].map((_, i) => (
+                <Skeleton key={`tab-${i}`} height={40} width={100} baseColor="#e5e7eb" highlightColor="#f3f4f6" aria-hidden="true" />
+              ))}
             </div>
-            {error && <p className="text-red-500 mb-4 text-center">{error}</p>}
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="flex flex-col">
-                  <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                    <CalendarIcon className="w-5 h-5 text-gray-500" />
-                    Date:
-                  </label>
-                  <input
-                    type="date"
-                    name="date"
-                    value={formData.date}
-                    onChange={handleInputChange}
-                    required
-                    className="mt-1 max-w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                  />
+          </div>
+
+          {/* Create Game Skeleton */}
+          <section className="bg-white shadow-lg rounded-xl p-6 border border-gray-100 mb-8" role="region" aria-label="Create Game">
+            <Skeleton height={28} width={150} baseColor="#e5e7eb" highlightColor="#f3f4f6" className="mb-4" aria-hidden="true" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {[...Array(8)].map((_, i) => (
+                <div key={`form-field-${i}`} className="flex flex-col">
+                  <Skeleton height={16} width={100} baseColor="#e5e7eb" highlightColor="#f3f4f6" className="mb-1" aria-hidden="true" />
+                  <Skeleton height={40} width="100%" baseColor="#e5e7eb" highlightColor="#f3f4f6" aria-hidden="true" />
                 </div>
-                <div className="flex flex-col">
-                  <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                    <ClockIcon className="w-5 h-5 text-gray-500" />
-                    Time:
-                  </label>
-                  <input
-                    type="time"
-                    name="time"
-                    value={formData.time}
-                    onChange={handleInputChange}
-                    required
-                    className="mt-1 max-w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                  />
-                </div>
-                <div className="flex flex-col">
-                  <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                    <UsersIcon className="w-5 h-5 text-gray-500" />
-                    Home Team:
-                  </label>
-                  <select
-                    name="teams[0]"
-                    value={formData.teams[0]}
-                    onChange={handleInputChange}
-                    required
-                    className="mt-1 max-w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                  >
-                    <option value="">Select Home Team</option>
-                    {teams.map(team => (
-                      <option key={team._id} value={team._id}>{team.name}</option>
+              ))}
+              <div className="flex gap-3">
+                <Skeleton height={44} width="100%" baseColor="#e5e7eb" highlightColor="#f3f4f6" aria-hidden="true" />
+                <Skeleton height={44} width="100%" baseColor="#e5e7eb" highlightColor="#f3f4f6" aria-hidden="true" />
+              </div>
+            </div>
+          </section>
+
+          {/* View Games Skeleton */}
+          <section className="bg-white shadow-lg rounded-xl p-6 border border-gray-100" role="region" aria-label="View Games">
+            <Skeleton height={28} width={150} baseColor="#e5e7eb" highlightColor="#f3f4f6" className="mb-4" aria-hidden="true" />
+            <div className="grid gap-2 md:grid-cols-2">
+              {[...Array(4)].map((_, i) => (
+                <div key={`game-skeleton-${i}`} className="bg-white p-3 rounded-md border border-gray-100">
+                  <div className="space-y-1">
+                    {[...Array(4)].map((_, j) => (
+                      <div key={`game-field-${j}`} className="flex items-center gap-2">
+                        <Skeleton circle height={16} width={16} baseColor="#e5e7eb" highlightColor="#f3f4f6" aria-hidden="true" />
+                        <Skeleton height={16} width={150} baseColor="#e5e7eb" highlightColor="#f3f4f6" aria-hidden="true" />
+                      </div>
                     ))}
-                  </select>
-                </div>
-                <div className="flex flex-col">
-                  <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                    <UsersIcon className="w-5 h-5 text-gray-500" />
-                    Away Team:
-                  </label>
-                  <select
-                    name="teams[1]"
-                    value={formData.teams[1]}
-                    onChange={handleInputChange}
-                    required
-                    className="mt-1 max-w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                  >
-                    <option value="">Select Away Team</option>
-                    {teams.map(team => (
-                      <option key={team._id} value={team._id}>{team.name}</option>
+                  </div>
+                  <div className="flex gap-2 mt-3">
+                    {[...Array(3)].map((_, j) => (
+                      <Skeleton key={`button-${j}`} height={36} width={80} baseColor="#e5e7eb" highlightColor="#f3f4f6" aria-hidden="true" />
                     ))}
-                  </select>
+                  </div>
                 </div>
-                <div className="flex flex-col">
-                  <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                    <MapPinIcon className="w-5 h-5 text-gray-500" />
-                    Location (optional):
-                  </label>
-                  <input
-                    type="text"
-                    name="location"
-                    value={formData.location}
-                    onChange={handleInputChange}
-                    className="mt-1 max-w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                  />
-                </div>
-                <div className="flex flex-col">
-                  <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                    <MapPinIcon className="w-5 h-5 text-gray-500" />
-                    Venue (optional):
-                  </label>
-                  <input
-                    type="text"
-                    name="venue"
-                    value={formData.venue}
-                    onChange={handleInputChange}
-                    className="mt-1 max-w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                  />
-                </div>
-                <div className="flex flex-col">
-                  <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                    <VideoCameraIcon className="w-5 h-5 text-gray-500" />
-                    YouTube Video URL (optional):
-                  </label>
-                  <input
-                    type="url"
-                    name="videoUrl"
-                    value={formData.videoUrl}
-                    onChange={handleInputChange}
-                    placeholder="https://www.youtube.com/watch?v=..."
-                    className="mt-1 max-w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                  />
-                </div>
-                <div className="flex flex-col">
-                  <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                    <FlagIcon className="w-5 h-5 text-gray-500" />
-                    Match Type (optional):
-                  </label>
-                  <select
-                    name="matchType"
-                    value={formData.matchType}
-                    onChange={handleInputChange}
-                    required
-                    className="mt-1 max-w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                  >
-                    <option value="league">League</option>
-                    <option value="friendly">Friendly</option>
-                    <option value="tournament">Tournament</option>
-                  </select>
-                </div>
-                <div className="flex flex-col">
-                  <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                    <FlagIcon className="w-5 h-5 text-gray-500" />
-                    Event Type (optional):
-                  </label>
-                  <select
-                    name="eventType"
-                    value={formData.eventType}
-                    onChange={handleInputChange}
-                    required
-                    className="mt-1 max-w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                  >
-                    <option value="regular">Regular</option>
-                    <option value="playoff">Playoff</option>
-                    <option value="final">Final</option>
-                  </select>
-                </div>
-                <div className="flex flex-col">
-                  <label className="text-sm font-medium text-gray-700">Period Type</label>
-                  <select
-                    name="periodType"
-                    value={formData.periodType}
-                    onChange={handleInputChange}
-                    className="mt-1 w-full p-3 border rounded-md"
-                  >
-                    <option value="halves">Halves</option>
-                    <option value="quarters">Quarters</option>
-                    <option value="periods">Periods</option>
-                  </select>
-                </div>
-                <div className="flex flex-col">
-                  <label className="text-sm font-medium text-gray-700">Period Duration (minutes)</label>
-                  <input
-                    type="number"
-                    name="periodDuration"
-                    value={formData.periodDuration}
-                    onChange={handleInputChange}
-                    className="mt-1 w-full p-3 border rounded-md"
-                  />
-                </div>
-                {Object.entries(formData.scoringRules || {}).map(([key, value]) => (
-                  <div key={key} className="flex flex-col">
-                    <label className="text-sm font-medium text-gray-700 capitalize">
-                      {key.replace(/([A-Z])/g, ' $1')} Points
+              ))}
+            </div>
+          </section>
+        </div>
+      ) : (
+        <>
+          {error === 'You are not authorized to manage games for this league' ? (
+            <Unauthorized />
+          ) : error ? (
+            <div
+              className="min-h-[var(--page-height)] bg-gray-100 flex items-center justify-center"
+              role="alert"
+              aria-live="assertive"
+            >
+              <p className="text-center text-red-600 text-lg py-4 px-6 bg-white rounded-xl shadow-sm">{error}</p>
+            </div>
+          ) : (
+            <div className="max-w-4xl mx-auto">
+              <AdminPanelPageHeader
+                backButtonLink={`/leagues/${leagueId}`}
+                backButtonText="Back to League"
+                pageTitle="Manage Games"
+                subHeader={league?.name || 'Unnamed League'}
+                tabs={tabs}
+                activeTab={activeTab}
+                onTabChange={setActiveTab}
+                aria-label="Manage Games Header"
+              />
+
+              {/* Create Game Form */}
+              {activeTab === 'create' && (
+                <section
+                  className="bg-white shadow-lg rounded-xl p-6 border border-gray-100 mb-8"
+                  role="region"
+                  aria-labelledby="create-game"
+                >
+                  <div className="flex items-center gap-3 mb-6">
+                    <PlusIcon className="w-6 h-6 text-gray-700" aria-hidden="true" />
+                    <h2 id="create-game" className="text-xl md:text-2xl font-bold text-gray-900">
+                      {editingGameId ? 'Edit Game' : 'Create New Game'}
+                    </h2>
+                  </div>
+                  {error && (
+                    <p className="text-red-600 mb-4 text-center" role="alert" aria-live="assertive">
+                      {error}
+                    </p>
+                  )}
+                  <form onSubmit={handleSubmit} className="space-y-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="flex flex-col">
+                        <label
+                          htmlFor="game-date"
+                          className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"
+                        >
+                          <CalendarIcon className="w-5 h-5 text-gray-600" aria-hidden="true" />
+                          Date
+                        </label>
+                        <input
+                          id="game-date"
+                          type="date"
+                          name="date"
+                          value={formData?.date || ''}
+                          onChange={handleInputChange}
+                          required
+                          className="w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-600 focus:outline-none"
+                          aria-required="true"
+                        />
+                      </div>
+                      <div className="flex flex-col">
+                        <label
+                          htmlFor="game-time"
+                          className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"
+                        >
+                          <ClockIcon className="w-5 h-5 text-gray-600" aria-hidden="true" />
+                          Time
+                        </label>
+                        <input
+                          id="game-time"
+                          type="time"
+                          name="time"
+                          value={formData?.time || ''}
+                          onChange={handleInputChange}
+                          required
+                          className="w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-600 focus:outline-none"
+                          aria-required="true"
+                        />
+                      </div>
+                      <div className="flex flex-col">
+                        <label
+                          htmlFor="home-team"
+                          className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"
+                        >
+                          <UserGroupIcon className="w-5 h-5 text-gray-600" aria-hidden="true" />
+                          Home Team
+                        </label>
+                        <select
+                          id="home-team"
+                          name="teams[0]"
+                          value={formData?.teams?.[0] || ''}
+                          onChange={handleInputChange}
+                          required
+                          className="w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-600 focus:outline-none"
+                          aria-required="true"
+                        >
+                          <option value="">Select Home Team</option>
+                          {teams?.map(team => (
+                            <option key={team?._id} value={team._id}>
+                              {team?.name || 'Unknown'}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="flex flex-col">
+                        <label
+                          htmlFor="away-team"
+                          className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"
+                        >
+                          <UserGroupIcon className="w-5 h-5 text-gray-600" aria-hidden="true" />
+                          Away Team
+                        </label>
+                        <select
+                          id="away-team"
+                          name="teams[1]"
+                          value={formData?.teams?.[1] || ''}
+                          onChange={handleInputChange}
+                          required
+                          className="w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-600 focus:outline-none"
+                          aria-required="true"
+                        >
+                          <option value="">Select Away Team</option>
+                          {teams?.map(team => (
+                            <option key={team?._id} value={team._id}>
+                              {team?.name || 'Unknown'}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="flex flex-col">
+                        <label
+                          htmlFor="game-location"
+                          className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"
+                        >
+                          <MapPinIcon className="w-5 h-5 text-gray-600" aria-hidden="true" />
+                          Location (optional)
+                        </label>
+                        <input
+                          id="game-location"
+                          type="text"
+                          name="location"
+                          value={formData?.location || ''}
+                          onChange={handleInputChange}
+                          className="w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-600 focus:outline-none"
+                        />
+                      </div>
+                      <div className="flex flex-col">
+                        <label
+                          htmlFor="game-venue"
+                          className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"
+                        >
+                          <MapPinIcon className="w-5 h-5 text-gray-600" aria-hidden="true" />
+                          Venue (optional)
+                        </label>
+                        <input
+                          id="game-venue"
+                          type="text"
+                          name="venue"
+                          value={formData?.venue || ''}
+                          onChange={handleInputChange}
+                          className="w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-600 focus:outline-none"
+                        />
+                      </div>
+                      <div className="flex flex-col">
+                        <label
+                          htmlFor="game-video-url"
+                          className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"
+                        >
+                          <VideoCameraIcon className="w-5 h-5 text-gray-600" aria-hidden="true" />
+                          YouTube Video URL (optional)
+                        </label>
+                        <input
+                          id="game-video-url"
+                          type="url"
+                          name="videoUrl"
+                          value={formData?.videoUrl || ''}
+                          onChange={handleInputChange}
+                          placeholder="https://www.youtube.com/watch?v=..."
+                          className="w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-600 focus:outline-none"
+                        />
+                      </div>
+                      <div className="flex flex-col">
+                        <label
+                          htmlFor="game-match-type"
+                          className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"
+                        >
+                          <FlagIcon className="w-5 h-5 text-gray-600" aria-hidden="true" />
+                          Match Type
+                        </label>
+                        <select
+                          id="game-match-type"
+                          name="matchType"
+                          value={formData?.matchType || 'league'}
+                          onChange={handleInputChange}
+                          required
+                          className="w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-600 focus:outline-none"
+                          aria-required="true"
+                        >
+                          <option value="league">League</option>
+                          <option value="friendly">Friendly</option>
+                          <option value="tournament">Tournament</option>
+                        </select>
+                      </div>
+                      <div className="flex flex-col">
+                        <label
+                          htmlFor="game-event-type"
+                          className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"
+                        >
+                          <FlagIcon className="w-5 h-5 text-gray-600" aria-hidden="true" />
+                          Event Type
+                        </label>
+                        <select
+                          id="game-event-type"
+                          name="eventType"
+                          value={formData?.eventType || 'regular'}
+                          onChange={handleInputChange}
+                          required
+                          className="w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-600 focus:outline-none"
+                          aria-required="true"
+                        >
+                          <option value="regular">Regular</option>
+                          <option value="playoff">Playoff</option>
+                          <option value="final">Final</option>
+                        </select>
+                      </div>
+                      <div className="flex flex-col">
+                        <label
+                          htmlFor="game-period-type"
+                          className="text-sm font-medium text-gray-700 mb-1"
+                        >
+                          Period Type
+                        </label>
+                        <select
+                          id="game-period-type"
+                          name="periodType"
+                          value={formData?.periodType || ''}
+                          onChange={handleInputChange}
+                          className="w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-600 focus:outline-none"
+                        >
+                          <option value="halves">Halves</option>
+                          <option value="quarters">Quarters</option>
+                          <option value="periods">Periods</option>
+                        </select>
+                      </div>
+                      <div className="flex flex-col">
+                        <label
+                          htmlFor="game-period-duration"
+                          className="text-sm font-medium text-gray-700 mb-1"
+                        >
+                          Period Duration (minutes)
+                        </label>
+                        <input
+                          id="game-period-duration"
+                          type="number"
+                          name="periodDuration"
+                          value={formData?.periodDuration || ''}
+                          onChange={handleInputChange}
+                          className="w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-600 focus:outline-none"
+                        />
+                      </div>
+                      {Object.entries(formData?.scoringRules || {}).map(([key, value]) => (
+                        <div key={key} className="flex flex-col">
+                          <label
+                            htmlFor={`scoring-rule-${key}`}
+                            className="text-sm font-medium text-gray-700 mb-1 capitalize"
+                          >
+                            {key.replace(/([A-Z])/g, ' $1')} Points
+                          </label>
+                          <input
+                            id={`scoring-rule-${key}`}
+                            type="number"
+                            name={`scoringRules.${key}`}
+                            value={value}
+                            onChange={handleInputChange}
+                            className="w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-600 focus:outline-none"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                    <div className="flex gap-3">
+                      <button
+                        type="submit"
+                        className="flex-1 flex items-center gap-2 justify-center bg-blue-600 text-white px-5 py-3 rounded-lg font-semibold hover:bg-blue-700 transition focus:ring-2 focus:ring-blue-600 focus:outline-none"
+                        aria-label={editingGameId ? 'Update game' : 'Create game'}
+                      >
+                        <PlusIcon className="w-5 h-5" aria-hidden="true" />
+                        {editingGameId ? 'Update Game' : 'Create Game'}
+                      </button>
+                      {editingGameId && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setFormData({
+                              date: '',
+                              time: '',
+                              teams: ['', ''],
+                              location: '',
+                              venue: '',
+                              score: { team1: 0, team2: 0 },
+                              matchType: 'league',
+                              eventType: 'regular',
+                              periodType: '',
+                              periodDuration: '',
+                              overtimeDuration: '',
+                              scoringRules: {},
+                              videoUrl: '',
+                            });
+                            setEditingGameId(null);
+                            setError(null);
+                            setActiveTab('create');
+                          }}
+                          className="flex-1 flex items-center gap-2 justify-center bg-gray-300 text-gray-800 px-5 py-3 rounded-lg font-semibold hover:bg-gray-400 transition focus:ring-2 focus:ring-gray-500 focus:outline-none"
+                          aria-label="Cancel editing game"
+                        >
+                          <TrashIcon className="w-5 h-5" aria-hidden="true" />
+                          Cancel Edit
+                        </button>
+                      )}
+                    </div>
+                  </form>
+                </section>
+              )}
+
+              {/* Current Season Games List */}
+              {activeTab === 'view' && (
+                <section
+                  className="bg-white shadow-lg rounded-xl p-6 border border-gray-100"
+                  role="region"
+                  aria-labelledby="view-games"
+                >
+                  <div className="flex items-center gap-3 mb-6">
+                    <StarIcon className="w-6 h-6 text-gray-700" aria-hidden="true" />
+                    <h2 id="view-games" className="text-xl md:text-2xl font-bold text-gray-900">
+                      Current Season Games
+                    </h2>
+                  </div>
+                  {games?.length > 0 ? (
+                    <div className="grid gap-4 md:grid-cols-2">
+                      {[...games]
+                        .sort((a, b) => {
+                          if (a?.isCompleted !== b?.isCompleted) {
+                            return (a?.isCompleted || false) ? 1 : -1;
+                          }
+                          return new Date(a?.date || 0) - new Date(b?.date || 0);
+                        })
+                        .map(game => {
+                          const isValidGame = game && Array.isArray(game.teams) && game.teams.length >= 2 && game.date;
+                          if (!isValidGame) {
+                            console.warn(`Invalid game data for game ID: ${game?._id}`, game);
+                            return (
+                              <article
+                                key={game?._id || `game-${Math.random()}`}
+                                className="bg-white p-4 rounded-md border border-gray-100"
+                                role="alert"
+                                aria-label="Invalid game data"
+                              >
+                                <div className="space-y-2 text-gray-600">
+                                  <div className="flex items-center gap-2">
+                                    <TrophyIcon className="w-4 h-4 text-gray-500" aria-hidden="true" />
+                                    <span>{game?.league?.name || 'Unknown League'}</span>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <UserGroupIcon className="w-4 h-4 text-gray-500" aria-hidden="true" />
+                                    <span>{game?.teams?.map(t => t?.name || 'TBD').join(' vs ') || 'Teams not set'}</span>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <MapPinIcon className="w-4 h-4 text-gray-500" aria-hidden="true" />
+                                    <span>{game?.location || 'No location provided'}</span>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <ClockIcon className="w-4 h-4 text-gray-500" aria-hidden="true" />
+                                    <span>{new Date(game?.date).toLocaleDateString() || 'No date'}</span>
+                                  </div>
+                                </div>
+                                <div className="mt-3 flex justify-end gap-2">
+                                  <button
+                                    onClick={() => handleDeleteGame(game._id)}
+                                    className="flex items-center gap-2 bg-red-600 text-white px-3 py-2 rounded-md hover:bg-red-700 transition focus:ring-2 focus:ring-red-600 focus:outline-none"
+                                    aria-label={`Delete invalid game for ${game?.league?.name || 'Unknown League'}`}
+                                  >
+                                    <TrashIcon className="w-4 h-4" aria-hidden="true" />
+                                    Delete
+                                  </button>
+                                </div>
+                              </article>
+                            );
+                          }
+                          return (
+                            <article
+                              key={game._id}
+                              className="flex flex-col gap-2 justify-between bg-white p-4 rounded-md border border-gray-100"
+                              role="article"
+                              aria-label={`Game between ${game.teams[0]?.name || 'TBD'} and ${game.teams[1]?.name || 'TBD'}`}
+                            >
+                              <div className="space-y-1 text-gray-700">
+                                <div className="flex items-center gap-2">
+                                  <UserGroupIcon className="w-4 h-4 text-gray-600" aria-hidden="true" />
+                                  <span>{(game.teams[0]?.name || 'TBD')} vs {(game.teams[1]?.name || 'TBD')}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <ClockIcon className="w-4 h-4 text-gray-600" aria-hidden="true" />
+                                  <span>
+                                    {new Date(game.date).toLocaleDateString('en-US', {
+                                      year: 'numeric',
+                                      month: 'short',
+                                      day: 'numeric',
+                                      hour: '2-digit',
+                                      minute: '2-digit',
+                                    })}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <ChartBarIcon className="w-4 h-4 text-gray-600" aria-hidden="true" />
+                                  <span>
+                                    {game.matchType} ({game.eventType})
+                                    {game.isCompleted ? ' - Completed' : ''}
+                                  </span>
+                                </div>
+                                {game.location && (
+                                  <div className="flex items-center gap-2">
+                                    <MapPinIcon className="w-4 h-4 text-gray-600" aria-hidden="true" />
+                                    <span>{game.location}</span>
+                                  </div>
+                                )}
+                                {game.score && (
+                                  <div className="flex items-center gap-2">
+                                    <ChartBarIcon className="w-4 h-4 text-gray-600" aria-hidden="true" />
+                                    <span>Score: {game.score.team1} - {game.score.team2}</span>
+                                  </div>
+                                )}
+                              </div>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => handleTrackGame(game)}
+                                  className="flex items-center gap-2 bg-blue-600 text-white px-3 py-2 rounded-md hover:bg-blue-700 transition focus:ring-2 focus:ring-blue-600 focus:outline-none"
+                                  aria-label={`Track game between ${game.teams[0]?.name || 'TBD'} and ${game.teams[1]?.name || 'TBD'}`}
+                                >
+                                  <DocumentChartBarIcon className="w-4 h-4" aria-hidden="true" />
+                                  Track
+                                </button>
+                                <button
+                                  onClick={() => handleEditGame(game)}
+                                  className="flex items-center gap-2 bg-yellow-600 text-white px-3 py-2 rounded-md hover:bg-yellow-700 transition focus:ring-2 focus:ring-yellow-600 focus:outline-none"
+                                  aria-label={`Edit game details for ${game.teams[0]?.name || 'TBD'} vs ${game.teams[1]?.name || 'TBD'}`}
+                                >
+                                  <PencilIcon className="w-4 h-4" aria-hidden="true" />
+                                  Details
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteGame(game._id)}
+                                  className="flex items-center gap-2 bg-red-600 text-white px-3 py-2 rounded-md hover:bg-red-700 transition focus:ring-2 focus:ring-red-600 focus:outline-none"
+                                  aria-label={`Delete game between ${game.teams[0]?.name || 'TBD'} and ${game.teams[1]?.name || 'TBD'}`}
+                                >
+                                  <TrashIcon className="w-4 h-4" aria-hidden="true" />
+                                  Delete
+                                </button>
+                              </div>
+                            </article>
+                          );
+                        })}
+                    </div>
+                  ) : (
+                    <p className="text-gray-600" role="alert" aria-live="polite">
+                      No games defined for the current season.
+                    </p>
+                  )}
+                </section>
+              )}
+
+              {/* Edit Game Modal */}
+              <Modal
+                isOpen={isEditModalOpen}
+                onRequestClose={handleCloseEditModal}
+                className="bg-white p-6 rounded-xl shadow-lg max-w-md w-full mx-auto my-8"
+                overlayClassName="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[1000]"
+                shouldCloseOnOverlayClick={true}
+                contentLabel="Edit Game Details Modal"
+                aria={{
+                  labelledby: 'edit-game-modal-title',
+                  describedby: 'edit-game-modal-description',
+                }}
+              >
+                <h3 id="edit-game-modal-title" className="text-xl font-bold mb-4 text-gray-900">
+                  Edit Game Details
+                </h3>
+                {editError && (
+                  <p className="text-red-600 mb-4 text-center" role="alert" aria-live="assertive">
+                    {editError}
+                  </p>
+                )}
+                <form id="edit-game-modal-description" onSubmit={handleEditSubmit} className="space-y-4">
+                  <div className="flex flex-col">
+                    <label
+                      htmlFor="edit-game-date"
+                      className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"
+                    >
+                      <CalendarIcon className="w-5 h-5 text-gray-600" aria-hidden="true" />
+                      Date
                     </label>
                     <input
-                      type="number"
-                      name={`scoringRules.${key}`}
-                      value={value}
-                      onChange={handleInputChange}
-                      className="mt-1 w-full p-3 border rounded-md"
+                      id="edit-game-date"
+                      type="date"
+                      name="date"
+                      value={editFormData?.date || ''}
+                      onChange={handleEditInputChange}
+                      required
+                      className="w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-600 focus:outline-none"
+                      aria-required="true"
                     />
                   </div>
-                ))}
-              </div>
-              <div className="flex gap-3">
-                <button
-                  type="submit"
-                  className="flex-1 flex items-center gap-2 justify-center bg-blue-600 text-white px-5 py-2 rounded-lg font-semibold shadow hover:bg-blue-700 transition focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                >
-                  <PlusIcon className="w-5 h-5" />
-                  {editingGameId ? 'Update Game' : 'Create Game'}
-                </button>
-                {editingGameId && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setFormData({
-                        date: '',
-                        time: '',
-                        teams: ['', ''],
-                        location: '',
-                        venue: '',
-                        score: { team1: 0, team2: 0 },
-                        matchType: 'league',
-                        eventType: 'regular',
-                        periodType: '',
-                        periodDuration: '',
-                        overtimeDuration: '',
-                        scoringRules: {},
-                        videoUrl: '',
-                      });
-                      setEditingGameId(null);
-                      setError(null);
-                      setActiveTab('create');
-                    }}
-                    className="flex-1 flex items-center gap-2 justify-center bg-gray-300 text-gray-800 px-5 py-2 rounded-lg font-semibold shadow hover:bg-gray-400 transition focus:ring-2 focus:ring-gray-500 focus:outline-none"
-                  >
-                    <TrashIcon className="w-5 h-5" />
-                    Cancel Edit
-                  </button>
-                )}
-              </div>
-            </form>
-          </section>
-        )}
-
-        {/* Current Season Games List */}
-        {activeTab === 'view' && (
-          <section className="bg-white shadow-xl rounded-2xl p-4 border border-gray-200">
-            <div className="flex items-center gap-3 mb-4">
-              <StarIcon className="w-6 h-6 text-yellow-400" />
-              <h2 className="text-2xl font-semibold text-gray-800">Current Season Games</h2>
+                  <div className="flex flex-col">
+                    <label
+                      htmlFor="edit-game-time"
+                      className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"
+                    >
+                      <ClockIcon className="w-5 h-5 text-gray-600" aria-hidden="true" />
+                      Time
+                    </label>
+                    <input
+                      id="edit-game-time"
+                      type="time"
+                      name="time"
+                      value={editFormData?.time || ''}
+                      onChange={handleEditInputChange}
+                      required
+                      className="w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-600 focus:outline-none"
+                      aria-required="true"
+                    />
+                  </div>
+                  <div className="flex flex-col">
+                    <label
+                      htmlFor="edit-game-location"
+                      className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"
+                    >
+                      <MapPinIcon className="w-5 h-5 text-gray-600" aria-hidden="true" />
+                      Location (optional)
+                    </label>
+                    <input
+                      id="edit-game-location"
+                      type="text"
+                      name="location"
+                      value={editFormData?.location || ''}
+                      onChange={handleEditInputChange}
+                      className="w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-600 focus:outline-none"
+                    />
+                  </div>
+                  <div className="flex flex-col">
+                    <label
+                      htmlFor="edit-game-venue"
+                      className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"
+                    >
+                      <MapPinIcon className="w-5 h-5 text-gray-600" aria-hidden="true" />
+                      Venue (optional)
+                    </label>
+                    <input
+                      id="edit-game-venue"
+                      type="text"
+                      name="venue"
+                      value={editFormData?.venue || ''}
+                      onChange={handleEditInputChange}
+                      className="w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-600 focus:outline-none"
+                    />
+                  </div>
+                  <div className="flex flex-col">
+                    <label
+                      htmlFor="edit-game-video-url"
+                      className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"
+                    >
+                      <VideoCameraIcon className="w-5 h-5 text-gray-600" aria-hidden="true" />
+                      YouTube Video URL (optional)
+                    </label>
+                    <input
+                      id="edit-game-video-url"
+                      type="url"
+                      name="videoUrl"
+                      value={editFormData?.videoUrl || ''}
+                      onChange={handleEditInputChange}
+                      placeholder="https://www.youtube.com/watch?v=..."
+                      className="w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-600 focus:outline-none"
+                    />
+                  </div>
+                  <div className="flex flex-col">
+                    <label
+                      htmlFor="edit-game-match-type"
+                      className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"
+                    >
+                      <FlagIcon className="w-5 h-5 text-gray-600" aria-hidden="true" />
+                      Match Type
+                    </label>
+                    <select
+                      id="edit-game-match-type"
+                      name="matchType"
+                      value={editFormData?.matchType || 'league'}
+                      onChange={handleEditInputChange}
+                      required
+                      className="w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-600 focus:outline-none"
+                      aria-required="true"
+                    >
+                      <option value="league">League</option>
+                      <option value="friendly">Friendly</option>
+                      <option value="tournament">Tournament</option>
+                    </select>
+                  </div>
+                  <div className="flex flex-col">
+                    <label
+                      htmlFor="edit-game-event-type"
+                      className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"
+                    >
+                      <FlagIcon className="w-5 h-5 text-gray-600" aria-hidden="true" />
+                      Event Type
+                    </label>
+                    <select
+                      id="edit-game-event-type"
+                      name="eventType"
+                      value={editFormData?.eventType || 'regular'}
+                      onChange={handleEditInputChange}
+                      required
+                      className="w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-600 focus:outline-none"
+                      aria-required="true"
+                    >
+                      <option value="regular">Regular</option>
+                      <option value="playoff">Playoff</option>
+                      <option value="final">Final</option>
+                    </select>
+                  </div>
+                  <div className="flex justify-end gap-3">
+                    <button
+                      type="button"
+                      onClick={handleCloseEditModal}
+                      className="px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300 transition focus:ring-2 focus:ring-gray-500 focus:outline-none"
+                      aria-label="Cancel editing game"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition focus:ring-2 focus:ring-blue-600 focus:outline-none"
+                      aria-label="Update game details"
+                    >
+                      Update Game
+                    </button>
+                  </div>
+                </form>
+              </Modal>
             </div>
-            {games.length > 0 ? (
-              <div className="grid gap-2 md:grid-cols-2">
-                {games.map(game => {
-                  const isValidGame = game && Array.isArray(game.teams) && game.teams.length >= 2 && game.date;
-                  if (!isValidGame) {
-                    console.warn(`Invalid game data for game ID: ${game?._id}`, game);
-                    return (
-                      <div
-                        key={game?._id || Math.random()}
-                        className="bg-white p-4 rounded-md border border-gray-200"
-                      >
-                        <div className="space-y-2 text-gray-600">
-                          <div className="flex items-center gap-2">
-                            <TrophyIcon className="w-4 h-4 text-gray-500" />
-                            <span>{game?.league?.name || 'Unknown League'}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <UserGroupIcon className="w-4 h-4 text-gray-500" />
-                            <span>{game?.teams?.map(t => t.name).join(' vs ') || 'Teams not set'}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <MapPinIcon className="w-4 h-4 text-gray-500" />
-                            <span>{game?.location || 'No location provided'}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <ClockIcon className="w-4 h-4 text-gray-500" />
-                            <span>{new Date(game?.date).toLocaleDateString() || 'No date'}</span>
-                          </div>
-                        </div>
-                        <div className="mt-3 flex justify-end gap-2">
-                          <button
-                            onClick={() => handleDeleteGame(game._id)}
-                            className="flex items-center gap-2 bg-red-600 text-white px-3 py-1 rounded-md hover:bg-red-700 transition focus:ring-2 focus:ring-red-500 focus:outline-none"
-                            aria-label="Delete Game"
-                          >
-                            <TrashIcon className="w-4 h-4" />
-                            Delete
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  }
-                  return (
-                    <div key={game._id} className="flex flex-col gap-2 justify-between bg-white p-3 rounded-md border border-gray-200">
-                      <div className="space-y-1 text-gray-700">
-                        <div className="flex items-center gap-2">
-                          <UserGroupIcon className="w-4 h-4 text-gray-500" />
-                          <span>{(game.teams[0]?.name || 'TBD')} vs {(game.teams[1]?.name || 'TBD')}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <ClockIcon className="w-4 h-4 text-gray-500" />
-                          <span>
-                            {new Date(game.date).toLocaleDateString('en-US', {
-                              year: 'numeric',
-                              month: 'short',
-                              day: 'numeric',
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <ChartBarIcon className="w-4 h-4 text-gray-500" />
-                          <span>{game.matchType} ({game.eventType}){game.isCompleted ? ' - Completed' : ''}</span>
-                        </div>
-                        {game.location && (
-                          <div className="flex items-center gap-2">
-                            <MapPinIcon className="w-4 h-4 text-gray-500" />
-                            <span>{game.location}</span>
-                          </div>
-                        )}
-                        {game.score && (
-                          <div className="flex items-center gap-2">
-                            <ChartBarIcon className="w-4 h-4 text-gray-500" />
-                            <span>Score: {game.score.team1} - {game.score.team2}</span>
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => handleTrackGame(game)}
-                          className="flex items-center gap-2 bg-blue-600 text-white px-3 py-1 rounded-md hover:bg-blue-700 transition focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                          aria-label="Track Game"
-                        >
-                          <DocumentChartBarIcon className="w-4 h-4" />
-                          Track
-                        </button>
-                        <button
-                          onClick={() => handleEditGame(game)}
-                          className="flex items-center gap-2 bg-yellow-600 text-white px-3 py-1 rounded-md hover:bg-yellow-700 transition focus:ring-2 focus:ring-yellow-500 focus:outline-none"
-                          aria-label="Edit Game Details"
-                        >
-                          <PencilIcon className="w-4 h-4" />
-                          Details
-                        </button>
-                        <button
-                          onClick={() => handleDeleteGame(game._id)}
-                          className="flex items-center gap-2 bg-red-600 text-white px-3 py-1 rounded-md hover:bg-red-700 transition focus:ring-2 focus:ring-red-500 focus:outline-none"
-                          aria-label="Delete Game"
-                        >
-                          <TrashIcon className="w-4 h-4" />
-                          Delete
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <p className="text-gray-600">No games defined for the current season.</p>
-            )}
-          </section>
-        )}
-
-        {/* Edit Game Modal */}
-        <Modal
-          isOpen={isEditModalOpen}
-          onRequestClose={handleCloseEditModal}
-          className="bg-white p-4 rounded shadow-lg max-w-md w-full mx-auto my-8"
-          overlayClassName="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[1000]"
-          shouldCloseOnOverlayClick={true}
-          contentLabel="Edit Game Details Modal"
-          aria={{
-            labelledby: 'edit-game-modal-title',
-            describedby: 'edit-game-modal-description',
-          }}
-        >
-          <h3 id="edit-game-modal-title" className="text-lg font-bold mb-2">Edit Game Details</h3>
-          {editError && <p className="text-red-500 mb-4 text-center">{editError}</p>}
-          <form id="edit-game-modal-description" onSubmit={handleEditSubmit} className="space-y-4">
-            <div className="flex flex-col">
-              <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                <CalendarIcon className="w-5 h-5 text-gray-500" />
-                Date:
-              </label>
-              <input
-                type="date"
-                name="date"
-                value={editFormData.date}
-                onChange={handleEditInputChange}
-                required
-                className="mt-1 max-w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
-              />
-            </div>
-            <div className="flex flex-col">
-              <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                <ClockIcon className="w-5 h-5 text-gray-500" />
-                Time:
-              </label>
-              <input
-                type="time"
-                name="time"
-                value={editFormData.time}
-                onChange={handleEditInputChange}
-                required
-                className="mt-1 max-w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
-              />
-            </div>
-            <div className="flex flex-col">
-              <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                <MapPinIcon className="w-5 h-5 text-gray-500" />
-                Location (optional):
-              </label>
-              <input
-                type="text"
-                name="location"
-                value={editFormData.location}
-                onChange={handleEditInputChange}
-                className="mt-1 max-w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
-              />
-            </div>
-            <div className="flex flex-col">
-              <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                <MapPinIcon className="w-5 h-5 text-gray-500" />
-                Venue (optional):
-              </label>
-              <input
-                type="text"
-                name="venue"
-                value={editFormData.venue}
-                onChange={handleEditInputChange}
-                className="mt-1 max-w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
-              />
-            </div>
-            <div className="flex flex-col">
-              <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                <VideoCameraIcon className="w-5 h-5 text-gray-500" />
-                YouTube Video URL (optional):
-              </label>
-              <input
-                type="url"
-                name="videoUrl"
-                value={editFormData.videoUrl}
-                onChange={handleEditInputChange}
-                placeholder="https://www.youtube.com/watch?v=..."
-                className="mt-1 max-w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
-              />
-            </div>
-            <div className="flex flex-col">
-              <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                <FlagIcon className="w-5 h-5 text-gray-500" />
-                Match Type:
-              </label>
-              <select
-                name="matchType"
-                value={editFormData.matchType}
-                onChange={handleEditInputChange}
-                required
-                className="mt-1 max-w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
-              >
-                <option value="league">League</option>
-                <option value="friendly">Friendly</option>
-                <option value="tournament">Tournament</option>
-              </select>
-            </div>
-            <div className="flex flex-col">
-              <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                <FlagIcon className="w-5 h-5 text-gray-500" />
-                Event Type:
-              </label>
-              <select
-                name="eventType"
-                value={editFormData.eventType}
-                onChange={handleEditInputChange}
-                required
-                className="mt-1 max-w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
-              >
-                <option value="regular">Regular</option>
-                <option value="playoff">Playoff</option>
-                <option value="final">Final</option>
-              </select>
-            </div>
-            <div className="flex justify-end space-x-2">
-              <button
-                type="button"
-                onClick={handleCloseEditModal}
-                className="px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-              >
-                Update Game
-              </button>
-            </div>
-          </form>
-        </Modal>
-      </div>
+          )}
+        </>
+      )}
     </div>
   );
 }
