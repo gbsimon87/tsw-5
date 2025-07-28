@@ -13,6 +13,12 @@ import {
   Cog6ToothIcon,
   ArrowRightEndOnRectangleIcon,
   CalendarDaysIcon,
+  ClipboardDocumentListIcon,
+  ChartBarIcon,
+  AdjustmentsHorizontalIcon,
+  DevicePhoneMobileIcon,
+  ChatBubbleBottomCenterTextIcon,
+  LockClosedIcon,
 } from '@heroicons/react/24/outline';
 
 // Masculine, athletic gradients and icon colors
@@ -32,7 +38,8 @@ const adminFeatures = [
     description: 'View team standings and player leaderboards.',
     icon: TrophyIcon,
     iconColor: 'text-amber-600',
-    comingSoon: true,
+    link: '/login',
+    comingSoon: false,
     bg: 'from-gray-100 to-gray-300',
   },
   {
@@ -40,7 +47,7 @@ const adminFeatures = [
     description: 'Create and organize detailed schedules for all your teams.',
     icon: CalendarDaysIcon,
     iconColor: 'text-purple-700',
-    link: '/admin/schedules',
+    link: '/login',
     linkLabel: 'Manage Schedules',
     comingSoon: false,
     bg: 'from-purple-100 to-purple-300',
@@ -63,7 +70,9 @@ const playerFeatures = [
     description: 'Track player performance, efficiency, and game stats.',
     icon: UsersIcon,
     iconColor: 'text-blue-700',
-    comingSoon: true,
+    link: '/join',
+    linkLabel: 'Join Now',
+    comingSoon: false,
     bg: 'from-slate-100 to-slate-300',
   },
   {
@@ -71,8 +80,8 @@ const playerFeatures = [
     description: 'View your full career stats broken down by team.',
     icon: UserCircleIcon,
     iconColor: 'text-sky-700',
-    link: '/my-sporty/stats',
-    linkLabel: 'View Stats',
+    link: '/login',
+    linkLabel: 'Join Now',
     comingSoon: false,
     bg: 'from-sky-100 to-sky-300',
   },
@@ -82,43 +91,57 @@ const whyChooseSporty = [
   {
     title: 'For Parents & Friends',
     description: 'Stay updated on your kids’ games, track their team’s progress, and never miss a moment.',
-    iconBg: 'from-blue-200 to-blue-400',
+    icon: UsersIcon,
+    iconColor: 'text-blue-600',
+    bg: 'from-blue-200 to-blue-400',
     semantic: 'audience',
   },
   {
     title: 'For League Managers',
     description: 'Simplify league management with tools to organize teams and monitor stats.',
-    iconBg: 'from-green-200 to-green-400',
+    icon: ClipboardDocumentListIcon,
+    iconColor: 'text-green-600',
+    bg: 'from-green-200 to-green-400',
     semantic: 'management',
   },
   {
     title: 'For Players',
     description: 'Monitor your stats, track your development, and shine on the leaderboard.',
-    iconBg: 'from-slate-200 to-slate-400',
+    icon: ChartBarIcon,
+    iconColor: 'text-slate-600',
+    bg: 'from-slate-200 to-slate-400',
     semantic: 'players',
   },
   {
     title: 'Accessible for All',
     description: 'Designed with accessibility in mind, so everyone can participate and enjoy.',
-    iconBg: 'from-gray-200 to-gray-400',
+    icon: AdjustmentsHorizontalIcon,
+    iconColor: 'text-gray-600',
+    bg: 'from-gray-200 to-gray-400',
     semantic: 'accessibility',
   },
   {
     title: 'Mobile Friendly',
     description: 'Enjoy a seamless experience on any device, wherever you are.',
-    iconBg: 'from-blue-100 to-blue-300',
+    icon: DevicePhoneMobileIcon,
+    iconColor: 'text-blue-500',
+    bg: 'from-blue-100 to-blue-300',
     semantic: 'mobile',
   },
   {
     title: 'Community Driven',
     description: 'Built for and by sports lovers - your feedback shapes our future.',
-    iconBg: 'from-green-100 to-green-300',
+    icon: ChatBubbleBottomCenterTextIcon,
+    iconColor: 'text-green-500',
+    bg: 'from-green-100 to-green-300',
     semantic: 'community',
   },
   {
     title: 'Privacy First',
     description: 'Your data is secure and never shared without your consent.',
-    iconBg: 'from-slate-100 to-slate-300',
+    icon: LockClosedIcon,
+    iconColor: 'text-slate-500',
+    bg: 'from-slate-100 to-slate-300',
     semantic: 'privacy',
   },
 ];
@@ -127,7 +150,7 @@ const whyChooseSporty = [
 function useParallax() {
   const ref = useRef(null);
   const { scrollYProgress } = useScroll({ target: ref });
-  const y = useTransform(scrollYProgress, [0, 1], ['0%', '20%']);
+  const y = useTransform(scrollYProgress, [0, 1], ['0%', '0%']);
   return { ref, y };
 }
 
@@ -484,22 +507,36 @@ export default function Home() {
               </div>
             </motion.section>
 
-            {/* Why Choose Section (Unchanged) */}
-            <section className="bg-white py-16" role="region" aria-labelledby="why-choose">
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <h2 id="why-choose" className="text-2xl sm:text-3xl font-bold text-blue-800 text-center mb-12 flex items-center justify-center">
+            <motion.section
+              className="py-16 bg-white"
+              role="region"
+              aria-labelledby="why-choose"
+              initial={shouldReduceMotion ? {} : { opacity: 0, y: 50 }}
+              animate={shouldReduceMotion ? {} : { opacity: 1, y: 0 }}
+              exit={shouldReduceMotion ? {} : { opacity: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+            >
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"
+              >
+                <h2
+                  id="why-choose"
+                  className="text-2xl sm:text-3xl font-bold text-blue-800 text-center mb-12 flex items-center justify-center"
+                >
                   <UsersIcon className="w-7 h-7 sm:w-8 mr-2 text-blue-700" aria-hidden="true" />
                   Why Choose The Sporty Way?
                 </h2>
+
                 <div className="overflow-hidden relative w-full" aria-hidden="true">
                   <div
-                    className="flex w-max py-4"
+                    className="flex w-max py-4 animate-[scroll-left_45s_linear_infinite]"
                     style={{
                       animation: 'marquee-left 45s linear infinite',
                     }}
                   >
-                    {Array.isArray(whyChooseSporty) ? (
-                      [...whyChooseSporty, ...whyChooseSporty].map((reason, idx) => (
+                    {[...whyChooseSporty, ...whyChooseSporty].map((reason, idx) => {
+                      const Icon = reason.icon;
+
+                      return (
                         <article
                           key={reason?.title ? `${reason.title}-${idx}` : `reason-${idx}`}
                           className="min-w-[220px] max-w-xs mx-3 text-center bg-gradient-to-br bg-opacity-80 glass rounded-xl shadow-lg p-4 border border-gray-100 flex-shrink-0"
@@ -507,23 +544,18 @@ export default function Home() {
                           role="article"
                           aria-label={`Reason: ${reason?.title || 'Unknown'}`}
                         >
-                          <div
-                            className={`h-16 w-16 bg-gradient-to-br ${reason?.iconBg || 'from-gray-200 to-gray-400'} rounded-full mx-auto mb-3`}
-                            aria-hidden="true"
-                          />
+                          <div className="h-16 w-16 flex items-center justify-center mx-auto mb-3 rounded-full bg-gradient-to-br from-white to-gray-100 shadow-inner">
+                            {Icon && <Icon className={`h-8 w-8 ${reason.iconColor || 'text-gray-700'}`} aria-hidden="true" />}
+                          </div>
                           <h3 className="text-base font-semibold text-gray-800 mb-1">{reason?.title || 'Untitled'}</h3>
                           <p className="text-gray-700 text-sm">{reason?.description || 'No description available'}</p>
                         </article>
-                      ))
-                    ) : (
-                      <div className="text-red-600 text-center" role="alert" aria-live="assertive">
-                        Error: Unable to display reasons. Please try again later.
-                      </div>
-                    )}
+                      );
+                    })}
                   </div>
                 </div>
               </div>
-            </section>
+            </motion.section>
 
             {/* Testimonials Section */}
             <motion.section
