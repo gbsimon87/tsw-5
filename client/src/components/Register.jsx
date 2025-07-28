@@ -1,16 +1,15 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
-import axios from 'axios';
 import useAnalytics from '../hooks/useAnalytics';
 
 export default function Register() {
   const navigate = useNavigate();
   const { trackEvent } = useAnalytics();
-
-  const { login } = useAuth();
+  const { register } = useAuth();
   const [formData, setFormData] = useState({ email: '', password: '', name: '' });
   const [error, setError] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -19,13 +18,22 @@ export default function Register() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (isSubmitting) {
+      console.log('Register submission blocked: already submitting');
+      return;
+    }
+    setIsSubmitting(true);
+    setError(null);
+
     try {
-      const response = await axios.post('/auth/register', formData);
-      await login(response.data.token, false);
+      await register(formData);
       trackEvent('register', { method: 'email' });
       navigate('/');
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to register');
+      console.error('Register error:', err.message, err);
+      setError(err.message || 'Failed to register');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -43,6 +51,7 @@ export default function Register() {
               value={formData.email}
               onChange={handleInputChange}
               required
+              disabled={isSubmitting}
               className="mt-1 w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -55,6 +64,7 @@ export default function Register() {
               onChange={handleInputChange}
               required
               minLength={8}
+              disabled={isSubmitting}
               className="mt-1 w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -66,14 +76,16 @@ export default function Register() {
               value={formData.name}
               onChange={handleInputChange}
               required
+              disabled={isSubmitting}
               className="mt-1 w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
           <button
             type="submit"
-            className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 transition"
+            disabled={isSubmitting}
+            className={`w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 transition ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
-            Register
+            {isSubmitting ? 'Registering...' : 'Register'}
           </button>
         </form>
         <p className="mt-4 text-center">

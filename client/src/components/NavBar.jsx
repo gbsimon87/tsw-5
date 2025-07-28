@@ -34,6 +34,22 @@ function NavBar() {
     navigate('/login');
   };
 
+  const sanitizeImageUrl = (url) => {
+    if (!url) return null;
+    const trustedDomains = ['lh3.googleusercontent.com'];
+    try {
+      const urlObj = new URL(url);
+      if (trustedDomains.includes(urlObj.hostname)) {
+        return urlObj.href;
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  };
+
+  const profilePicture = user?.picture ? sanitizeImageUrl(user.picture) : null;
+
   const navigation = [
     ...(isAuthenticated
       ? [
@@ -43,7 +59,6 @@ function NavBar() {
       ]
       : [
         { name: 'Login', to: '/login', current: false },
-        // { name: 'Register', to: '/register', current: false },
       ]),
     { name: 'Upcoming Features', to: '/upcoming-features', current: false },
     { name: 'Privacy Policy', to: '/privacy-policy', current: false },
@@ -91,11 +106,12 @@ function NavBar() {
                 <MenuButton className="relative flex rounded-full bg-gray-800 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-gray-800">
                   <span className="absolute -inset-1.5" />
                   <span className="sr-only">Open user menu</span>
-                  {user.picture ? (
+                  {profilePicture ? (
                     <img
-                      src={user.picture}
+                      src={profilePicture}
                       alt="User profile"
                       className="size-8 rounded-full"
+                      onError={() => console.error('Failed to load profile picture:', profilePicture)}
                     />
                   ) : (
                     <div
@@ -142,7 +158,6 @@ function NavBar() {
                     </a>
                   </MenuItem>
                 </MenuItems>
-
               </Menu>
             </div>
           )}
@@ -170,19 +185,19 @@ function NavBar() {
               {item.name}
             </DisclosureButton>
           ))}
-          {/* If you want to add a logout button in the mobile menu, add it here: */}
-          <DisclosureButton
-            as="button"
-            onClick={handleLogoutClick}
-            className="flex items-center gap-3 w-full text-left text-gray-300 hover:bg-gray-700 hover:text-white rounded-md px-3 py-2 text-base font-medium"
-            aria-label="Log out"
-          >
-            <ArrowLeftEndOnRectangleIcon className="w-5 h-5 text-gray-400" aria-hidden="true" />
-            Log out
-          </DisclosureButton>
+          {isAuthenticated && (
+            <DisclosureButton
+              as="button"
+              onClick={handleLogoutClick}
+              className="flex items-center gap-3 w-full text-left text-gray-300 hover:bg-gray-700 hover:text-white rounded-md px-3 py-2 text-base font-medium"
+              aria-label="Log out"
+            >
+              <ArrowLeftEndOnRectangleIcon className="w-5 h-5 text-gray-400" aria-hidden="true" />
+              Log out
+            </DisclosureButton>
+          )}
         </div>
       </DisclosurePanel>
-
     </Disclosure>
   );
 }

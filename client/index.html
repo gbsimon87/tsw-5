@@ -5,9 +5,21 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>TSW</title>
+    <!-- GA4 External Script -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-VHTKDJP4GZ"></script>
+    <!-- Google Sign-In Script -->
+    <script async src="https://accounts.google.com/gsi/client"></script>
   </head>
   <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
+    <!-- GA4 Inline Script with Nonce -->
+    <script nonce="%NONCE%">
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-VHTKDJP4GZ');
+    </script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
