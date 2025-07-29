@@ -9,8 +9,24 @@ export default function UpcomingFeatures() {
   const features = [
     // Difficulty 1: Simple UI changes or notifications
     {
+      title: "Add an option for adding arbitraty points to the ringers.",
+      status: "todo"
+    },
+    {
       title: "As a non logged in user, I want to disable being able to view completed games.",
       status: "done"
+    },
+    {
+      title: "System - in game tracking screen, in the subs, have 5 players currently in lineup show up first.",
+      status: "todo"
+    },
+    {
+      title: "System - in game tracking screen, in the subs, when adding a ringer, offer the positions by sport.",
+      status: "todo"
+    },
+    {
+      title: "System - Change 'Rosters' to 'Line UP' in GameTracking screen.",
+      status: "todo"
     },
     {
       title: "As a user, I want to receive a confirmation or error toast when creating a game so that I know the answer.",

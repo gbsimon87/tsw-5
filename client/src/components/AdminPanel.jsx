@@ -319,7 +319,7 @@ export default function AdminPanel() {
               </section>
 
               {/* Create League Card */}
-              {/* <section
+              <section
                 className="bg-white shadow-lg rounded-xl p-6 border border-gray-100"
                 role="region"
                 aria-labelledby="create-league"
@@ -518,7 +518,7 @@ export default function AdminPanel() {
                     Create League
                   </button>
                 </form>
-              </section> */}
+              </section>
             </div>
           </>
         )}
