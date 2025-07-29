@@ -3,50 +3,80 @@ const router = express.Router();
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { OAuth2Client } = require('google-auth-library');
+const { check, validationResult } = require('express-validator');
+const crypto = require('crypto');
 const User = require('../models/User');
+const { registerLimiter, loginLimiter, googleAuthLimiter, meLimiter, logger } = require('../middleware');
+
 require('dotenv').config({ path: '.env' });
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
+// Validation Middleware
+const validateRegister = [
+  check('email').isEmail().normalizeEmail().withMessage({ error: 'Invalid email format', code: 'validation_error' }),
+  check('name').trim().isLength({ min: 3, max: 50 }).withMessage({ error: 'Name must be 3-50 characters', code: 'validation_error' }),
+  check('password').isLength({ min: 8 }).matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/).withMessage({ error: 'Password must be at least 8 characters with uppercase, lowercase, and number', code: 'validation_error' })
+];
+
+const validateLogin = [
+  check('email').isEmail().normalizeEmail().withMessage({ error: 'Invalid email format', code: 'validation_error' }),
+  check('password').notEmpty().withMessage({ error: 'Password is required', code: 'validation_error' })
+];
+
+const validateGoogleAuth = [
+  check('token').notEmpty().withMessage({ error: 'Google token is required', code: 'validation_error' })
+];
+
+const validateRefresh = [
+  check('refreshToken').notEmpty().withMessage({ error: 'Refresh token is required', code: 'validation_error' })
+];
+
+// In-memory failed attempts store for login lockout
+const failedAttempts = new Map();
+
+// Generate Refresh Token
+const generateRefreshToken = () => crypto.randomBytes(32).toString('hex');
+
 // Register user with email and password
-router.post('/register', async (req, res) => {
+router.post('/register', registerLimiter, validateRegister, async (req, res) => {
   try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      const error = errors.array()[0].msg;
+      logger.warn('Registration validation failed', { ip: req.ip, errors: errors.array() });
+      return res.status(400).json(error);
+    }
+
     const { email, password, name } = req.body;
-    if (!email || !password || !name) {
-      return res.status(400).json({ error: 'Email, password, and name are required' });
-    }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      return res.status(400).json({ error: 'Invalid email format' });
-    }
-    if (password.length < 8) {
-      return res.status(400).json({ error: 'Password must be at least 8 characters' });
-    }
-    if (name.trim().length === 0) {
-      return res.status(400).json({ error: 'Name cannot be empty' });
-    }
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return res.status(400).json({ error: 'Email already in use' });
+      logger.warn('Registration attempt with existing email', { ip: req.ip, email });
+      return res.status(400).json({ error: 'Email already in use', code: 'email_exists' });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
+    const refreshToken = generateRefreshToken();
     const user = new User({
       email,
       name,
       password: hashedPassword,
-      emailVerified: false
+      emailVerified: false,
+      refreshToken
     });
     await user.save();
 
     const jwtToken = jwt.sign(
       { userId: user._id, email: user.email },
       process.env.JWT_SECRET,
-      { expiresIn: '1h' }
+      { expiresIn: '15m' }
     );
 
+    logger.info('User registered successfully', { ip: req.ip, userId: user._id });
     res.status(201).json({
       token: jwtToken,
+      refreshToken,
       user: {
         email: user.email,
         name: user.name,
@@ -57,37 +87,58 @@ router.post('/register', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Register error:', error);
-    res.status(400).json({ error: 'Failed to register' });
+    logger.error('Register error', { ip: req.ip, error: error.message });
+    res.status(500).json({ error: 'Failed to register', code: 'server_error' });
   }
 });
 
 // Login with email and password
-router.post('/login', async (req, res) => {
+router.post('/login', loginLimiter, validateLogin, async (req, res) => {
   try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      const error = errors.array()[0].msg;
+      logger.warn('Login validation failed', { ip: req.ip, errors: errors.array() });
+      return res.status(400).json(error);
+    }
+
     const { email, password } = req.body;
-    if (!email || !password) {
-      return res.status(400).json({ error: 'Email and password are required' });
+
+    // Check lockout
+    const key = `${req.ip}:${email}`;
+    const attempts = failedAttempts.get(key) || { count: 0, lockedUntil: 0 };
+    if (attempts.lockedUntil > Date.now()) {
+      logger.warn('Login lockout', { ip: req.ip, email });
+      return res.status(429).json({ error: 'Account temporarily locked, try again later', code: 'locked_out' });
     }
 
     const user = await User.findOne({ email });
-    if (!user || !user.password) {
-      return res.status(401).json({ error: 'Invalid email or password' });
+    if (!user || !user.password || !(await bcrypt.compare(password, user.password))) {
+      attempts.count += 1;
+      if (attempts.count >= 5) {
+        attempts.lockedUntil = Date.now() + 15 * 60 * 1000; // 15 minutes
+      }
+      failedAttempts.set(key, attempts);
+      logger.warn('Invalid login attempt', { ip: req.ip, email, attempt: attempts.count });
+      return res.status(401).json({ error: 'Invalid email or password', code: 'invalid_credentials' });
     }
 
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(401).json({ error: 'Invalid email or password' });
-    }
+    // Reset attempts and generate refresh token
+    failedAttempts.delete(key);
+    const refreshToken = generateRefreshToken();
+    user.refreshToken = refreshToken;
+    await user.save();
 
     const jwtToken = jwt.sign(
       { userId: user._id, email: user.email },
       process.env.JWT_SECRET,
-      { expiresIn: '1h' }
+      { expiresIn: '15m' }
     );
 
+    logger.info('User logged in successfully', { ip: req.ip, userId: user._id });
     res.json({
       token: jwtToken,
+      refreshToken,
       user: {
         email: user.email,
         name: user.name,
@@ -98,14 +149,21 @@ router.post('/login', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Login error:', error);
-    res.status(400).json({ error: 'Failed to login' });
+    logger.error('Login error', { ip: req.ip, error: error.message });
+    res.status(500).json({ error: 'Failed to login', code: 'server_error' });
   }
 });
 
 // Verify Google ID token
-router.post('/google', async (req, res) => {
+router.post('/google', googleAuthLimiter, validateGoogleAuth, async (req, res) => {
   try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      const error = errors.array()[0].msg;
+      logger.warn('Google auth validation failed', { ip: req.ip, errors: errors.array() });
+      return res.status(400).json(error);
+    }
+
     const { token } = req.body;
     const ticket = await client.verifyIdToken({
       idToken: token,
@@ -115,6 +173,7 @@ router.post('/google', async (req, res) => {
     const { sub: googleId, email, name, given_name, family_name, picture, email_verified } = payload;
 
     let user = await User.findOne({ googleId });
+    const refreshToken = generateRefreshToken();
     if (!user) {
       user = new User({
         googleId,
@@ -123,9 +182,9 @@ router.post('/google', async (req, res) => {
         givenName: given_name,
         familyName: family_name,
         picture,
-        emailVerified: email_verified
+        emailVerified: email_verified,
+        refreshToken
       });
-      await user.save();
     } else {
       user.email = email;
       user.name = name;
@@ -133,17 +192,20 @@ router.post('/google', async (req, res) => {
       user.familyName = family_name;
       user.picture = picture;
       user.emailVerified = email_verified;
-      await user.save();
+      user.refreshToken = refreshToken;
     }
+    await user.save();
 
     const jwtToken = jwt.sign(
       { userId: user._id, email: user.email },
       process.env.JWT_SECRET,
-      { expiresIn: '1h' }
+      { expiresIn: '15m' }
     );
 
+    logger.info('Google auth successful', { ip: req.ip, userId: user._id });
     res.json({
       token: jwtToken,
+      refreshToken,
       user: {
         email: user.email,
         name: user.name,
@@ -154,21 +216,68 @@ router.post('/google', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Google auth error:', error);
-    res.status(401).json({ error: 'Invalid Google token' });
+    logger.error('Google auth error', { ip: req.ip, error: error.message });
+    res.status(401).json({ error: 'Invalid Google token', code: 'invalid_token' });
+  }
+});
+
+// Refresh access token
+router.post('/refresh', validateRefresh, async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      const error = errors.array()[0].msg;
+      logger.warn('Refresh token validation failed', { ip: req.ip, errors: errors.array() });
+      return res.status(400).json(error);
+    }
+
+    const { refreshToken } = req.body;
+    const user = await User.findOne({ refreshToken });
+    if (!user) {
+      logger.warn('Invalid refresh token', { ip: req.ip });
+      return res.status(401).json({ error: 'Invalid refresh token', code: 'invalid_refresh_token' });
+    }
+
+    // Generate new access token and rotate refresh token
+    const newRefreshToken = generateRefreshToken();
+    user.refreshToken = newRefreshToken;
+    await user.save();
+
+    const jwtToken = jwt.sign(
+      { userId: user._id, email: user.email },
+      process.env.JWT_SECRET,
+      { expiresIn: '15m' }
+    );
+
+    logger.info('Token refreshed successfully', { ip: req.ip, userId: user._id });
+    res.json({
+      token: jwtToken,
+      refreshToken: newRefreshToken
+    });
+  } catch (error) {
+    logger.error('Refresh token error', { ip: req.ip, error: error.message });
+    res.status(500).json({ error: 'Failed to refresh token', code: 'server_error' });
   }
 });
 
 // Get current user (protected route)
-router.get('/me', async (req, res) => {
+router.get('/me', meLimiter, async (req, res) => {
   try {
     const token = req.headers.authorization?.split(' ')[1];
-    if (!token) return res.status(401).json({ error: 'No token provided' });
+    if (!token) {
+      logger.warn('No token provided for /me', { ip: req.ip });
+      return res.status(401).json({ error: 'No token provided', code: 'no_token' });
+    }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.userId);
-    if (!user) return res.status(404).json({ error: 'User not found' });
+    req.user = decoded; // Set req.user for rate limiter
+    const user = await User.findById(decoded.userId).select('email name givenName familyName picture emailVerified');
+    if (!user) {
+      logger.warn('User not found for /me', { ip: req.ip, userId: decoded.userId });
+      return res.status(404).json({ error: 'User not found', code: 'user_not_found' });
+    }
 
+    logger.info('User data fetched successfully', { ip: req.ip, userId: user._id });
     res.json({
       email: user.email,
       name: user.name,
@@ -178,8 +287,8 @@ router.get('/me', async (req, res) => {
       emailVerified: user.emailVerified
     });
   } catch (error) {
-    console.error('Auth me error:', error);
-    res.status(401).json({ error: 'Invalid token' });
+    logger.error('Auth me error', { ip: req.ip, error: error.message });
+    res.status(401).json({ error: 'Invalid token', code: 'invalid_token' });
   }
 });
 

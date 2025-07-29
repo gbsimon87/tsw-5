@@ -9,7 +9,6 @@ import { useAuth } from '../../context/AuthContext';
 
 ChartJS.register(LineElement, PointElement, LinearScale, CategoryScale, Title, Tooltip, Legend);
 
-// console.log('[PlayerProfile] Chart.js controllers:', Object.keys(ChartJS.registry.controllers));
 
 export default function PlayerProfile() {
   const { user } = useAuth();
@@ -27,7 +26,6 @@ export default function PlayerProfile() {
       }
 
       try {
-        // console.log(`[PlayerProfile] Fetching player ID: ${playerId}, leagueId: ${leagueId}`);
         const response = await axios.get(`/api/players/${playerId}`, {
           params: { leagueId },
           headers: { Authorization: `Bearer ${user.token}` },
@@ -113,7 +111,6 @@ export default function PlayerProfile() {
   // Chart data for performance trends
   const chartData = useMemo(() => {
     if (!player?.gameStats || player.gameStats.length === 0) {
-      // console.log('[PlayerProfile] No gameStats available for chart');
       return null;
     }
     const labels = sortedGameStats.map(game => {
@@ -127,7 +124,6 @@ export default function PlayerProfile() {
     const assistsData = sortedGameStats.map(game => game.assists || 0);
     const stealsData = sortedGameStats.map(game => game.steals || 0);
     const turnoversData = sortedGameStats.map(game => game.turnovers || 0);
-    // console.log('[PlayerProfile] Chart data:', { labels, pointsData, reboundsData, assistsData, stealsData, turnoversData });
     return {
       labels,
       datasets: [
@@ -174,9 +170,6 @@ export default function PlayerProfile() {
       ],
     };
   }, [sortedGameStats]);
-
-  // console.log('[PlayerProfile] chartData:', chartData);
-
 
   const chartOptions = {
     responsive: true,

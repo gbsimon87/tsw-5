@@ -2,13 +2,15 @@ import { useState } from 'react';
 import { GoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
-import axios from 'axios';
+import useAnalytics from '../hooks/useAnalytics';
 
 export default function Login() {
-  const { login } = useAuth();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [error, setError] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { login } = useAuth();
+  const { trackEvent } = useAnalytics();
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -17,21 +19,42 @@ export default function Login() {
 
   const handleEmailLogin = async (e) => {
     e.preventDefault();
+    if (isSubmitting) {
+      console.log('Login submission blocked: already submitting');
+      return;
+    }
+    setIsSubmitting(true);
+    setError(null);
+
     try {
-      const response = await axios.post('/auth/login', formData);
-      await login(response.data.token, false);
-      navigate('/my-sporty');
+      await login(formData, false);
+      trackEvent('login', { method: 'email' });
+      navigate('/');
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to login');
+      console.error('Login error:', err.message, err);
+      setError(err.message || 'Failed to login');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleGoogleSuccess = async (credentialResponse) => {
+    if (isSubmitting) {
+      console.log('Google login blocked: already submitting');
+      return;
+    }
+    setIsSubmitting(true);
+    setError(null);
+
     try {
       await login(credentialResponse.credential, true);
-      navigate('/my-sporty');
+      trackEvent('login', { method: 'google' });
+      navigate('/');
     } catch (error) {
+      console.error('Google login error:', error.message);
       setError('Google Login Failed');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -50,6 +73,7 @@ export default function Login() {
               value={formData.email}
               onChange={handleInputChange}
               required
+              disabled={isSubmitting}
               className="mt-1 w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -61,21 +85,26 @@ export default function Login() {
               value={formData.password}
               onChange={handleInputChange}
               required
+              disabled={isSubmitting}
               className="mt-1 w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
           <button
             type="submit"
-            className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 transition"
+            disabled={isSubmitting}
+            className={`w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 transition ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
-            Login
+            {isSubmitting ? 'Logging in...' : 'Login'}
           </button>
         </form> */}
         <h2 className="text-lg font-semibold mt-6 mb-4">Google Login</h2>
         <div className="flex justify-center">
           <GoogleLogin
             onSuccess={handleGoogleSuccess}
-            onError={() => setError('Google Login Failed')}
+            onError={() => {
+              console.error('Google login failed');
+              setError('Google Login Failed');
+            }}
           />
         </div>
         <p className="mt-4 text-center">

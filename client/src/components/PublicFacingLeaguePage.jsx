@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useParams, Link } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import Skeleton from 'react-loading-skeleton';
 
@@ -9,7 +9,6 @@ const PublicFacingLeaguePage = () => {
   const [leagueStats, setLeagueStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -122,54 +121,6 @@ const PublicFacingLeaguePage = () => {
         )}
       </section>
 
-      {/* Games */}
-      <section className="bg-white shadow-lg rounded-xl p-6 border border-gray-100" role="region" aria-label="Games">
-        <h2 className="text-base md:text-2xl font-bold text-gray-900 mb-4 break-words">Games</h2>
-        {error || !league || league.games?.length === 0 ? (
-          <p className="text-gray-600 text-left font-medium" role="alert" aria-live="true">
-            No games found. Check back later.
-          </p>
-        ) : (
-          <div className="space-y-4">
-            {league.games
-              .sort((a, b) => new Date(b.date) - new Date(a.date))
-              .map((game) => (
-                <div
-                  key={game._id || game.date}
-                  className="border border-gray-200 rounded-lg p-4 bg-white"
-                >
-                  <div className="flex justify-between items-center mb-2">
-                    <p className="text-sm text-gray-500">
-                      {new Date(game.date).toLocaleDateString('en-US', {
-                        weekday: 'short',
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric',
-                      })}
-                    </p>
-                    <span
-                      className={`text-xs font-semibold px-2 py-1 rounded-full ${game.isCompleted ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}
-                    >
-                      {game.isCompleted ? 'Completed' : 'Scheduled'}
-                    </span>
-                  </div>
-                  <div className="flex flex-col divide-y divide-gray-200">
-                    {game.teamScores.map((ts, idx) => {
-                      const team = game.teams.find((t) => t._id === ts.team);
-                      return (
-                        <div key={ts.team} className="flex justify-between py-2">
-                          <span className="text-sm font-medium text-gray-900 truncate max-w-[60%]">{team?.name || 'Unknown'}</span>
-                          <span className="text-sm font-bold text-gray-900">{ts.score || 0}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              ))}
-          </div>
-        )}
-      </section>
-
       {/* League Leaders - Points */}
       <section className="bg-white shadow-lg rounded-xl p-6 border border-gray-100" role="region" aria-label="League Leaders - Points">
         <h2 className="text-base md:text-2xl font-bold text-gray-900 mb-4 break-words">League Leaders - Points</h2>
@@ -275,7 +226,6 @@ const PublicFacingLeaguePage = () => {
         )}
       </section>
 
-
       {/* League Statistics */}
       <section className="bg-white shadow-lg rounded-xl p-4 sm:p-6 border border-gray-100" role="region" aria-label="League Statistics">
         <h2 className="text-base md:text-2xl font-bold text-gray-900 mb-4 break-words">League Statistics</h2>
@@ -319,6 +269,54 @@ const PublicFacingLeaguePage = () => {
                 </div>
               </>
             )}
+          </div>
+        )}
+      </section>
+
+      {/* Games */}
+      <section className="bg-white shadow-lg rounded-xl p-6 border border-gray-100" role="region" aria-label="Games">
+        <h2 className="text-base md:text-2xl font-bold text-gray-900 mb-4 break-words">Games</h2>
+        {error || !league || league.games?.length === 0 ? (
+          <p className="text-gray-600 text-left font-medium" role="alert" aria-live="true">
+            No games found. Check back later.
+          </p>
+        ) : (
+          <div className="space-y-4">
+            {league.games
+              .sort((a, b) => new Date(b.date) - new Date(a.date))
+              .map((game) => (
+                <div
+                  key={game._id || game.date}
+                  className="border border-gray-200 rounded-lg p-4 bg-white"
+                >
+                  <div className="flex justify-between items-center mb-2">
+                    <p className="text-sm text-gray-500">
+                      {new Date(game.date).toLocaleDateString('en-US', {
+                        weekday: 'short',
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                      })}
+                    </p>
+                    <span
+                      className={`text-xs font-semibold px-2 py-1 rounded-full ${game.isCompleted ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}
+                    >
+                      {game.isCompleted ? 'Completed' : 'Scheduled'}
+                    </span>
+                  </div>
+                  <div className="flex flex-col divide-y divide-gray-200">
+                    {game.teamScores.map((ts, idx) => {
+                      const team = game.teams.find((t) => t._id === ts.team);
+                      return (
+                        <div key={ts.team} className="flex justify-between py-2">
+                          <span className="text-sm font-medium text-gray-900 truncate max-w-[60%]">{team?.name || 'Unknown'}</span>
+                          <span className="text-sm font-bold text-gray-900">{ts.score || 0}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
           </div>
         )}
       </section>

@@ -44,7 +44,6 @@ router.get('/:playerId', authMiddleware, async (req, res) => {
 
     // Validate inputs
     if (!mongoose.Types.ObjectId.isValid(playerId) || !mongoose.Types.ObjectId.isValid(leagueId)) {
-      // console.log(`[Get player] Invalid playerId: ${playerId} or leagueId: ${leagueId}`);
       return res.status(400).json({ error: 'Invalid playerId or leagueId' });
     }
 
@@ -59,18 +58,15 @@ router.get('/:playerId', authMiddleware, async (req, res) => {
       .lean();
 
     if (!player) {
-      // console.log(`[Get player] Player not found for playerId: ${playerId}`);
       return res.status(404).json({ error: 'Player not found' });
     }
 
     // Determine player name
     const playerName = player.isRinger ? player.name : player.user?.name || 'Unknown Player';
-    // console.log(`[Get player] Player name: ${playerName}, isRinger: ${player.isRinger}`);
 
     // Verify player is in the league
     const team = player.teams.find(t => t.league._id.toString() === leagueId);
     if (!team) {
-      // console.log(`[Get player] Player ${playerId} not in league ${leagueId}`);
       return res.status(400).json({ error: 'Player is not in the specified league' });
     }
 

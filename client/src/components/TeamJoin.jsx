@@ -2,18 +2,20 @@ import { useState, useEffect, useRef } from 'react';
 import Skeleton from 'react-loading-skeleton';
 import { toast } from 'react-toastify';
 import axios from 'axios';
-import { useAuth } from '../context/AuthContext';
 import { validateSecretKey } from '../utils/validateSecretKey';
+import useAnalytics from '../hooks/useAnalytics';
+import { useAuth } from '../context/AuthContext';
 
 export default function TeamJoin() {
-  const { user } = useAuth();
+  const { trackEvent } = useAnalytics();
   const [joinFormData, setJoinFormData] = useState({ secretKey: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const secretKeyInputRef = useRef(null);
+  const { user } = useAuth();
+  const apiBaseUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
-  // Focus input on mount
   useEffect(() => {
     if (secretKeyInputRef.current) {
       secretKeyInputRef.current.focus();
@@ -50,13 +52,15 @@ export default function TeamJoin() {
     setLoading(true);
     try {
       const response = await axios.post(
-        '/api/teams/join',
+        `${apiBaseUrl}/api/teams/join`,
         { secretKey },
         { headers: { Authorization: `Bearer ${user.token}` } }
       );
 
       setSuccess(`Successfully joined team: ${response.data.team.name}`);
       toast.success(`Successfully joined team: ${response.data.team.name}`, { toastId: 'join-success' });
+      trackEvent('join_team', { method: 'secret_key' });
+
       setJoinFormData({ secretKey: '' });
       setError(null);
     } catch (err) {
@@ -94,8 +98,7 @@ export default function TeamJoin() {
     <div
       className="h-[var(--page-height)] flex items-center justify-center bg-cover bg-center bg-no-repeat bg-gray-800"
       style={{
-        backgroundImage:
-          "url('https://img.freepik.com/free-photo/hands-with-basketball-ball_171337-9220.jpg?t=st=1751592905~exp=1751596505~hmac=bc85776f6b17bf3ea7405e651548b76a64e2d17e0873ea2d6c96cee71ecbf9af&w=996')",
+        backgroundImage: "url('/images/basketball.jpg')",
       }}
       role="region"
       aria-label="Team Join Form"

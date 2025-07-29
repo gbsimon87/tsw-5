@@ -734,8 +734,8 @@ export default function Team() {
         {renderLeaderboards()}
 
         {/* GAMES */}
-        <section className="bg-white shadow-lg rounded-xl p-6 border border-gray-100 mb-8" role="region" aria-label="Games">
-          <h2 className="text-base md:text-2xl font-bold text-gray-900 mb-4 break-words">Games</h2>
+        <section className="bg-white mb-8" role="region" aria-label="Games">
+          <h2 className="text-lg font-bold mb-2">Games</h2>
           {upcomingGames?.length === 0 && recentGames?.length === 0 ? (
             <p className="text-gray-600 text-left font-medium" role="alert" aria-live="true">
               No games found. Check back later.
