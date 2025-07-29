@@ -15,6 +15,15 @@ try {
 }
 
 const app = express();
+
+// Add CORS middleware before routes
+app.use(cors({
+  origin: ['https://thesportyway.com'],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
+
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '../client/dist')));
 
