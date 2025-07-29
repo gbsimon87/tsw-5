@@ -10,7 +10,7 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   // Base URL for API requests
-  const apiBaseUrl = process.env.VITE_API_URL || 'http://localhost:5000';
+  const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
   // Refresh token function
   const refreshToken = async () => {
