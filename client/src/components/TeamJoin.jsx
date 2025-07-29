@@ -14,7 +14,7 @@ export default function TeamJoin() {
   const [success, setSuccess] = useState(null);
   const secretKeyInputRef = useRef(null);
   const { user } = useAuth();
-  const apiBaseUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+  const apiBaseUrl = process.env.VITE_API_URL || 'http://localhost:5000';
 
   useEffect(() => {
     if (secretKeyInputRef.current) {
