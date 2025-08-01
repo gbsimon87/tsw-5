@@ -17,16 +17,25 @@ try {
 
 const app = express();
 
-// Add CORS middleware before routes
+// Dynamic CORS configuration based on environment
+const allowedOrigins = process.env.NODE_ENV === 'production'
+  ? ['https://thesportyway.com']
+  : ['http://localhost:5173', 'http://localhost:5000'];
+
 app.use(cors({
-  origin: ['https://thesportyway.com'],
+  origin: allowedOrigins,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
+app.options('*', cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, '../client/dist')));
+
+// Serve static files only in production
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(__dirname, '../client/dist')));
+}
 
 // Content Security Policy with nonce
 app.use((req, res, next) => {
@@ -34,7 +43,7 @@ app.use((req, res, next) => {
   res.locals.nonce = nonce;
   res.setHeader(
     'Content-Security-Policy',
-    `default-src 'self'; script-src 'self' https://www.googletagmanager.com https://accounts.google.com 'nonce-${nonce}'; connect-src 'self' https://www.google-analytics.com https://*.google-analytics.com; img-src 'self' data: https://lh3.googleusercontent.com https://placehold.co; style-src 'self' https://accounts.google.com 'unsafe-inline'; frame-src https://accounts.google.com;`
+    `default-src 'self'; script-src 'self' https://www.googletagmanager.com https://accounts.google.com 'nonce-${nonce}'; connect-src 'self' ${process.env.NODE_ENV === 'production' ? 'https://www.google-analytics.com https://*.google-analytics.com' : 'http://localhost:5173 http://localhost:5000 https://www.google-analytics.com https://*.google-analytics.com'}; img-src 'self' data: https://lh3.googleusercontent.com https://placehold.co; style-src 'self' https://accounts.google.com 'unsafe-inline'; frame-src https://accounts.google.com;`
   );
   next();
 });
@@ -58,19 +67,21 @@ app.get('/api', (req, res) => {
   res.json({ message: 'Hello from the MERN backend!' });
 });
 
-// Middleware to inject nonce into index.html for client routes
-app.get('*', (req, res) => {
-  const indexPath = path.join(__dirname, '../client/dist', 'index.html');
-  fs.readFile(indexPath, 'utf8', (err, data) => {
-    if (err) {
-      logger.error('Failed to read index.html', { error: err.message });
-      return res.status(500).send('Server error');
-    }
-    const html = data.replace(/%NONCE%/g, res.locals.nonce);
-    res.setHeader('Content-Type', 'text/html');
-    res.send(html);
+// Serve client routes only in production
+if (process.env.NODE_ENV === 'production') {
+  app.get('*', (req, res) => {
+    const indexPath = path.join(__dirname, '../client/dist', 'index.html');
+    fs.readFile(indexPath, 'utf8', (err, data) => {
+      if (err) {
+        logger.error('Failed to read index.html', { error: err.message });
+        return res.status(500).send('Server error');
+      }
+      const html = data.replace(/%NONCE%/g, res.locals.nonce);
+      res.setHeader('Content-Type', 'text/html');
+      res.send(html);
+    });
   });
-});
+}
 
 // Initialize MongoDB connection and start server
 const PORT = process.env.PORT || 5000;

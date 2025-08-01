@@ -4,7 +4,10 @@
   "scripts": {
     "render-build": "cd server && npm install && cd ../client && npm install && ./node_modules/.bin/cross-env NODE_ENV=production npm run build",
     "start": "cd server && npm start",
-    "dev": "cd client && npm run build && cd ../server && npm run dev",
+    "dev": "concurrently \"cd client && npm run dev\" \"cd server && npm run dev\"",
     "seed": "cd server && node seed.js"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.0"
   }
 }

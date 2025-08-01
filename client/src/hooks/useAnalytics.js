@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom';
 
 const useAnalytics = () => {
   const location = useLocation();
-  const measurementId = process.env.VITE_GA_MEASUREMENT_ID;
+  const measurementId = import.meta.env.VITE_GA_MEASUREMENT_ID;
 
   // Track page views on route change
   useEffect(() => {

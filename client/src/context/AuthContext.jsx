@@ -105,6 +105,7 @@ export const AuthProvider = ({ children }) => {
 
   // Debounced login function to prevent duplicate requests
   const login = debounce(async (credentials, isGoogle = false) => {
+    console.log(isGoogle)
     try {
       let response;
       if (isGoogle) {
@@ -113,7 +114,9 @@ export const AuthProvider = ({ children }) => {
         if (!credentials.email || !credentials.password) {
           throw new Error('Email and password are required');
         }
-        response = await axios.post(`${apiBaseUrl}/auth/login`, credentials);
+        console.log('apiBaseUrl:', apiBaseUrl);
+        // response = await axios.post(`${apiBaseUrl}/auth/login`, credentials);
+        response = await axios.post(`/auth/login`, credentials);
       }
       const { token: jwtToken, refreshToken, user: userData } = response.data;
       localStorage.setItem('token', jwtToken);
